@@ -1,4 +1,4 @@
-# 📑 Catastro Auto-Fill & Workflow Assistant
+# 📑 Catastro_automatic
 
 Esta extensión basada en Chromium está diseñada para optimizar y automatizar el llenado de fichas en plataformas de **Registro Catastral** basadas en **React** y **Ant Design**. Combina una interfaz de usuario (Popup) para la gestión de datos y un motor de inyección inteligente en segundo plano.
 
