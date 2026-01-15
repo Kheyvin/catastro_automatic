@@ -11,7 +11,7 @@ La extensión cuenta con un panel flotante que permite al usuario pre-cargar la 
 * **Persistencia:** Los datos se guardan en `chrome.storage.sync`, lo que permite que la información no se pierda al cerrar el navegador o cambiar de pestaña.
 * **Gestión de Memoria:** Botón **"Guardar"** para confirmar datos y **"Limpiar"** para vaciar tanto el formulario del popup como la memoria de la extensión.
 
-### 2. Inyección de Datos Ultra-Rápida
+### 2. Inyección de Datos
 * **Bypass de React:** Utiliza setters nativos para asegurar que los cambios se reflejen en el estado interno de React, evitando que los datos se pierdan al guardar la ficha.
 * **Mapeo Inteligente:** Identifica campos mediante selectores de ID directos o mediante etiquetas (`<legend>`).
 
