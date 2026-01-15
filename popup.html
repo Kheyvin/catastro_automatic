@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            width: 260px;
+            padding: 8px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        .form-group {
+            margin-bottom: 8px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+        .form-section {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 10px;
+            color: #b0b0b0;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #444;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 11px;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 3px rgba(24, 144, 255, 0.5);
+        }
+        input::placeholder {
+            color: #666;
+        }
+        .button-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 7px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .btn-save {
+            background-color: #1890ff;
+            color: white;
+        }
+        .btn-save:hover {
+            background-color: #0050b3;
+        }
+        .btn-clear {
+            background-color: #333;
+            color: #e0e0e0;
+        }
+        .btn-clear:hover {
+            background-color: #444;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1890ff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 13px;
+            color: #1890ff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Made by KDA</h1>
+    </div>
+    
+    <div class="form-section">
+        <div class="section-title">Código de vía</div>
+        <div class="form-row">
+            <div>
+                <label for="codeVia">Código:</label>
+                <input type="text" id="codeVia" placeholder="Código via">
+            </div>
+            <div>
+                <label for="numberMunicipal">N° Municipal:</label>
+                <input type="text" id="numberMunicipal" placeholder="N° Municipal">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Código de HU</div>
+        <div class="form-row full">
+            <div>
+                <label for="codeHu">Código HU:</label>
+                <input type="text" id="codeHu" placeholder="Código HU">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="numberManzana">Manzana:</label>
+                <input type="text" id="numberManzana" placeholder="Manzana">
+            </div>
+            <div>
+                <label for="numberLote">Lote:</label>
+                <input type="text" id="numberLote" placeholder="Lote">
+            </div>
+        </div>
+        <div class="form-row full">
+            <div>
+                <label for="numberSubLote">Sub-Lote:</label>
+                <input type="text" id="numberSubLote" placeholder="Sub-Lote">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Observaciones</div>
+        <div class="form-group">
+            <label for="observations">Notas:</label>
+            <input type="text" id="observations" placeholder="Observaciones">
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Supervisor</div>
+        <div class="form-row">
+            <div>
+                <label for="supervisorName">Nombre:</label>
+                <input type="text" id="supervisorName" placeholder="Nombre">
+            </div>
+            <div>
+                <label for="supervisorDate">Fecha:</label>
+                <input type="text" id="supervisorDate">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Técnico Catastral</div>
+        <div class="form-row">
+            <div>
+                <label for="technicianName">Nombre:</label>
+                <input type="text" id="technicianName" placeholder="Nombre">
+            </div>
+            <div>
+                <label for="technicianDate">Fecha:</label>
+                <input type="text" id="technicianDate">
+            </div>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="btn-clear" id="clearBtn">Limpiar</button>
+        <button class="btn-save" id="saveBtn">Guardar</button>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

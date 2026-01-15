@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Webinar Catastro - By KDA",
+  "version": "0.2",
+  "description": "Automatización de ficha catastral individual",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://161.132.42.244/*"
+  ],
+  "icons": {
+    "16": "bb.png",
+    "48": "bb.png",
+    "128": "bb.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "bb.png",
+      "32": "bb.png",
+      "48": "bb.png",
+      "128": "bb.png"
+    },
+    "default_title": "Yo te cuido BB",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://161.132.42.244:9006/ficha-individual/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
