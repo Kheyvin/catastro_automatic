@@ -156,6 +156,68 @@ const setCatastralDefaults = () => {
             fastInject(input, 'R3');
         }
     });
+
+    // Setear ASIENTO [82] a "00001"
+    const asientoInputs = findAllInputsByLabel({ label: '[82]', keyword: 'ASIENTO' });
+    asientoInputs.forEach(input => {
+        if (input && (input.value === "" || input.value === null)) {
+            fastInject(input, '00001');
+        }
+    });
+
+    // Setear TIPO PARTIDA REGISTRAL [79] a "03 - PARTIDA ELECTRONICA"
+    setAntSelect('[79]', 'TIPO', '03 - PARTIDA ELECTRONICA');
+};
+
+const setAntSelect = (label, keyword, targetText) => {
+    const fieldsets = document.querySelectorAll('fieldset');
+    const labelClean = cleanText(label);
+    const keywordClean = cleanText(keyword);
+
+    fieldsets.forEach(fieldset => {
+        const legend = fieldset.querySelector('legend');
+        if (!legend) return;
+        
+        const legendTextClean = cleanText(legend.innerText);
+        if (legendTextClean.includes(labelClean) && legendTextClean.includes(keywordClean)) {
+            const selectContainer = fieldset.querySelector('.ant-select');
+            if (!selectContainer) return;
+
+            const selectedSpan = selectContainer.querySelector('.ant-select-selection-item');
+            if (selectedSpan && selectedSpan.textContent.includes(targetText)) {
+                // Ya tiene el valor correcto
+                return;
+            }
+
+            // Simular click en el selector para abrirlo
+            const selector = selectContainer.querySelector('.ant-select-selector');
+            if (selector) {
+                // Disparar eventos de mouse para abrir el dropdown
+                selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+                // Esperar a que el dropdown se abra y seleccionar la opción
+                setTimeout(() => {
+                    const dropdown = document.querySelector('.rc-virtual-list-holder');
+                    if (dropdown) {
+                        const options = dropdown.querySelectorAll('.ant-select-item-option');
+                        const targetOption = Array.from(options).find(opt => 
+                            opt.textContent.trim() === targetText
+                        );
+                        
+                        if (targetOption) {
+                            // Disparar eventos de mouse en la opción
+                            targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                            targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                            targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                            targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                        }
+                    }
+                }, 300);
+            }
+        }
+    });
 };
 
 const fillAllFields = () => {
