@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <style>
         body {
-            width: 260px;
+            width: 600px;
             padding: 8px;
             font-family: Arial, sans-serif;
             margin: 0;
@@ -98,6 +98,27 @@
         .btn-clear:hover {
             background-color: #444;
         }
+        .btn-success {
+            background-color: #52c41a;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #389e0d;
+        }
+        .btn-danger {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #cf1322;
+        }
+        .btn-warning {
+            background-color: #faad14;
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #d48806;
+        }
         .header {
             text-align: center;
             margin-bottom: 12px;
@@ -109,6 +130,45 @@
             font-size: 13px;
             color: #1890ff;
             font-weight: bold;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 4px;
+            text-align: center;
+        }
+        th {
+            background-color: #2a2a2a;
+            color: #1890ff;
+            font-weight: bold;
+        }
+        td input {
+            width: 100%;
+            padding: 2px;
+            font-size: 10px;
+            text-align: center;
+        }
+        .btn-small {
+            padding: 3px 6px;
+            font-size: 10px;
+        }
+        .construcciones-buttons {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        .construcciones-buttons button {
+            flex: 1;
+            min-width: 120px;
         }
     </style>
 </head>
@@ -190,6 +250,41 @@
                 <label for="technicianDate">Fecha:</label>
                 <input type="text" id="technicianDate">
             </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Construcciones</div>
+        <div class="construcciones-buttons">
+            <button class="btn-success btn-small" id="addRowBtn">+ Añadir Fila</button>
+            <button class="btn-danger btn-small" id="deleteRowBtn">- Borrar Última Fila</button>
+            <button class="btn-warning btn-small" id="clearTableBtn">Limpiar Tabla</button>
+            <button class="btn-save btn-small" id="executeBtn">▶ Ejecutar</button>
+        </div>
+        <div class="table-container">
+            <table id="construccionesTable">
+                <thead>
+                    <tr>
+                        <th>N</th>
+                        <th>Mes</th>
+                        <th>Año</th>
+                        <th>58</th>
+                        <th>59</th>
+                        <th>60</th>
+                        <th>61</th>
+                        <th>62</th>
+                        <th>63</th>
+                        <th>64</th>
+                        <th>65</th>
+                        <th>66</th>
+                        <th>67</th>
+                        <th>68</th>
+                        <th>69</th>
+                    </tr>
+                </thead>
+                <tbody id="construccionesBody">
+                </tbody>
+            </table>
         </div>
     </div>
 
