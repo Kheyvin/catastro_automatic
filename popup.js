@@ -9,12 +9,15 @@ const formFields = [
     'supervisorName',
     'supervisorDate',
     'technicianName',
-    'technicianDate'
+    'technicianDate',
+    'sectorValue',
+    'manzanaValue',
+    'loteValue',
+    'inscripcionNumero',
+    'inscripcionFecha'
 ];
 
-// Cargar datos guardados al abrir el popup
 chrome.storage.sync.get(['catastroFormData', 'construccionesData'], (result) => {
-    // Cargar datos del formulario principal
     if (result.catastroFormData && Object.keys(result.catastroFormData).length > 0) {
         Object.keys(result.catastroFormData).forEach(fieldId => {
             const element = document.getElementById(fieldId);
@@ -24,7 +27,6 @@ chrome.storage.sync.get(['catastroFormData', 'construccionesData'], (result) => 
         });
     }
 
-    // Cargar datos de construcciones
     if (result.construccionesData && Array.isArray(result.construccionesData)) {
         result.construccionesData.forEach(rowData => {
             addTableRow(rowData);
@@ -32,7 +34,6 @@ chrome.storage.sync.get(['catastroFormData', 'construccionesData'], (result) => 
     }
 });
 
-// Función para añadir una fila a la tabla
 function addTableRow(data = null) {
     const tbody = document.getElementById('construccionesBody');
     const row = tbody.insertRow();
@@ -53,7 +54,6 @@ function addTableRow(data = null) {
     });
 }
 
-// Función para obtener datos de la tabla
 function getTableData() {
     const tbody = document.getElementById('construccionesBody');
     const rows = tbody.getElementsByTagName('tr');
@@ -79,7 +79,6 @@ function getTableData() {
             c69: inputs[14].value.trim()
         };
         
-        // Solo agregar filas con al menos el campo N lleno
         if (rowData.n) {
             data.push(rowData);
         }
@@ -88,12 +87,10 @@ function getTableData() {
     return data;
 }
 
-// Botón añadir fila
 document.getElementById('addRowBtn').addEventListener('click', () => {
     addTableRow();
 });
 
-// Botón borrar última fila
 document.getElementById('deleteRowBtn').addEventListener('click', () => {
     const tbody = document.getElementById('construccionesBody');
     if (tbody.rows.length > 0) {
@@ -101,13 +98,11 @@ document.getElementById('deleteRowBtn').addEventListener('click', () => {
     }
 });
 
-// Botón limpiar tabla
 document.getElementById('clearTableBtn').addEventListener('click', () => {
     const tbody = document.getElementById('construccionesBody');
     tbody.innerHTML = '';
 });
 
-// Botón ejecutar
 document.getElementById('executeBtn').addEventListener('click', () => {
     const construccionesData = getTableData();
     
@@ -116,7 +111,6 @@ document.getElementById('executeBtn').addEventListener('click', () => {
         return;
     }
     
-    // Guardar y enviar mensaje al content script para ejecutar
     chrome.storage.sync.set({ 'construccionesData': construccionesData }, () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.tabs.sendMessage(tabs[0].id, { 
@@ -124,16 +118,13 @@ document.getElementById('executeBtn').addEventListener('click', () => {
                 data: construccionesData
             }, (response) => {
                 if (chrome.runtime.lastError) {
-                    alert('Error: Asegúrate de estar en la página correcta.');
-                } else {
-                    alert('Ejecución iniciada. Revisa la consola del navegador para más detalles.');
+                    alert('Error: Carga la Pagina.');
                 }
             });
         });
     });
 });
 
-// Botón guardar
 document.getElementById('saveBtn').addEventListener('click', () => {
     const formData = {};
     let hasData = false;
@@ -161,7 +152,6 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     }
 });
 
-// Botón limpiar todo
 document.getElementById('clearBtn').addEventListener('click', () => {
     formFields.forEach(fieldId => {
         const element = document.getElementById(fieldId);

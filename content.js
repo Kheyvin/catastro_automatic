@@ -44,20 +44,6 @@ const MAPEO_60 = {
     '4': '04 - EN RUINAS'
 };
 
-// const MAPEO_LETRAS = {
-//     '0': '00 - NINGUNO',
-//     'A': 'A', 'a': 'A',
-//     'B': 'B', 'b': 'B',
-//     'C': 'C', 'c': 'C',
-//     'D': 'D', 'd': 'D',
-//     'E': 'E', 'e': 'E',
-//     'F': 'F', 'f': 'F',
-//     'G': 'G', 'g': 'G',
-//     'H': 'H', 'h': 'H',
-//     'I': 'I', 'i': 'I'
-// };
-
-// Actualización del mapeo de letras para usar valores completos
 const MAPEO_LETRAS = {
     '0': '00 - NINGUNO',
     'A': 'A', 'a': 'A',
@@ -197,6 +183,332 @@ const setupTabAsEnter = () => {
     }, true);
 };
 
+// Función para seleccionar SECTOR, MANZANA, LOTE con scroll
+const selectUbicacionField = async (fieldId, value) => {
+    if (!value) return;
+    
+    console.log(`\n🔄 Seleccionando ${fieldId}: ${value}`);
+    
+    const selectInput = document.querySelector(`input#${fieldId}`);
+    if (!selectInput) {
+        console.error(`No se encontró el campo ${fieldId}`);
+        return;
+    }
+    
+    const selectContainer = selectInput.closest('.ant-select');
+    if (!selectContainer) {
+        console.error(`No se encontró el contenedor del select para ${fieldId}`);
+        return;
+    }
+    
+    const selector = selectContainer.querySelector('.ant-select-selector');
+    if (selector) {
+        console.log(`Abriendo dropdown de ${fieldId}...`);
+        selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        await sleep(300);
+        
+        try {
+            const dropdown = await waitForDropdownVisible();
+            await sleep(200);
+            
+            let targetOption = await scrollDropdownToFindOption(dropdown, value);
+            
+            if (targetOption) {
+                console.log(`Opción encontrada: ${value}, haciendo clic...`);
+                
+                targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                
+                await sleep(300);
+                console.log(`Selección completada: ${fieldId} = ${value}`);
+            } else {
+                console.error(`No se encontró la opción ${value} en ${fieldId}`);
+            }
+        } catch (error) {
+            console.error(`Error al seleccionar ${fieldId}:`, error);
+        }
+    }
+};
+
+const fillUbicacionCatastral = async () => {
+    console.log('\nLlenando Ubicación Catastral...');
+    
+    chrome.storage.sync.get(['catastroFormData'], async (result) => {
+        const data = result.catastroFormData;
+        if (!data) return;
+        
+        // SECTOR
+        if (data.sectorValue) {
+            await selectUbicacionField('form_item_sector', data.sectorValue);
+            await sleep(500);
+        }
+        
+        // MANZANA
+        if (data.manzanaValue) {
+            await selectUbicacionField('form_item_manzana', data.manzanaValue);
+            await sleep(500);
+        }
+        
+        // LOTE
+        if (data.loteValue) {
+            await selectUbicacionField('form_item_lote', data.loteValue);
+            await sleep(500);
+        }
+        
+        console.log('Ubicación Catastral completada');
+    });
+};
+
+// Función mejorada para seleccionar TIPO PARTIDA REGISTRAL
+const selectTipoPartidaRegistral = async () => {
+    console.log('\nSeleccionando TIPO PARTIDA REGISTRAL...');
+    
+    const fieldsets = document.querySelectorAll('fieldset');
+    let targetFieldset = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[79]') && legend.textContent.includes('TIPO PARTIDA REGISTRAL')) {
+            targetFieldset = fieldset;
+            break;
+        }
+    }
+    
+    if (!targetFieldset) {
+        console.error('No se encontró el fieldset de TIPO PARTIDA REGISTRAL');
+        return;
+    }
+    
+    const selectContainer = targetFieldset.querySelector('.ant-select');
+    if (!selectContainer) {
+        console.error('No se encontró el selector en el fieldset');
+        return;
+    }
+    
+    const selectedItem = selectContainer.querySelector('.ant-select-selection-item');
+    if (selectedItem && selectedItem.textContent.includes('03 - PARTIDA ELECTRONICA')) {
+        console.log('ℹEl valor ya está seleccionado');
+        return;
+    }
+    
+    const selector = selectContainer.querySelector('.ant-select-selector');
+    if (selector) {
+        console.log('Abriendo dropdown...');
+        selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        await sleep(300);
+        
+        try {
+            const dropdown = await waitForDropdownVisible();
+            await sleep(200);
+            
+            const options = dropdown.querySelectorAll('.ant-select-item-option');
+            const targetOption = Array.from(options).find(opt => {
+                const content = opt.querySelector('.ant-select-item-option-content');
+                return content && content.textContent.trim() === '03 - PARTIDA ELECTRONICA';
+            });
+            
+            if (targetOption) {
+                console.log('Opción encontrada: 03 - PARTIDA ELECTRONICA');
+                
+                targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                
+                await sleep(300);
+                console.log('Tipo Partida Registral seleccionado');
+            } else {
+                console.error('No se encontró la opción 03 - PARTIDA ELECTRONICA');
+            }
+        } catch (error) {
+            console.error('Error al seleccionar Tipo Partida:', error);
+        }
+    }
+};
+
+const fillNumeroInscripcion = async (numero) => {
+    if (!numero) return;
+    
+    console.log(`\nLlenando NÚMERO [80]: ${numero}`);
+    
+    const fieldsets = document.querySelectorAll('fieldset');
+    let targetInput = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[80]') && legend.textContent.includes('NÚMERO')) {
+            targetInput = fieldset.querySelector('input[type="text"]');
+            break;
+        }
+    }
+    
+    if (targetInput) {
+        fastInject(targetInput, numero);
+        await sleep(200);
+        console.log('Número de inscripción llenado');
+    } else {
+        console.error('No se encontró el campo NÚMERO [80]');
+    }
+};
+
+const fillFechaInscripcion = async (fecha) => {
+    if (!fecha) return;
+    
+    console.log(`\n📅 Llenando FECHA INSCRIPCIÓN [83]: ${fecha}`);
+    
+    const fieldsets = document.querySelectorAll('fieldset');
+    let targetInput = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[83]') && legend.textContent.includes('FECHA INSCRIPCIÓN PREDIO')) {
+            targetInput = fieldset.querySelector('.ant-picker-input input');
+            break;
+        }
+    }
+    
+    if (targetInput) {
+        targetInput.focus();
+        await sleep(100);
+        targetInput.click();
+        await sleep(300);
+        
+        targetInput.value = '';
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeSetter.call(targetInput, '');
+        
+        for (let i = 0; i < fecha.length; i++) {
+            const char = fecha[i];
+            nativeSetter.call(targetInput, targetInput.value + char);
+            targetInput.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+            targetInput.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            targetInput.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+            
+            await sleep(30);
+        }
+        
+        await sleep(200);
+        
+        targetInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+        targetInput.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+        targetInput.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+        
+        await sleep(200);
+        targetInput.blur();
+        await sleep(300);
+        
+        console.log('Fecha de inscripción llenada');
+    } else {
+        console.error('No se encontró el campo FECHA INSCRIPCIÓN [83]');
+    }
+};
+
+const fillInscripcionPredio = async () => {
+    console.log('\n📋 Llenando Inscripción del Predio Catastral...');
+    
+    chrome.storage.sync.get(['catastroFormData'], async (result) => {
+        const data = result.catastroFormData;
+        if (!data) return;
+        
+        // Seleccionar TIPO PARTIDA REGISTRAL
+        await selectTipoPartidaRegistral();
+        await sleep(500);
+        
+        // Llenar NÚMERO [80]
+        if (data.inscripcionNumero) {
+            await fillNumeroInscripcion(data.inscripcionNumero);
+            await sleep(300);
+        }
+        
+        // Llenar FECHA [83]
+        if (data.inscripcionFecha) {
+            await fillFechaInscripcion(data.inscripcionFecha);
+            await sleep(300);
+        }
+        
+        console.log('Inscripción del Predio completada');
+    });
+};
+
+const observePageSections = () => {
+    const checkAndFillSections = () => {
+        const sectorInput = document.querySelector('input#form_item_sector');
+        if (sectorInput && !sectorInput.dataset.filled) {
+            sectorInput.dataset.filled = 'true';
+            console.log('Sección de Ubicación Catastral detectada');
+            setTimeout(() => fillUbicacionCatastral(), 500);
+        }
+        
+        const allH1 = document.querySelectorAll('h1');
+        let inscripcionSection = null;
+        
+        for (let h1 of allH1) {
+            if (h1.textContent.includes('11.- INSCRIPCIÓN DEL PREDIO CATASTRAL')) {
+                inscripcionSection = h1;
+                break;
+            }
+        }
+        
+        if (inscripcionSection) {
+            const collapseItem = inscripcionSection.closest('.ant-collapse-item');
+            if (collapseItem && collapseItem.classList.contains('ant-collapse-item-active')) {
+                const allFieldsets = document.querySelectorAll('fieldset');
+                let tipoPartidaFieldset = null;
+                
+                for (let fieldset of allFieldsets) {
+                    const legend = fieldset.querySelector('legend');
+                    if (legend && legend.textContent.includes('[79]')) {
+                        tipoPartidaFieldset = fieldset;
+                        break;
+                    }
+                }
+                
+                if (tipoPartidaFieldset && !tipoPartidaFieldset.dataset.filled) {
+                    tipoPartidaFieldset.dataset.filled = 'true';
+                    console.log('🔍 Sección de Inscripción detectada y activa');
+                    setTimeout(() => fillInscripcionPredio(), 500);
+                }
+            }
+        }
+    };
+    
+    checkAndFillSections();
+    
+    const observer = new MutationObserver(() => {
+        checkAndFillSections();
+    });
+    
+    observer.observe(document.body, { 
+        childList: true, 
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+if (document.readyState === 'complete') {
+    observePageSections();
+} else {
+    window.addEventListener('load', observePageSections);
+}
+
 const setCatastralDefaults = () => {
     const idDefaults = {
         '#form_item_codigoedifica': '01',
@@ -226,54 +538,54 @@ const setCatastralDefaults = () => {
         }
     });
 
-    setAntSelect('[79]', 'TIPO', '03 - PARTIDA ELECTRONICA');
+    //setAntSelect('[79]', 'TIPO', '03 - PARTIDA ELECTRONICA');
 };
 
-const setAntSelect = (label, keyword, targetText) => {
-    const fieldsets = document.querySelectorAll('fieldset');
-    const labelClean = cleanText(label);
-    const keywordClean = cleanText(keyword);
+// const setAntSelect = (label, keyword, targetText) => {
+//     const fieldsets = document.querySelectorAll('fieldset');
+//     const labelClean = cleanText(label);
+//     const keywordClean = cleanText(keyword);
 
-    fieldsets.forEach(fieldset => {
-        const legend = fieldset.querySelector('legend');
-        if (!legend) return;
+//     fieldsets.forEach(fieldset => {
+//         const legend = fieldset.querySelector('legend');
+//         if (!legend) return;
         
-        const legendTextClean = cleanText(legend.innerText);
-        if (legendTextClean.includes(labelClean) && legendTextClean.includes(keywordClean)) {
-            const selectContainer = fieldset.querySelector('.ant-select');
-            if (!selectContainer) return;
+//         const legendTextClean = cleanText(legend.innerText);
+//         if (legendTextClean.includes(labelClean) && legendTextClean.includes(keywordClean)) {
+//             const selectContainer = fieldset.querySelector('.ant-select');
+//             if (!selectContainer) return;
 
-            const selectedSpan = selectContainer.querySelector('.ant-select-selection-item');
-            if (selectedSpan && selectedSpan.textContent.includes(targetText)) {
-                return;
-            }
+//             const selectedSpan = selectContainer.querySelector('.ant-select-selection-item');
+//             if (selectedSpan && selectedSpan.textContent.includes(targetText)) {
+//                 return;
+//             }
 
-            const selector = selectContainer.querySelector('.ant-select-selector');
-            if (selector) {
-                selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-                selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-                selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+//             const selector = selectContainer.querySelector('.ant-select-selector');
+//             if (selector) {
+//                 selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+//                 selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+//                 selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-                setTimeout(() => {
-                    const dropdown = document.querySelector('.rc-virtual-list-holder');
-                    if (dropdown) {
-                        const options = dropdown.querySelectorAll('.ant-select-item-option');
-                        const targetOption = Array.from(options).find(opt => 
-                            opt.textContent.trim() === targetText
-                        );
+//                 setTimeout(() => {
+//                     const dropdown = document.querySelector('.rc-virtual-list-holder');
+//                     if (dropdown) {
+//                         const options = dropdown.querySelectorAll('.ant-select-item-option');
+//                         const targetOption = Array.from(options).find(opt => 
+//                             opt.textContent.trim() === targetText
+//                         );
                         
-                        if (targetOption) {
-                            targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-                            targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-                            targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-                            targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                        }
-                    }
-                }, 300);
-            }
-        }
-    });
-};
+//                         if (targetOption) {
+//                             targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+//                             targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+//                             targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+//                             targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+//                         }
+//                     }
+//                 }, 300);
+//             }
+//         }
+//     });
+// };
 
 const fillAllFields = () => {
     chrome.storage.sync.get(['catastroFormData'], (result) => {
@@ -440,7 +752,6 @@ const waitForElement = (selector, textContent = null, timeout = 10000) => {
     });
 };
 
-// Nueva función para desplegar la sección de construcciones
 const expandConstruccionesSection = async () => {
     console.log('🔍 Buscando sección de construcciones...');
     
@@ -449,54 +760,52 @@ const expandConstruccionesSection = async () => {
     for (let header of collapseHeaders) {
         const headerText = header.querySelector('.ant-collapse-header-text');
         if (headerText && headerText.textContent.includes('08.- CONSTRUCCIONES')) {
-            console.log('✅ Sección de construcciones encontrada');
+            console.log('Sección de construcciones encontrada');
             
             const isExpanded = header.getAttribute('aria-expanded') === 'true';
             
             if (!isExpanded) {
-                console.log('📂 Desplegando sección...');
+                console.log('Desplegando sección...');
                 header.click();
                 await sleep(500);
-                console.log('✅ Sección desplegada');
+                console.log('Sección desplegada');
             } else {
-                console.log('ℹ️ La sección ya estaba desplegada');
+                console.log('ℹLa sección ya estaba desplegada');
             }
             
             return true;
         }
     }
     
-    console.error('❌ No se encontró la sección de construcciones');
+    console.error('No se encontró la sección de construcciones');
     return false;
 };
 
 // Nueva función para hacer click en el botón NUEVO de construcciones
 const clickNuevoButton = async () => {
-    console.log('🔍 Buscando botón NUEVO...');
+    console.log('Buscando botón NUEVO...');
     
     const buttons = document.querySelectorAll('.ant-btn');
     
     for (let button of buttons) {
         if (button.textContent.includes('NUEVO') && button.closest('.ant-table-title')) {
-            console.log('✅ Botón NUEVO encontrado, haciendo click...');
+            console.log('Botón NUEVO encontrado, haciendo click...');
             button.click();
             await sleep(800);
-            console.log('✅ Modal de construcción debería estar abierto');
+            console.log('Modal de construcción debería estar abierto');
             return true;
         }
     }
     
-    console.error('❌ No se encontró el botón NUEVO');
+    console.error('No se encontró el botón NUEVO');
     return false;
 };
 
-// Función mejorada para esperar a que el dropdown sea visible
 const waitForDropdownVisible = async (timeout = 5000) => {
     const startTime = Date.now();
     
     return new Promise((resolve, reject) => {
         const checkInterval = setInterval(() => {
-            // Buscar dropdown que NO tenga display: none
             const dropdowns = document.querySelectorAll('.ant-select-dropdown');
             const visibleDropdown = Array.from(dropdowns).find(dropdown => {
                 const style = window.getComputedStyle(dropdown);
@@ -505,81 +814,73 @@ const waitForDropdownVisible = async (timeout = 5000) => {
             
             if (visibleDropdown) {
                 clearInterval(checkInterval);
-                console.log('✅ Dropdown visible encontrado');
+                console.log('Dropdown visible encontrado');
                 resolve(visibleDropdown);
             } else if (Date.now() - startTime > timeout) {
                 clearInterval(checkInterval);
-                reject(new Error('❌ Timeout: Dropdown no se hizo visible'));
+                reject(new Error('Timeout: Dropdown no se hizo visible'));
             }
         }, 50);
     });
 };
 
-// Función mejorada para hacer scroll en el dropdown hasta encontrar la opción
 const scrollDropdownToFindOption = async (dropdown, targetValue, maxScrollAttempts = 10) => {
     const holder = dropdown.querySelector('.rc-virtual-list-holder');
     
     if (!holder) {
-        console.error('❌ No se encontró .rc-virtual-list-holder');
+        console.error('No se encontró .rc-virtual-list-holder');
         return null;
     }
     
-    console.log(`🔍 Buscando opción: "${targetValue}"`);
+    console.log(`Buscando opción: "${targetValue}"`);
     
-    // Intentar encontrar la opción, haciendo scroll si es necesario
     for (let attempt = 0; attempt < maxScrollAttempts; attempt++) {
-        // Buscar la opción en el DOM actual
         const options = dropdown.querySelectorAll('.ant-select-item-option');
         
-        console.log(`  📋 Intento ${attempt + 1}: ${options.length} opciones visibles`);
+        console.log(`Intento ${attempt + 1}: ${options.length} opciones visibles`);
         
         for (let opt of options) {
             const content = opt.querySelector('.ant-select-item-option-content');
             if (content) {
                 const optionText = content.textContent.trim();
                 if (optionText === targetValue) {
-                    console.log(`  ✅ Opción encontrada: "${targetValue}"`);
+                    console.log(`Opción encontrada: "${targetValue}"`);
                     return opt;
                 }
             }
         }
         
-        // Si no se encontró, hacer scroll hacia abajo
-        console.log(`  ⬇️ Haciendo scroll (intento ${attempt + 1})...`);
+        console.log(`Haciendo scroll (intento ${attempt + 1})...`);
         
         const currentScroll = holder.scrollTop;
-        const scrollAmount = 50; // Cantidad de scroll en píxeles
+        const scrollAmount = 50;
         
         holder.scrollTop = currentScroll + scrollAmount;
         
-        // Disparar evento de scroll para que Ant Design renderice más opciones
         holder.dispatchEvent(new Event('scroll', { bubbles: true }));
         
         await sleep(150); // Esperar a que se rendericen nuevas opciones
-        
-        // Si llegamos al final del scroll, no seguir intentando
+
         if (holder.scrollTop === currentScroll) {
-            console.log('  ⚠️ Llegamos al final del scroll');
+            console.log('Llegamos al final del scroll');
             break;
         }
     }
     
-    console.error(`  ❌ No se encontró la opción después de ${maxScrollAttempts} intentos`);
+    console.error(`No se encontró la opción después de ${maxScrollAttempts} intentos`);
     return null;
 };
 
 // Función actualizada para seleccionar en un dropdown de Ant Design con scroll
 const selectInAntDropdown = async (value) => {
     try {
-        console.log(`\n🔍 Esperando dropdown visible para seleccionar: ${value}`);
+        console.log(`\nEsperando dropdown visible para seleccionar: ${value}`);
         
-        // Esperar a que el dropdown sea visible
         const dropdown = await waitForDropdownVisible();
         await sleep(200);
         
-        // Primero intentar encontrar sin scroll (opciones ya visibles)
         let options = dropdown.querySelectorAll('.ant-select-item-option');
-        console.log(`📋 Opciones inicialmente visibles: ${options.length}`);
+        console.log(`Opciones inicialmente visibles: ${options.length}`);
         
         let targetOption = Array.from(options).find(opt => {
             const content = opt.querySelector('.ant-select-item-option-content');
@@ -589,22 +890,19 @@ const selectInAntDropdown = async (value) => {
             return false;
         });
         
-        // Si no se encuentra, hacer scroll para buscarla
         if (!targetOption) {
-            console.log('⚠️ Opción no visible, buscando con scroll...');
+            console.log('Opción no visible, buscando con scroll...');
             targetOption = await scrollDropdownToFindOption(dropdown, value);
         }
         
         if (targetOption) {
-            console.log(`✅ Opción encontrada: ${value}, haciendo clic...`);
+            console.log(`Opción encontrada: ${value}, haciendo clic...`);
             
-            // Verificar que la opción no esté deshabilitada
             if (targetOption.classList.contains('ant-select-item-option-disabled')) {
                 console.warn(`⚠️ La opción "${value}" está deshabilitada, saltando...`);
                 return false;
             }
             
-            // Simular interacción completa
             targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
             await sleep(50);
             targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
@@ -614,34 +912,32 @@ const selectInAntDropdown = async (value) => {
             targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             
             await sleep(100);
-            console.log(`✅ Selección completada: ${value}`);
+            console.log(`Selección completada: ${value}`);
             return true;
         }
         
-        console.error(`❌ No se encontró la opción: ${value}`);
+        console.error(`No se encontró la opción: ${value}`);
         return false;
         
     } catch (error) {
-        console.error('❌ Error al seleccionar en dropdown:', error);
+        console.error('Error al seleccionar en dropdown:', error);
         return false;
     }
 };
 
-// Test alternativo: Si el scroll no funciona, podemos probar tecleando la letra
+// Test alternativo: Solo si el scroll no funciona ademas aun tiene errores
 const selectByTyping = async (selectElement, letter) => {
-    console.log(`⌨️ Intentando seleccionar por teclado: ${letter}`);
+    console.log(`Intentando seleccionar por teclado: ${letter}`);
     
     const searchInput = selectElement.querySelector('.ant-select-selection-search-input');
     if (!searchInput) {
-        console.error('❌ No se encontró input de búsqueda');
+        console.error('No se encontró input de búsqueda');
         return false;
     }
     
-    // Enfocar el input
     searchInput.focus();
     await sleep(100);
     
-    // Simular tipeo de la letra
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
     nativeSetter.call(searchInput, letter);
     
@@ -652,29 +948,26 @@ const selectByTyping = async (selectElement, letter) => {
     
     await sleep(200);
     
-    // Presionar Enter para seleccionar
     searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, which: 13, bubbles: true }));
     await sleep(100);
     
     return true;
 };
 
-// Función mejorada para hacer clic en un selector y esperar el dropdown
 const clickSelectAndWait = async (selectElement, value = null) => {
     if (!selectElement) {
-        console.error('❌ Elemento selector no encontrado');
+        console.error('Elemento selector no encontrado');
         return false;
     }
     
     const selector = selectElement.querySelector('.ant-select-selector');
     if (!selector) {
-        console.error('❌ No se encontró .ant-select-selector');
+        console.error('No se encontró .ant-select-selector');
         return false;
     }
     
     console.log('🖱️ Haciendo clic en selector...');
     
-    // Hacer clic para abrir el dropdown
     selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
     await sleep(50);
     selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
@@ -683,10 +976,8 @@ const clickSelectAndWait = async (selectElement, value = null) => {
     
     await sleep(100);
     
-    // Si el valor es una letra y no es "0", intentar seleccionar por teclado como alternativa
     if (value && value.length === 1 && value !== '0' && /[A-Ia-i]/.test(value)) {
-        console.log('💡 Es una letra, usando método de teclado como respaldo');
-        // Guardamos esta opción para usarla si el scroll falla
+        console.log('Es una letra, usando método de teclado como respaldo');
     }
     
     return true;
@@ -701,7 +992,7 @@ const fillConstruccionModal = async (rowData) => {
     
     const modal = document.querySelector('.ant-modal-content:not([style*="display: none"])');
     if (!modal) {
-        console.error('❌ No se encontró el modal abierto');
+        console.error('No se encontró el modal abierto');
         return false;
     }
     
@@ -709,7 +1000,7 @@ const fillConstruccionModal = async (rowData) => {
     if (rowData.n) {
         const input56 = modal.querySelector('input[type="text"]');
         if (input56) {
-            console.log(`✅ Campo 56 (N° PISO): ${rowData.n}`);
+            console.log(`Campo 56 (N° PISO): ${rowData.n}`);
             fastInject(input56, rowData.n);
             await sleep(100);
         }
@@ -717,7 +1008,7 @@ const fillConstruccionModal = async (rowData) => {
     
     // 57 - MES
     if (rowData.mes) {
-        console.log(`\n🔄 Procesando MES: ${rowData.mes}`);
+        console.log(`\nProcesando MES: ${rowData.mes}`);
         const selects = modal.querySelectorAll('.ant-select');
         const mesSelect = selects[0];
         
@@ -732,7 +1023,7 @@ const fillConstruccionModal = async (rowData) => {
     if (rowData.anio) {
         const anioInput = modal.querySelector('input[type="number"]');
         if (anioInput) {
-            console.log(`\n✅ Campo 57 (AÑO): ${rowData.anio}`);
+            console.log(`\nCampo 57 (AÑO): ${rowData.anio}`);
             fastInject(anioInput, rowData.anio);
             await sleep(100);
         }
@@ -740,7 +1031,7 @@ const fillConstruccionModal = async (rowData) => {
     
     // 58 - MATERIAL ESTRUCTURAL PREDOMINANTE
     if (rowData.c58 && MAPEO_58[rowData.c58]) {
-        console.log(`\n🔄 Procesando 58: ${MAPEO_58[rowData.c58]}`);
+        console.log(`\nProcesando 58: ${MAPEO_58[rowData.c58]}`);
         const selects = modal.querySelectorAll('.ant-select');
         const select58 = selects[1];
         
@@ -752,7 +1043,7 @@ const fillConstruccionModal = async (rowData) => {
     
     // 59 - ESTADO CONSERVACIÓN
     if (rowData.c59 && MAPEO_59[rowData.c59]) {
-        console.log(`\n🔄 Procesando 59: ${MAPEO_59[rowData.c59]}`);
+        console.log(`\nProcesando 59: ${MAPEO_59[rowData.c59]}`);
         const selects = modal.querySelectorAll('.ant-select');
         const select59 = selects[2];
         
@@ -764,7 +1055,7 @@ const fillConstruccionModal = async (rowData) => {
     
     // 60 - ESTADO CONSTRUCCIÓN
     if (rowData.c60 && MAPEO_60[rowData.c60]) {
-        console.log(`\n🔄 Procesando 60: ${MAPEO_60[rowData.c60]}`);
+        console.log(`\nProcesando 60: ${MAPEO_60[rowData.c60]}`);
         const selects = modal.querySelectorAll('.ant-select');
         const select60 = selects[3];
         
@@ -792,10 +1083,8 @@ const fillConstruccionModal = async (rowData) => {
             if (selectField) {
                 await clickSelectAndWait(selectField, value);
                 
-                // Intentar seleccionar por dropdown con scroll
                 const success = await selectInAntDropdown(MAPEO_LETRAS[value]);
                 
-                // Si falla y es una letra (no "00 - NINGUNO"), intentar por teclado
                 if (!success && value !== '0' && /[A-Ia-i]/.test(value)) {
                     console.log(`⚠️ Selección por dropdown falló, intentando por teclado...`);
                     await selectByTyping(selectField, value.toUpperCase());
@@ -809,7 +1098,7 @@ const fillConstruccionModal = async (rowData) => {
         const inputs = modal.querySelectorAll('input[type="number"]');
         const input68 = inputs[inputs.length - 1];
         if (input68) {
-            console.log(`\n✅ Campo 68 (AREA VERIFICADA): ${rowData.c68}`);
+            console.log(`\nCampo 68 (AREA VERIFICADA): ${rowData.c68}`);
             fastInject(input68, rowData.c68);
             await sleep(100);
         }
@@ -817,7 +1106,7 @@ const fillConstruccionModal = async (rowData) => {
     
     // 69 - UBI. CONSTRUC. ANTI. (opcional)
     if (rowData.c69 && rowData.c69 !== '' && MAPEO_69[rowData.c69]) {
-        console.log(`\n🔄 Procesando 69: ${MAPEO_69[rowData.c69]}`);
+        console.log(`\nProcesando 69: ${MAPEO_69[rowData.c69]}`);
         const selects = modal.querySelectorAll('.ant-select');
         const select69 = selects[selects.length - 1];
         
@@ -829,63 +1118,62 @@ const fillConstruccionModal = async (rowData) => {
     
     await sleep(300);
     
-    // Guardar el modal
-    console.log('\n💾 Guardando modal...');
+    console.log('\nGuardando modal...');
     const saveButtons = Array.from(modal.querySelectorAll('.ant-modal-footer button'));
     const saveBtn = saveButtons.find(btn => btn.textContent.includes('Guardar'));
     
     if (saveBtn) {
         saveBtn.click();
         await sleep(800);
-        console.log('✅ Modal guardado');
+        console.log('Modal guardado');
         return true;
     }
     
-    console.error('❌ No se encontró el botón Guardar');
+    console.error('No se encontró el botón Guardar');
     return false;
 };
 
 // Función principal para ejecutar construcciones
 const executeConstrucciones = async (construccionesData) => {
-    console.log('🚀 Iniciando proceso de construcciones...');
-    console.log('📊 Datos a procesar:', construccionesData);
+    console.log('Iniciando proceso de construcciones...');
+    console.log('Datos a procesar:', construccionesData);
     
     // Paso 1: Desplegar sección
     const expanded = await expandConstruccionesSection();
     if (!expanded) {
-        console.error('❌ No se pudo desplegar la sección de construcciones');
+        console.error('No se pudo desplegar la sección de construcciones');
         return;
     }
     
     // Paso 2: Iterar por cada fila
     for (let i = 0; i < construccionesData.length; i++) {
         const rowData = construccionesData[i];
-        console.log(`\n📋 Procesando fila ${i + 1}/${construccionesData.length}`);
+        console.log(`\nProcesando fila ${i + 1}/${construccionesData.length}`);
         
         // Hacer click en NUEVO
         const clicked = await clickNuevoButton();
         if (!clicked) {
-            console.error(`❌ No se pudo abrir el modal para la fila ${i + 1}`);
+            console.error(`No se pudo abrir el modal para la fila ${i + 1}`);
             continue;
         }
         
         // Llenar el modal
         const filled = await fillConstruccionModal(rowData);
         if (!filled) {
-            console.error(`❌ Error al llenar el modal para la fila ${i + 1}`);
+            console.error(`Error al llenar el modal para la fila ${i + 1}`);
             continue;
         }
         
-        console.log(`✅ Fila ${i + 1} procesada exitosamente`);
+        console.log(`Fila ${i + 1} procesada exitosamente`);
     }
-    
-    console.log('\n🎉 Proceso de construcciones completado');
+
+    console.log('\nProceso de construcciones completado');
 };
 
 // Listener para mensajes del popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'executeConstrucciones') {
-        console.log('📩 Mensaje recibido del popup');
+        console.log('Mensaje recibido del popup');
         executeConstrucciones(request.data);
         sendResponse({ success: true });
     }
