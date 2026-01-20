@@ -645,7 +645,7 @@ const fillSignatureModal = async (type) => {
             const searchButton = document.querySelector('.ant-modal-content:not([style*="display: none"]) button[type="button"] .anticon-search');
             if (searchButton) {
                 searchButton.closest('button').click();
-                await sleep(500);
+                await sleep(800);
             }
 
             await waitForElement('.ant-modal-title', 'LISTADO DEL PERSONAL');
@@ -669,7 +669,7 @@ const fillSignatureModal = async (type) => {
                         if (selectBtn) {
                             selectBtn.closest('button').click();
 
-                            await sleep(500);
+                            await sleep(800);
                             await waitForElement('.ant-modal-title', modalTitle);
                             await sleep(300);
 
@@ -713,7 +713,7 @@ const fillSignatureModal = async (type) => {
                             const saveBtn = saveButtons.find(btn => btn.textContent.includes('Guardar'));
                             if (saveBtn) {
                                 saveBtn.click();
-                                await sleep(500);
+                                await sleep(700);
                             }
 
                             resolve(true);
@@ -791,7 +791,7 @@ const clickNuevoButton = async () => {
         if (button.textContent.includes('NUEVO') && button.closest('.ant-table-title')) {
             console.log('Botón NUEVO encontrado, haciendo click...');
             button.click();
-            await sleep(800);
+            await sleep(1000);
             console.log('Modal de construcción debería estar abierto');
             return true;
         }

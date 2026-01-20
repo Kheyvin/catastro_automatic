@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Automatización de ficha catastral individual",
   "permissions": [
     "storage"
