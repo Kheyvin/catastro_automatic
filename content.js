@@ -254,7 +254,69 @@ const smartScrollToOption = async (dropdown, targetValue) => {
     return null;
 };
 
-// Función mejorada para seleccionar SECTOR, MANZANA, LOTE con scroll inteligente
+// Función de scroll natural y rápido para dropdowns grandes
+const naturalScrollToOption = async (dropdown, targetValue, maxAttempts = 100) => {
+    const holder = dropdown.querySelector('.rc-virtual-list-holder');
+    
+    if (!holder) {
+        console.error('❌ No se encontró .rc-virtual-list-holder');
+        return null;
+    }
+    
+    console.log(`🔍 Búsqueda natural de: "${targetValue}"`);
+    
+    // Resetear al inicio
+    holder.scrollTop = 0;
+    holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+    await sleep(150);
+    
+    let lastScrollTop = -1;
+    let scrollSpeed = 150; // Empezar con scroll rápido
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        // Buscar la opción en el DOM actual
+        const options = dropdown.querySelectorAll('.ant-select-item-option');
+        
+        for (let opt of options) {
+            const content = opt.querySelector('.ant-select-item-option-content');
+            if (content && content.textContent.trim() === targetValue) {
+                console.log(`  ✅ Opción encontrada: "${targetValue}" (intento ${attempt + 1})`);
+                return opt;
+            }
+        }
+        
+        // Si no se encontró, hacer scroll
+        const currentScroll = holder.scrollTop;
+        
+        // Si no nos movimos desde el último intento, estamos atorados
+        if (currentScroll === lastScrollTop) {
+            console.log(`  ⚠️ Llegamos al final del scroll (intento ${attempt + 1})`);
+            break;
+        }
+        
+        lastScrollTop = currentScroll;
+        
+        // Scroll natural: rápido al principio, más lento cerca del final
+        if (attempt > 70) {
+            scrollSpeed = 80; // Más lento cerca del final
+        }
+        
+        holder.scrollTop = currentScroll + scrollSpeed;
+        holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+        
+        await sleep(60); // Tiempo de espera constante
+        
+        // Log cada 15 intentos para no saturar consola
+        if (attempt % 15 === 0 && attempt > 0) {
+            console.log(`  📊 Intento ${attempt}/${maxAttempts}, scroll: ${holder.scrollTop}px`);
+        }
+    }
+    
+    console.error(`  ❌ No se encontró la opción después de ${maxAttempts} intentos`);
+    return null;
+};
+
+// Función mejorada para seleccionar SECTOR, MANZANA, LOTE con scroll natural
 const selectUbicacionField = async (fieldId, value) => {
     if (!value) return;
     
@@ -288,10 +350,10 @@ const selectUbicacionField = async (fieldId, value) => {
             const dropdown = await waitForDropdownVisible();
             await sleep(200);
             
-            // Usar búsqueda inteligente primero
-            let targetOption = await smartScrollToOption(dropdown, value);
+            // Usar búsqueda con scroll natural
+            let targetOption = await naturalScrollToOption(dropdown, value);
             
-            // Si no funciona, usar scroll normal
+            // Si no funciona, usar scroll estándar como respaldo
             if (!targetOption) {
                 console.log('  🔄 Intentando con búsqueda estándar...');
                 targetOption = await scrollDropdownToFindOption(dropdown, value);
@@ -462,12 +524,16 @@ const selectTipoEdificacion = async () => {
         return;
     }
     
-    // Abrir el dropdown
+    // Abrir el dropdown simulando clicks como usuario
     const selector = selectContainer.querySelector('.ant-select-selector');
     if (selector) {
         console.log('🖱️ Abriendo dropdown...');
-        selector.click();
-        await sleep(400);
+        selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        await sleep(50);
+        selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        await sleep(300);
         
         try {
             const dropdown = await waitForDropdownVisible();
@@ -483,7 +549,11 @@ const selectTipoEdificacion = async () => {
                 console.log('✅ Seleccionando: 02 - CASA / CHALET');
                 targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
                 await sleep(50);
-                targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                 await sleep(300);
                 console.log('✅ Tipo de Edificación seleccionado');
             }
