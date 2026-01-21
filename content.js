@@ -183,7 +183,78 @@ const setupTabAsEnter = () => {
     }, true);
 };
 
-// Función para seleccionar SECTOR, MANZANA, LOTE con scroll
+// Función alternativa: Scroll inteligente que intenta saltar a la ubicación aproximada
+const smartScrollToOption = async (dropdown, targetValue) => {
+    const holder = dropdown.querySelector('.rc-virtual-list-holder');
+    
+    if (!holder) {
+        console.error('❌ No se encontró .rc-virtual-list-holder');
+        return null;
+    }
+    
+    console.log(`🧠 Búsqueda inteligente de: "${targetValue}"`);
+    
+    // Resetear al inicio
+    holder.scrollTop = 0;
+    holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+    await sleep(200);
+    
+    // Intentar determinar si el valor es numérico y su posición aproximada
+    const numericValue = parseInt(targetValue);
+    const isNumeric = !isNaN(numericValue);
+    
+    if (isNumeric && numericValue > 10) {
+        // Si el valor es mayor a 10, hacer un salto inicial grande
+        console.log(`  💨 Valor numérico alto detectado (${numericValue}), haciendo salto inicial...`);
+        
+        const estimatedPosition = numericValue * 30; // Aproximadamente 30px por opción
+        holder.scrollTop = estimatedPosition;
+        holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+        await sleep(300);
+    }
+    
+    // Ahora buscar con scroll fino
+    const maxAttempts = 80;
+    let lastScrollTop = -1;
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const options = dropdown.querySelectorAll('.ant-select-item-option');
+        
+        // Buscar la opción
+        for (let opt of options) {
+            const content = opt.querySelector('.ant-select-item-option-content');
+            if (content && content.textContent.trim() === targetValue) {
+                console.log(`  ✅ Opción encontrada en intento ${attempt + 1}`);
+                return opt;
+            }
+        }
+        
+        // Hacer scroll
+        const currentScroll = holder.scrollTop;
+        
+        // Si no nos movimos desde el último intento, estamos atorados
+        if (currentScroll === lastScrollTop) {
+            console.log(`  ⚠️ Scroll no avanza (posición: ${currentScroll})`);
+            break;
+        }
+        
+        lastScrollTop = currentScroll;
+        holder.scrollTop = currentScroll + 120; // Scroll más agresivo
+        holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+        
+        await sleep(80);
+        
+        // Log cada 10 intentos
+        if (attempt % 10 === 0) {
+            console.log(`  📊 Intento ${attempt + 1}/${maxAttempts}, scroll: ${holder.scrollTop}px`);
+        }
+    }
+    
+    console.error(`  ❌ No se encontró la opción después de búsqueda inteligente`);
+    return null;
+};
+
+// Función mejorada para seleccionar SECTOR, MANZANA, LOTE con scroll inteligente
 const selectUbicacionField = async (fieldId, value) => {
     if (!value) return;
     
@@ -191,34 +262,49 @@ const selectUbicacionField = async (fieldId, value) => {
     
     const selectInput = document.querySelector(`input#${fieldId}`);
     if (!selectInput) {
-        console.error(`No se encontró el campo ${fieldId}`);
+        console.error(`❌ No se encontró el campo ${fieldId}`);
         return;
     }
     
     const selectContainer = selectInput.closest('.ant-select');
     if (!selectContainer) {
-        console.error(`No se encontró el contenedor del select para ${fieldId}`);
+        console.error(`❌ No se encontró el contenedor del select para ${fieldId}`);
         return;
     }
     
+    // Hacer clic para abrir el dropdown
     const selector = selectContainer.querySelector('.ant-select-selector');
     if (selector) {
-        console.log(`Abriendo dropdown de ${fieldId}...`);
+        console.log(`🖱️ Abriendo dropdown de ${fieldId}...`);
         selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
         await sleep(50);
         selector.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
         await sleep(50);
         selector.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-        await sleep(300);
+        await sleep(400);
         
+        // Esperar a que el dropdown sea visible
         try {
             const dropdown = await waitForDropdownVisible();
             await sleep(200);
             
-            let targetOption = await scrollDropdownToFindOption(dropdown, value);
+            // Usar búsqueda inteligente primero
+            let targetOption = await smartScrollToOption(dropdown, value);
+            
+            // Si no funciona, usar scroll normal
+            if (!targetOption) {
+                console.log('  🔄 Intentando con búsqueda estándar...');
+                targetOption = await scrollDropdownToFindOption(dropdown, value);
+            }
             
             if (targetOption) {
-                console.log(`Opción encontrada: ${value}, haciendo clic...`);
+                console.log(`✅ Opción encontrada: ${value}, haciendo clic...`);
+                
+                // Verificar que no esté deshabilitada
+                if (targetOption.classList.contains('ant-select-item-option-disabled')) {
+                    console.warn(`⚠️ La opción "${value}" está deshabilitada`);
+                    return;
+                }
                 
                 targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
                 await sleep(50);
@@ -228,13 +314,13 @@ const selectUbicacionField = async (fieldId, value) => {
                 await sleep(50);
                 targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                 
-                await sleep(300);
-                console.log(`Selección completada: ${fieldId} = ${value}`);
+                await sleep(400);
+                console.log(`✅ Selección completada: ${fieldId} = ${value}`);
             } else {
-                console.error(`No se encontró la opción ${value} en ${fieldId}`);
+                console.error(`❌ No se pudo encontrar la opción ${value} en ${fieldId}`);
             }
         } catch (error) {
-            console.error(`Error al seleccionar ${fieldId}:`, error);
+            console.error(`❌ Error al seleccionar ${fieldId}:`, error);
         }
     }
 };
@@ -340,6 +426,357 @@ const selectTipoPartidaRegistral = async () => {
             console.error('Error al seleccionar Tipo Partida:', error);
         }
     }
+};
+
+// Función para seleccionar TIPO DE EDIFICACIÓN (campo 11)
+const selectTipoEdificacion = async () => {
+    console.log('\n🏠 Seleccionando TIPO DE EDIFICACIÓN...');
+    
+    // Buscar el fieldset con "[11]" y "TIPO DE EDIFICACIÓN"
+    const fieldsets = document.querySelectorAll('fieldset');
+    let targetFieldset = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[11]') && legend.textContent.includes('TIPO DE EDIFICACIÓN')) {
+            targetFieldset = fieldset;
+            break;
+        }
+    }
+    
+    if (!targetFieldset) {
+        console.error('❌ No se encontró el fieldset TIPO DE EDIFICACIÓN');
+        return;
+    }
+    
+    const selectContainer = targetFieldset.querySelector('.ant-select');
+    if (!selectContainer) {
+        console.error('❌ No se encontró el selector');
+        return;
+    }
+    
+    // Verificar si ya tiene el valor correcto
+    const selectedItem = selectContainer.querySelector('.ant-select-selection-item');
+    if (selectedItem && selectedItem.textContent.includes('02 - CASA / CHALET')) {
+        console.log('ℹ️ Ya tiene el valor correcto');
+        return;
+    }
+    
+    // Abrir el dropdown
+    const selector = selectContainer.querySelector('.ant-select-selector');
+    if (selector) {
+        console.log('🖱️ Abriendo dropdown...');
+        selector.click();
+        await sleep(400);
+        
+        try {
+            const dropdown = await waitForDropdownVisible();
+            await sleep(200);
+            
+            const options = dropdown.querySelectorAll('.ant-select-item-option');
+            const targetOption = Array.from(options).find(opt => {
+                const content = opt.querySelector('.ant-select-item-option-content');
+                return content && content.textContent.trim() === '02 - CASA / CHALET';
+            });
+            
+            if (targetOption) {
+                console.log('✅ Seleccionando: 02 - CASA / CHALET');
+                targetOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                await sleep(50);
+                targetOption.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                await sleep(300);
+                console.log('✅ Tipo de Edificación seleccionado');
+            }
+        } catch (error) {
+            console.error('❌ Error al seleccionar:', error);
+        }
+    }
+};
+
+// Función para buscar y seleccionar Código HU
+const searchAndSelectCodigoHU = async (codigoHu) => {
+    if (!codigoHu) {
+        console.log('ℹ️ No hay Código HU para buscar');
+        return;
+    }
+    
+    console.log(`\n🔍 Buscando Código HU: ${codigoHu}`);
+    
+    // Buscar el botón de lupa junto al campo [18] CÓDIGO HU
+    const fieldsets = document.querySelectorAll('fieldset');
+    let searchButton = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[18]') && legend.textContent.includes('CÓDIGO HU')) {
+            searchButton = fieldset.querySelector('button .anticon-search');
+            break;
+        }
+    }
+    
+    if (!searchButton) {
+        console.error('❌ No se encontró el botón de búsqueda');
+        return;
+    }
+    
+    // Hacer click en el botón de lupa
+    console.log('🖱️ Haciendo click en botón de búsqueda...');
+    searchButton.closest('button').click();
+    await sleep(800);
+    
+    // Esperar a que se abra el modal
+    await waitForElement('.ant-modal-title', 'LISTADO DE HABITACIONES URBANAS');
+    await sleep(300);
+    
+    console.log('✅ Modal abierto');
+    
+    // Buscar el input de búsqueda en el modal
+    const modal = document.querySelector('.ant-modal-content:not([style*="display: none"])');
+    if (!modal) {
+        console.error('❌ No se encontró el modal');
+        return;
+    }
+    
+    const searchInput = modal.querySelector('input#form_item_search');
+    if (!searchInput) {
+        console.error('❌ No se encontró el input de búsqueda');
+        return;
+    }
+    
+    // Pegar el valor del código HU
+    console.log(`📝 Ingresando código: ${codigoHu}`);
+    fastInject(searchInput, codigoHu);
+    await sleep(300);
+    
+    // Hacer click en el botón de búsqueda del modal
+    const searchButtonModal = modal.querySelector('.ant-input-search-button');
+    if (!searchButtonModal) {
+        console.error('❌ No se encontró el botón de búsqueda del modal');
+        return;
+    }
+    
+    console.log('🔎 Ejecutando búsqueda...');
+    searchButtonModal.click();
+    await sleep(1500); // Esperar a que carguen los resultados
+    
+    // Verificar el total de registros
+    const totalSpan = modal.querySelector('footer p span.text-black');
+    if (!totalSpan) {
+        console.error('❌ No se encontró el total de registros');
+        return;
+    }
+    
+    const totalRegistros = totalSpan.textContent.trim();
+    console.log(`📊 Total de registros encontrados: ${totalRegistros}`);
+    
+    if (totalRegistros === '1') {
+        console.log('✅ Un registro encontrado, seleccionando...');
+        
+        // Buscar el botón "Seleccionar"
+        const selectButtons = modal.querySelectorAll('button');
+        let selectButton = null;
+        
+        for (let btn of selectButtons) {
+            if (btn.textContent.includes('Seleccionar')) {
+                selectButton = btn;
+                break;
+            }
+        }
+        
+        if (selectButton) {
+            console.log('🖱️ Haciendo click en Seleccionar...');
+            selectButton.click();
+            await sleep(800);
+            console.log('✅ Código HU seleccionado y modal cerrado');
+        } else {
+            console.error('❌ No se encontró el botón Seleccionar');
+        }
+    } else {
+        console.warn(`⚠️ Se encontraron ${totalRegistros} registros. Se esperaba 1.`);
+    }
+};
+
+// Función para llenar el campo de Manzana
+const fillManzanaField = async (manzana) => {
+    if (!manzana) return;
+    
+    console.log(`\n📝 Llenando Manzana: ${manzana}`);
+    
+    // Buscar el fieldset [17] MANZANA
+    const fieldsets = document.querySelectorAll('fieldset');
+    let manzanaInput = null;
+    
+    for (let fieldset of fieldsets) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent.includes('[17]') && legend.textContent.includes('MANZANA')) {
+            manzanaInput = fieldset.querySelector('input[type="text"]');
+            break;
+        }
+    }
+    
+    if (manzanaInput) {
+        fastInject(manzanaInput, manzana);
+        await sleep(200);
+        console.log('✅ Manzana llenada');
+    } else {
+        console.error('❌ No se encontró el campo Manzana');
+    }
+};
+
+// Función para capturar los valores de Lote y SubLote al guardar
+const captureAndSaveLoteSubLote = () => {
+    console.log('\n💾 Configurando captura de Lote y SubLote...');
+    
+    // Buscar el botón "Guardar ubicación de predio"
+    const buttons = document.querySelectorAll('button');
+    let saveButton = null;
+    
+    for (let btn of buttons) {
+        if (btn.textContent.includes('Guardar ubicación de predio')) {
+            saveButton = btn;
+            break;
+        }
+    }
+    
+    if (!saveButton) {
+        console.log('⚠️ Botón de guardar no encontrado aún');
+        return;
+    }
+    
+    // Verificar si ya tiene el listener
+    if (saveButton.dataset.listenerAdded) {
+        return;
+    }
+    
+    saveButton.dataset.listenerAdded = 'true';
+    
+    // Agregar listener al botón
+    saveButton.addEventListener('click', async () => {
+        console.log('\n📥 Capturando valores de Lote y SubLote...');
+        
+        // Buscar los campos
+        const fieldsets = document.querySelectorAll('fieldset');
+        let loteValue = '';
+        let subLoteValue = '';
+        
+        for (let fieldset of fieldsets) {
+            const legend = fieldset.querySelector('legend');
+            
+            if (legend && legend.textContent.includes('[18]') && legend.textContent.includes('LOTE')) {
+                const loteInput = fieldset.querySelector('input[type="text"]');
+                if (loteInput) {
+                    loteValue = loteInput.value.trim();
+                }
+            }
+            
+            if (legend && legend.textContent.includes('[19]') && legend.textContent.includes('SUB-LOTE')) {
+                const subLoteInput = fieldset.querySelector('input[type="text"]');
+                if (subLoteInput) {
+                    subLoteValue = subLoteInput.value.trim();
+                }
+            }
+        }
+        
+        console.log(`📝 Lote: ${loteValue}`);
+        console.log(`📝 SubLote: ${subLoteValue}`);
+        
+        // Guardar en Chrome Storage
+        chrome.storage.sync.get(['catastroFormData'], (result) => {
+            const data = result.catastroFormData || {};
+            
+            if (loteValue) {
+                data.numberLote = loteValue;
+            }
+            if (subLoteValue) {
+                data.numberSubLote = subLoteValue;
+            }
+            
+            chrome.storage.sync.set({ 'catastroFormData': data }, () => {
+                console.log('✅ Lote y SubLote guardados en storage');
+            });
+        });
+    });
+    
+    console.log('✅ Listener configurado en botón de guardar');
+};
+
+// Función principal para llenar la sección de Ubicación del Predio
+const fillUbicacionPredio = async () => {
+    console.log('\n📍 Llenando Ubicación del Predio Catastral...');
+    
+    chrome.storage.sync.get(['catastroFormData'], async (result) => {
+        const data = result.catastroFormData;
+        if (!data) return;
+        
+        // 1. Seleccionar TIPO DE EDIFICACIÓN
+        await selectTipoEdificacion();
+        await sleep(500);
+        
+        // 2. Buscar y seleccionar Código HU (si existe)
+        if (data.codeHu) {
+            await searchAndSelectCodigoHU(data.codeHu);
+            await sleep(500);
+        }
+        
+        // 3. Llenar Manzana
+        if (data.numberManzana) {
+            await fillManzanaField(data.numberManzana);
+        }
+        
+        // 4. Configurar captura de Lote y SubLote
+        captureAndSaveLoteSubLote();
+        
+        console.log('✅ Ubicación del Predio completada');
+    });
+};
+
+// Observer mejorado para detectar la sección de Ubicación del Predio
+const observeUbicacionPredio = () => {
+    const checkUbicacionSection = () => {
+        // Buscar la sección "02.- UBICACIÓN DEL PREDIO CATASTRAL"
+        const allH1 = document.querySelectorAll('h1');
+        let ubicacionHeader = null;
+        
+        for (let h1 of allH1) {
+            if (h1.textContent.includes('02.- UBICACIÓN DEL PREDIO CATASTRAL')) {
+                ubicacionHeader = h1;
+                break;
+            }
+        }
+        
+        if (ubicacionHeader) {
+            const collapseItem = ubicacionHeader.closest('.ant-collapse-item');
+            
+            if (collapseItem && collapseItem.classList.contains('ant-collapse-item-active')) {
+                // Buscar un campo específico para verificar que la sección está cargada
+                const tipoEdificacionFieldset = Array.from(document.querySelectorAll('fieldset')).find(fs => {
+                    const legend = fs.querySelector('legend');
+                    return legend && legend.textContent.includes('[11]');
+                });
+                
+                if (tipoEdificacionFieldset && !tipoEdificacionFieldset.dataset.filled) {
+                    tipoEdificacionFieldset.dataset.filled = 'true';
+                    console.log('🔍 Sección Ubicación del Predio detectada y activa');
+                    setTimeout(() => fillUbicacionPredio(), 500);
+                }
+            }
+        }
+    };
+    
+    // Ejecutar inmediatamente
+    checkUbicacionSection();
+    
+    // Observar cambios
+    const observer = new MutationObserver(() => {
+        checkUbicacionSection();
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
 };
 
 const fillNumeroInscripcion = async (numero) => {
@@ -503,10 +940,17 @@ const observePageSections = () => {
     });
 };
 
+
+// Inicializar todos los observers cuando se carga la página
+const initializeAllObservers = () => {
+    observePageSections();      // Para SECTOR, MANZANA, LOTE e INSCRIPCIÓN
+    observeUbicacionPredio();   // Para UBICACIÓN DEL PREDIO CATASTRAL
+};
+
 if (document.readyState === 'complete') {
-    observePageSections();
+    initializeAllObservers();
 } else {
-    window.addEventListener('load', observePageSections);
+    window.addEventListener('load', initializeAllObservers);
 }
 
 const setCatastralDefaults = () => {
@@ -752,53 +1196,104 @@ const waitForElement = (selector, textContent = null, timeout = 10000) => {
     });
 };
 
-const expandConstruccionesSection = async () => {
-    console.log('🔍 Buscando sección de construcciones...');
+// Función corregida para hacer click en el botón NUEVO de CONSTRUCCIONES específicamente
+const clickNuevoButton = async () => {
+    console.log('🔍 Buscando botón NUEVO en la sección de CONSTRUCCIONES...');
     
-    const collapseHeaders = document.querySelectorAll('.ant-collapse-header');
+    // Primero, encontrar la sección de CONSTRUCCIONES
+    const allH1 = document.querySelectorAll('h1');
+    let construccionesHeader = null;
     
-    for (let header of collapseHeaders) {
-        const headerText = header.querySelector('.ant-collapse-header-text');
-        if (headerText && headerText.textContent.includes('08.- CONSTRUCCIONES')) {
-            console.log('Sección de construcciones encontrada');
-            
-            const isExpanded = header.getAttribute('aria-expanded') === 'true';
-            
-            if (!isExpanded) {
-                console.log('Desplegando sección...');
-                header.click();
-                await sleep(500);
-                console.log('Sección desplegada');
-            } else {
-                console.log('ℹLa sección ya estaba desplegada');
-            }
-            
+    for (let h1 of allH1) {
+        if (h1.textContent.includes('08.- CONSTRUCCIONES')) {
+            construccionesHeader = h1;
+            break;
+        }
+    }
+    
+    if (!construccionesHeader) {
+        console.error('❌ No se encontró el header de CONSTRUCCIONES');
+        return false;
+    }
+    
+    // Obtener el contenedor de la sección (ant-collapse-item)
+    const collapseItem = construccionesHeader.closest('.ant-collapse-item');
+    
+    if (!collapseItem) {
+        console.error('❌ No se encontró el collapse-item de CONSTRUCCIONES');
+        return false;
+    }
+    
+    // Verificar que la sección esté expandida
+    if (!collapseItem.classList.contains('ant-collapse-item-active')) {
+        console.error('❌ La sección de CONSTRUCCIONES no está expandida');
+        return false;
+    }
+    
+    // Buscar el botón NUEVO dentro de esta sección específica
+    const collapseContent = collapseItem.querySelector('.ant-collapse-content-box');
+    
+    if (!collapseContent) {
+        console.error('❌ No se encontró el contenido de la sección CONSTRUCCIONES');
+        return false;
+    }
+    
+    // Buscar el botón NUEVO dentro de esta sección
+    const buttons = collapseContent.querySelectorAll('.ant-btn');
+    
+    for (let button of buttons) {
+        if (button.textContent.includes('NUEVO')) {
+            console.log('✅ Botón NUEVO de CONSTRUCCIONES encontrado, haciendo click...');
+            button.click();
+            await sleep(800);
+            console.log('✅ Modal de construcción debería estar abierto');
             return true;
         }
     }
     
-    console.error('No se encontró la sección de construcciones');
+    console.error('❌ No se encontró el botón NUEVO en la sección de CONSTRUCCIONES');
     return false;
 };
 
-// Nueva función para hacer click en el botón NUEVO de construcciones
-const clickNuevoButton = async () => {
-    console.log('Buscando botón NUEVO...');
+// Función mejorada para desplegar la sección de construcciones
+const expandConstruccionesSection = async () => {
+    console.log('🔍 Buscando sección de construcciones...');
     
-    const buttons = document.querySelectorAll('.ant-btn');
+    const allH1 = document.querySelectorAll('h1');
+    let construccionesHeader = null;
     
-    for (let button of buttons) {
-        if (button.textContent.includes('NUEVO') && button.closest('.ant-table-title')) {
-            console.log('Botón NUEVO encontrado, haciendo click...');
-            button.click();
-            await sleep(1000);
-            console.log('Modal de construcción debería estar abierto');
-            return true;
+    for (let h1 of allH1) {
+        if (h1.textContent.includes('08.- CONSTRUCCIONES')) {
+            construccionesHeader = h1;
+            break;
         }
     }
     
-    console.error('No se encontró el botón NUEVO');
-    return false;
+    if (!construccionesHeader) {
+        console.error('❌ No se encontró la sección de construcciones');
+        return false;
+    }
+    
+    // Obtener el header del collapse
+    const collapseHeader = construccionesHeader.closest('.ant-collapse-header');
+    
+    if (!collapseHeader) {
+        console.error('❌ No se encontró el collapse-header');
+        return false;
+    }
+    
+    const isExpanded = collapseHeader.getAttribute('aria-expanded') === 'true';
+    
+    if (!isExpanded) {
+        console.log('📂 Desplegando sección de CONSTRUCCIONES...');
+        collapseHeader.click();
+        await sleep(500);
+        console.log('✅ Sección desplegada');
+    } else {
+        console.log('ℹ️ La sección ya estaba desplegada');
+    }
+    
+    return true;
 };
 
 const waitForDropdownVisible = async (timeout = 5000) => {
@@ -824,50 +1319,61 @@ const waitForDropdownVisible = async (timeout = 5000) => {
     });
 };
 
-const scrollDropdownToFindOption = async (dropdown, targetValue, maxScrollAttempts = 10) => {
+// Función mejorada para hacer scroll en el dropdown hasta encontrar la opción
+const scrollDropdownToFindOption = async (dropdown, targetValue, maxScrollAttempts = 60) => {
     const holder = dropdown.querySelector('.rc-virtual-list-holder');
     
     if (!holder) {
-        console.error('No se encontró .rc-virtual-list-holder');
+        console.error('❌ No se encontró .rc-virtual-list-holder');
         return null;
     }
     
-    console.log(`Buscando opción: "${targetValue}"`);
+    console.log(`🔍 Buscando opción: "${targetValue}"`);
     
+    // Resetear scroll al inicio
+    holder.scrollTop = 0;
+    holder.dispatchEvent(new Event('scroll', { bubbles: true }));
+    await sleep(200);
+    
+    // Intentar encontrar la opción, haciendo scroll si es necesario
     for (let attempt = 0; attempt < maxScrollAttempts; attempt++) {
+        // Buscar la opción en el DOM actual
         const options = dropdown.querySelectorAll('.ant-select-item-option');
         
-        console.log(`Intento ${attempt + 1}: ${options.length} opciones visibles`);
+        if (attempt % 10 === 0) {
+            console.log(`  📋 Intento ${attempt + 1}/${maxScrollAttempts}: ${options.length} opciones visibles`);
+        }
         
         for (let opt of options) {
             const content = opt.querySelector('.ant-select-item-option-content');
             if (content) {
                 const optionText = content.textContent.trim();
                 if (optionText === targetValue) {
-                    console.log(`Opción encontrada: "${targetValue}"`);
+                    console.log(`  ✅ Opción encontrada: "${targetValue}" (intento ${attempt + 1})`);
                     return opt;
                 }
             }
         }
         
-        console.log(`Haciendo scroll (intento ${attempt + 1})...`);
-        
+        // Si no se encontró, hacer scroll hacia abajo
         const currentScroll = holder.scrollTop;
-        const scrollAmount = 50;
+        const scrollAmount = 100; // Aumentado de 50 a 100 píxeles
         
         holder.scrollTop = currentScroll + scrollAmount;
         
+        // Disparar evento de scroll para que Ant Design renderice más opciones
         holder.dispatchEvent(new Event('scroll', { bubbles: true }));
         
-        await sleep(150); // Esperar a que se rendericen nuevas opciones
-
+        await sleep(100); // Reducido de 150ms a 100ms para ser más rápido
+        
+        // Si llegamos al final del scroll, no seguir intentando
         if (holder.scrollTop === currentScroll) {
-            console.log('Llegamos al final del scroll');
+            console.log(`  ⚠️ Llegamos al final del scroll (intento ${attempt + 1})`);
             break;
         }
     }
     
-    console.error(`No se encontró la opción después de ${maxScrollAttempts} intentos`);
+    console.error(`  ❌ No se encontró la opción después de ${maxScrollAttempts} intentos`);
     return null;
 };
 
