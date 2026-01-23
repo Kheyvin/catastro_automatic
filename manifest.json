@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "0.4",
+  "version": "0.9.8",
   "description": "Automatización de ficha catastral individual",
   "permissions": [
     "storage"
@@ -30,7 +30,16 @@
         "http://161.132.42.244:9006/ficha-individual/*"
       ],
       "js": [
-        "content.js"
+        "content-individual.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://161.132.42.244:9006/ficha-cotitularidad/*"
+      ],
+      "js": [
+        "content-cotitularidad.js"
       ],
       "run_at": "document_idle"
     }

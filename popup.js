@@ -1,170 +1,432 @@
-const formFields = [
-    'codeVia',
-    'numberMunicipal',
-    'codeHu',
-    'numberManzana',
-    'numberLote',
-    'numberSubLote',
-    'observations',
-    'supervisorName',
-    'supervisorDate',
-    'technicianName',
-    'technicianDate',
-    'sectorValue',
-    'manzanaValue',
-    'loteValue',
-    'inscripcionNumero',
-    'inscripcionFecha'
-];
+const STORAGE_KEY = 'fichaCatastralData';
+const THEME_KEY = 'fichaCatastralTheme';
 
-chrome.storage.sync.get(['catastroFormData', 'construccionesData'], (result) => {
-    if (result.catastroFormData && Object.keys(result.catastroFormData).length > 0) {
-        Object.keys(result.catastroFormData).forEach(fieldId => {
-            const element = document.getElementById(fieldId);
-            if (element) {
-                element.value = result.catastroFormData[fieldId];
-            }
-        });
-    }
+const SECCIONES_CONFIG = {
+  principales: {
+    fields: ['principales-sector', 'principales-manzana', 'principales-lote']
+  },
+  ubicacion: {
+    fields: [
+      'ubicacion-codigo-via', 'ubicacion-codigo-hu', 'ubicacion-n-municipal',
+      'ubicacion-manzana', 'ubicacion-lote', 'ubicacion-sub-lote'
+    ]
+  },
+  descripcion: {
+    fields: [
+      'descripcion-zonificacion', 'descripcion-area-adquirida', 'descripcion-area-verificada',
+      'lindero-frente-medida', 'lindero-frente-colindancia',
+      'lindero-derecha-medida', 'lindero-derecha-colindancia',
+      'lindero-izquierda-medida', 'lindero-izquierda-colindancia',
+      'lindero-fondo-medida', 'lindero-fondo-colindancia'
+    ]
+  },
+  inscripcion: {
+    fields: ['inscripcion-numero', 'inscripcion-asiento', 'inscripcion-fecha']
+  },
+  final: {
+    fields: [
+      'final-observaciones', 'final-supervisor-nombre', 'final-supervisor-fecha',
+      'final-tecnico-nombre', 'final-tecnico-fecha'
+    ]
+  }
+};
 
-    if (result.construccionesData && Array.isArray(result.construccionesData)) {
-        result.construccionesData.forEach(rowData => {
-            addTableRow(rowData);
-        });
-    }
-});
+const TABLAS_CONFIG = {
+  construcciones: {
+    tableId: 'tabla-construcciones',
+    tbodyId: 'tbody-construcciones',
+    columns: ['npiso', 'mes', 'anio', 'mep', 'ecs', 'ecc', 'muro', 'techo', 'piso', 'puerta', 'revest', 'banio', 'inst', 'area', 'uca']
+  },
+  obras: {
+    tableId: 'tabla-obras',
+    tbodyId: 'tbody-obras',
+    columns: ['codigo', 'mes', 'anio', 'mep', 'ecs', 'ecc', 'total', 'uca']
+  }
+};
 
-function addTableRow(data = null) {
-    const tbody = document.getElementById('construccionesBody');
-    const row = tbody.insertRow();
-    
-    const columns = ['n', 'mes', 'anio', 'c58', 'c59', 'c60', 'c61', 'c62', 'c63', 'c64', 'c65', 'c66', 'c67', 'c68', 'c69'];
-    
-    columns.forEach(col => {
-        const cell = row.insertCell();
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = `construccion-${col}`;
-        
-        if (data && data[col]) {
-            input.value = data[col];
-        }
-        
-        cell.appendChild(input);
-    });
+function showToast(message, type = 'info') {
+  const existingToast = document.querySelector('.toast');
+  if (existingToast) existingToast.remove();
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
 }
 
-function getTableData() {
-    const tbody = document.getElementById('construccionesBody');
-    const rows = tbody.getElementsByTagName('tr');
-    const data = [];
-    
-    for (let row of rows) {
-        const inputs = row.getElementsByTagName('input');
-        const rowData = {
-            n: inputs[0].value.trim(),
-            mes: inputs[1].value.trim(),
-            anio: inputs[2].value.trim(),
-            c58: inputs[3].value.trim(),
-            c59: inputs[4].value.trim(),
-            c60: inputs[5].value.trim(),
-            c61: inputs[6].value.trim(),
-            c62: inputs[7].value.trim(),
-            c63: inputs[8].value.trim(),
-            c64: inputs[9].value.trim(),
-            c65: inputs[10].value.trim(),
-            c66: inputs[11].value.trim(),
-            c67: inputs[12].value.trim(),
-            c68: inputs[13].value.trim(),
-            c69: inputs[14].value.trim()
-        };
-        
-        if (rowData.n) {
-            data.push(rowData);
-        }
-    }
-    
-    return data;
+function generateRowId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-document.getElementById('addRowBtn').addEventListener('click', () => {
-    addTableRow();
-});
-
-document.getElementById('deleteRowBtn').addEventListener('click', () => {
-    const tbody = document.getElementById('construccionesBody');
-    if (tbody.rows.length > 0) {
-        tbody.deleteRow(tbody.rows.length - 1);
+function initTheme() {
+  chrome.storage.local.get([THEME_KEY], (result) => {
+    const isDark = result[THEME_KEY] === 'dark';
+    if (isDark) {
+      document.body.classList.add('dark-mode');
+      document.getElementById('btn-theme').textContent = '☀️';
     }
-});
+  });
+}
 
-document.getElementById('clearTableBtn').addEventListener('click', () => {
-    const tbody = document.getElementById('construccionesBody');
-    tbody.innerHTML = '';
-});
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  const btn = document.getElementById('btn-theme');
+  btn.textContent = isDark ? '☀️' : '🌙';
+  
+  chrome.storage.local.set({ [THEME_KEY]: isDark ? 'dark' : 'light' });
+  showToast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
+}
 
-document.getElementById('executeBtn').addEventListener('click', () => {
-    const construccionesData = getTableData();
-    
-    if (construccionesData.length === 0) {
-        alert('No hay datos en la tabla de construcciones para ejecutar.');
-        return;
+async function getAllStoredData() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([STORAGE_KEY], (result) => {
+      resolve(result[STORAGE_KEY] || {});
+    });
+  });
+}
+
+async function saveAllData(data) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [STORAGE_KEY]: data }, resolve);
+  });
+}
+
+async function getSectionData(section) {
+  const allData = await getAllStoredData();
+  return allData[section] || {};
+}
+
+async function saveSectionData(section, data) {
+  const allData = await getAllStoredData();
+  allData[section] = data;
+  await saveAllData(allData);
+}
+
+function getSectionValuesFromDOM(section) {
+  const config = SECCIONES_CONFIG[section];
+  if (!config) return {};
+
+  const values = {};
+  config.fields.forEach(fieldId => {
+    const element = document.getElementById(fieldId);
+    if (element) values[fieldId] = element.value;
+  });
+  return values;
+}
+
+function setSectionValuesInDOM(section, values) {
+  const config = SECCIONES_CONFIG[section];
+  if (!config) return;
+
+  config.fields.forEach(fieldId => {
+    const element = document.getElementById(fieldId);
+    if (element && values[fieldId] !== undefined) {
+      element.value = values[fieldId];
+    }
+  });
+}
+
+function clearSectionInDOM(section) {
+  const config = SECCIONES_CONFIG[section];
+  if (!config) return;
+
+  config.fields.forEach(fieldId => {
+    const element = document.getElementById(fieldId);
+    if (element) element.value = '';
+  });
+}
+
+async function saveSection(section) {
+  const values = getSectionValuesFromDOM(section);
+  await saveSectionData(section, values);
+  showToast(`"${section}" guardado`, 'success');
+}
+
+async function clearSection(section) {
+  clearSectionInDOM(section);
+  await saveSectionData(section, {});
+  showToast(`"${section}" limpiado`, 'info');
+}
+
+function createTableRow(tableType, values = {}) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return null;
+
+  const row = document.createElement('tr');
+  const rowId = values.rowId || generateRowId();
+  row.setAttribute('data-row-id', rowId);
+
+  config.columns.forEach(colName => {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = colName;
+    input.value = values[colName] || '';
+    td.appendChild(input);
+    row.appendChild(td);
+  });
+
+  const actionsTd = document.createElement('td');
+  actionsTd.className = 'acciones-cell';
+  actionsTd.innerHTML = `
+    <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
+    <button class="btn-row btn-delete" data-action="delete">❌</button>
+  `;
+  row.appendChild(actionsTd);
+
+  return row;
+}
+
+function getTableDataFromDOM(tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return [];
+
+  const tbody = document.getElementById(config.tbodyId);
+  const rows = tbody.querySelectorAll('tr');
+  const data = [];
+
+  rows.forEach(row => {
+    const rowData = { rowId: row.getAttribute('data-row-id') };
+    config.columns.forEach(colName => {
+      const input = row.querySelector(`input[name="${colName}"]`);
+      if (input) rowData[colName] = input.value;
+    });
+    data.push(rowData);
+  });
+
+  return data;
+}
+
+function setTableDataInDOM(tableType, data) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+
+  const tbody = document.getElementById(config.tbodyId);
+  tbody.innerHTML = '';
+
+  if (data && data.length > 0) {
+    data.forEach(rowData => {
+      const row = createTableRow(tableType, rowData);
+      tbody.appendChild(row);
+    });
+  } else {
+    tbody.appendChild(createTableRow(tableType));
+  }
+}
+
+function clearTableInDOM(tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+
+  const tbody = document.getElementById(config.tbodyId);
+  tbody.innerHTML = '';
+  tbody.appendChild(createTableRow(tableType));
+}
+
+function addTableRow(tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+
+  const tbody = document.getElementById(config.tbodyId);
+  const row = createTableRow(tableType);
+  tbody.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function duplicateTableRow(row, tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+
+  const values = {};
+  config.columns.forEach(colName => {
+    const input = row.querySelector(`input[name="${colName}"]`);
+    if (input) values[colName] = input.value;
+  });
+
+  const newRow = createTableRow(tableType, values);
+  row.parentNode.insertBefore(newRow, row.nextSibling);
+  showToast('Fila duplicada', 'success');
+}
+
+function deleteTableRow(row, tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+
+  const tbody = document.getElementById(config.tbodyId);
+  if (tbody.querySelectorAll('tr').length <= 1) {
+    showToast('No se puede eliminar la última fila', 'error');
+    return;
+  }
+
+  row.remove();
+  showToast('Fila eliminada', 'info');
+}
+
+async function saveTable(tableType) {
+  const data = getTableDataFromDOM(tableType);
+  await saveSectionData(tableType, data);
+  showToast(`"${tableType}" guardado`, 'success');
+}
+
+async function clearTable(tableType) {
+  clearTableInDOM(tableType);
+  await saveSectionData(tableType, []);
+  showToast(`"${tableType}" limpiado`, 'info');
+}
+
+async function saveAll() {
+  const allData = {};
+
+  for (const section of Object.keys(SECCIONES_CONFIG)) {
+    allData[section] = getSectionValuesFromDOM(section);
+  }
+
+  for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    allData[tableType] = getTableDataFromDOM(tableType);
+  }
+
+  await saveAllData(allData);
+  showToast('Todo guardado correctamente', 'success');
+}
+
+async function clearAll() {
+  if (!confirm('¿Limpiar todos los datos?')) return;
+
+  for (const section of Object.keys(SECCIONES_CONFIG)) {
+    clearSectionInDOM(section);
+  }
+
+  for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    clearTableInDOM(tableType);
+  }
+
+  await saveAllData({});
+  showToast('Todo limpiado', 'info');
+}
+
+async function exportData() {
+  const allData = {};
+
+  for (const section of Object.keys(SECCIONES_CONFIG)) {
+    allData[section] = getSectionValuesFromDOM(section);
+  }
+
+  for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    allData[tableType] = getTableDataFromDOM(tableType);
+  }
+
+  const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ficha_catastral_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('Datos exportados', 'success');
+}
+
+async function importData(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    for (const section of Object.keys(SECCIONES_CONFIG)) {
+      if (data[section]) setSectionValuesInDOM(section, data[section]);
+    }
+
+    for (const tableType of Object.keys(TABLAS_CONFIG)) {
+      if (data[tableType]) setTableDataInDOM(tableType, data[tableType]);
+    }
+
+    await saveAllData(data);
+    showToast('Datos importados', 'success');
+  } catch (error) {
+    console.error('Error al importar:', error);
+    showToast('Error al importar', 'error');
+  }
+}
+
+async function loadStoredData() {
+  const allData = await getAllStoredData();
+
+  for (const section of Object.keys(SECCIONES_CONFIG)) {
+    if (allData[section]) setSectionValuesInDOM(section, allData[section]);
+  }
+
+  for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    if (allData[tableType] && allData[tableType].length > 0) {
+      setTableDataInDOM(tableType, allData[tableType]);
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  loadStoredData();
+
+  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+
+  document.addEventListener('click', async (e) => {
+    const target = e.target.closest('button');
+    if (!target) return;
+
+    const action = target.dataset.action;
+    const section = target.dataset.section;
+
+    if (action === 'save' && SECCIONES_CONFIG[section]) {
+      await saveSection(section);
+    } else if (action === 'clear' && SECCIONES_CONFIG[section]) {
+      await clearSection(section);
     }
     
-    chrome.storage.sync.set({ 'construccionesData': construccionesData }, () => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, { 
-                action: 'executeConstrucciones',
-                data: construccionesData
-            }, (response) => {
-                if (chrome.runtime.lastError) {
-                    alert('Error: Carga la Pagina.');
-                }
-            });
-        });
-    });
-});
-
-document.getElementById('saveBtn').addEventListener('click', () => {
-    const formData = {};
-    let hasData = false;
-
-    formFields.forEach(fieldId => {
-        const element = document.getElementById(fieldId);
-        if (element) {
-            const value = element.value.trim();
-            if (value) {
-                formData[fieldId] = value;
-                hasData = true;
-            }
-        }
-    });
-
-    const construccionesData = getTableData();
-
-    if (hasData || construccionesData.length > 0) {
-        chrome.storage.sync.set({ 
-            'catastroFormData': formData,
-            'construccionesData': construccionesData
-        }, () => {
-            window.close();
-        });
+    else if (action === 'save' && TABLAS_CONFIG[section]) {
+      await saveTable(section);
+    } else if (action === 'clear' && TABLAS_CONFIG[section]) {
+      await clearTable(section);
+    } else if (action === 'add-row' && TABLAS_CONFIG[section]) {
+      addTableRow(section);
     }
+    
+    else if (action === 'duplicate') {
+      const row = target.closest('tr');
+      const tableType = target.closest('table').id.replace('tabla-', '');
+      duplicateTableRow(row, tableType);
+    } else if (action === 'delete') {
+      const row = target.closest('tr');
+      const tableType = target.closest('table').id.replace('tabla-', '');
+      deleteTableRow(row, tableType);
+    }
+  });
+
+  document.getElementById('btn-guardar-todo').addEventListener('click', saveAll);
+  document.getElementById('btn-limpiar-todo').addEventListener('click', clearAll);
+  document.getElementById('btn-exportar').addEventListener('click', exportData);
+  
+  document.getElementById('btn-importar').addEventListener('click', () => {
+    document.getElementById('input-importar').click();
+  });
+  
+  document.getElementById('input-importar').addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      importData(e.target.files[0]);
+      e.target.value = '';
+    }
+  });
 });
 
-document.getElementById('clearBtn').addEventListener('click', () => {
-    formFields.forEach(fieldId => {
-        const element = document.getElementById(fieldId);
-        if (element) {
-            element.value = '';
-        }
-    });
-    
-    const tbody = document.getElementById('construccionesBody');
-    tbody.innerHTML = '';
-    
-    chrome.storage.sync.set({ 
-        'catastroFormData': {},
-        'construccionesData': []
-    });
-});
+window.FichaCatastralAPI = {
+  STORAGE_KEY,
+  SECCIONES_CONFIG,
+  TABLAS_CONFIG,
+  getAllData: getAllStoredData,
+  getSectionData,
+  saveSectionData
+};
