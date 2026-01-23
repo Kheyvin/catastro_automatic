@@ -546,3 +546,16 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ============================================
+   BOTÓN EJECUTAR
+   ============================================ */
+.btn-execute {
+  background: #8b5cf6;
+  color: white;
+}
+
+.btn-execute:hover {
+  background: #7c3aed;
+  transform: scale(1.1);
+}
