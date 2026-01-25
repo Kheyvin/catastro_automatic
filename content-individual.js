@@ -1,23 +1,3 @@
-/**
- * ============================================
- * CONTENT-INDIVIDUAL.JS
- * Automatizacion de Ficha Catastral Individual
- * ============================================
- * 
- * Estructura modular:
- * 1. Configuracion y constantes
- * 2. Utilidades generales
- * 3. Funciones de espera y observadores
- * 4. Funciones de interaccion con selectores
- * 5. Funciones de interaccion con modales
- * 6. Funciones por seccion
- * 7. Controlador principal de flujo
- */
-
-// ============================================
-// 1. CONFIGURACION Y CONSTANTES
-// ============================================
-
 const STORAGE_KEY = 'fichaCatastralData';
 
 const CONFIG = {
@@ -59,20 +39,12 @@ const CONFIG = {
   }
 };
 
-// Estado global de la aplicacion
 const AppState = {
   storedData: null,
   currentSection: null,
   isProcessing: false
 };
 
-// ============================================
-// 2. UTILIDADES GENERALES
-// ============================================
-
-/**
- * Obtiene los datos almacenados en chrome.storage.local
- */
 async function getStoredData() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
@@ -81,18 +53,12 @@ async function getStoredData() {
   });
 }
 
-/**
- * Guarda datos en chrome.storage.local
- */
 async function saveStoredData(data) {
   return new Promise((resolve) => {
     chrome.storage.local.set({ [STORAGE_KEY]: data }, resolve);
   });
 }
 
-/**
- * Actualiza un valor especifico en el storage
- */
 async function updateStoredValue(section, key, value) {
   const data = await getStoredData();
   if (!data[section]) data[section] = {};
@@ -101,21 +67,14 @@ async function updateStoredValue(section, key, value) {
   AppState.storedData = data;
 }
 
-/**
- * Espera un tiempo determinado
- */
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Simula un evento de input nativo
- */
 function simulateInput(element, value) {
   if (!element) return;
   
   try {
-    // Intentar usar el setter nativo segun el tipo de elemento
     let nativeInputValueSetter;
     
     if (element instanceof HTMLInputElement) {
@@ -134,26 +93,19 @@ function simulateInput(element, value) {
       element.value = value;
     }
   } catch (e) {
-    // Fallback si falla el setter nativo
     element.value = value;
   }
   
-  // Disparar eventos
   element.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
   element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
   
-  // Para componentes React/Ant Design, tambien disparar focus y blur
   element.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
   element.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
 }
 
-/**
- * Simula un click en un elemento
- */
 function simulateClick(element) {
   if (!element) return false;
   
-  // Opciones completas para los eventos de mouse
   const eventOptions = {
     bubbles: true,
     cancelable: true,
@@ -164,7 +116,6 @@ function simulateClick(element) {
     clientY: element.getBoundingClientRect ? element.getBoundingClientRect().y + 5 : 0
   };
   
-  // Focus primero si es posible
   if (element.focus) {
     element.focus();
   }
@@ -175,9 +126,6 @@ function simulateClick(element) {
   return true;
 }
 
-/**
- * Simula presionar Enter en un elemento
- */
 function simulateEnter(element) {
   if (!element) return;
   
@@ -200,9 +148,6 @@ function simulateEnter(element) {
   element.dispatchEvent(enterEventUp);
 }
 
-/**
- * Log con prefijo de la extension
- */
 function log(message, type = 'info') {
   const prefix = '[FichaCatastral]';
   const styles = {
@@ -214,13 +159,6 @@ function log(message, type = 'info') {
   console.log('%c' + prefix + ' ' + message, styles[type] || styles.info);
 }
 
-// ============================================
-// 3. FUNCIONES DE ESPERA Y OBSERVADORES
-// ============================================
-
-/**
- * Espera a que un elemento aparezca en el DOM
- */
 function waitForElement(selector, timeout = 10000, parent = document) {
   return new Promise((resolve, reject) => {
     const element = parent.querySelector(selector);
@@ -249,9 +187,6 @@ function waitForElement(selector, timeout = 10000, parent = document) {
   });
 }
 
-/**
- * Espera a que un elemento desaparezca del DOM
- */
 function waitForElementToDisappear(selector, timeout = 10000) {
   return new Promise((resolve, reject) => {
     const element = document.querySelector(selector);
@@ -280,9 +215,6 @@ function waitForElementToDisappear(selector, timeout = 10000) {
   });
 }
 
-/**
- * Espera a que una seccion se despliegue completamente
- */
 function waitForSectionToExpand(sectionIndex) {
   return new Promise((resolve, reject) => {
     let observer;
@@ -312,7 +244,6 @@ function waitForSectionToExpand(sectionIndex) {
       attributeFilter: ['class']
     });
 
-    // Verificar si ya esta expandida
     const sections = document.querySelectorAll('.ant-collapse-item');
     const section = sections[sectionIndex];
     if (section && section.classList.contains('ant-collapse-item-active')) {
@@ -326,9 +257,6 @@ function waitForSectionToExpand(sectionIndex) {
   });
 }
 
-/**
- * Espera a que el usuario haga click en un boton especifico
- */
 function waitForButtonClick(buttonSelector, buttonText = null) {
   return new Promise((resolve) => {
     const handler = (e) => {
@@ -348,13 +276,6 @@ function waitForButtonClick(buttonSelector, buttonText = null) {
   });
 }
 
-// ============================================
-// 4. FUNCIONES DE INTERACCION CON SELECTORES
-// ============================================
-
-/**
- * Abre un selector y espera a que cargue el dropdown
- */
 async function openSelector(selectorElement) {
   if (!selectorElement) {
     log('Selector no encontrado', 'error');
@@ -363,11 +284,9 @@ async function openSelector(selectorElement) {
 
   const selectContainer = selectorElement.closest('.ant-select') || selectorElement;
   
-  // Primero intentar con el selector principal
   const selectorInput = selectContainer.querySelector('.ant-select-selector');
   
   if (selectorInput) {
-    // Simular mousedown + mouseup + click (secuencia completa)
     selectorInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
     await delay(50);
     selectorInput.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
@@ -379,15 +298,12 @@ async function openSelector(selectorElement) {
   
   await delay(CONFIG.delays.medium);
 
-  // Buscar el dropdown que no esté oculto
   let dropdown = null;
   const maxAttempts = 10;
   
   for (let i = 0; i < maxAttempts; i++) {
-    // Buscar todos los dropdowns visibles
     const dropdowns = document.querySelectorAll('.ant-select-dropdown');
     for (const dd of dropdowns) {
-      // Verificar que no esté oculto
       const style = window.getComputedStyle(dd);
       const isHidden = dd.classList.contains('ant-select-dropdown-hidden') || 
                        style.display === 'none' || 
@@ -411,26 +327,20 @@ async function openSelector(selectorElement) {
   return dropdown;
 }
 
-/**
- * Selecciona una opcion en un selector por su texto exacto o parcial
- * Maneja el scroll para cargar mas opciones si es necesario
- */
 async function selectOptionByText(selectorElement, targetText, exactMatch = false) {
   const dropdown = await openSelector(selectorElement);
   if (!dropdown) return false;
 
-  // Normalizar texto para comparacion - quitar acentos y caracteres especiales
   const normalizeText = (text) => {
     return text.trim()
       .toUpperCase()
       .replace(/\s+/g, ' ')
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, ''); // Quitar acentos
+      .replace(/[\u0300-\u036f]/g, '');
   };
 
   const targetNormalized = normalizeText(targetText);
   
-  // Extraer solo el código si el target tiene formato "XX - TEXTO"
   const targetCode = targetNormalized.split(' - ')[0].replace(/^0+/, '');
 
   const findOption = () => {
@@ -440,33 +350,24 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       const text = content ? content.textContent.trim() : option.textContent.trim();
       const textNormalized = normalizeText(text);
 
-      // Extraer código del texto de opción
       const optionCode = textNormalized.split(' - ')[0].replace(/^0+/, '');
       
       if (exactMatch) {
         if (textNormalized === targetNormalized) return option;
       } else {
-        // Busqueda flexible:
-        // 1. Coincidencia exacta (prioridad máxima)
         if (textNormalized === targetNormalized) return option;
         
-        // 2. Para letras sueltas (A-I), solo coincidencia exacta
         if (targetNormalized.length === 1 && /^[A-I]$/.test(targetNormalized)) {
-          // Solo coincidir si el texto es exactamente la letra
           if (textNormalized === targetNormalized) return option;
-          // No hacer más búsquedas flexibles para letras
           continue;
         }
-        
-        // 3. El código coincide (ej: "1" == "01", "01" == "1")
+
         if (targetCode && optionCode && targetCode === optionCode) return option;
         
-        // 4. El texto contiene el target o viceversa (solo para targets > 1 caracter)
         if (targetNormalized.length > 1) {
           if (textNormalized.includes(targetNormalized) || targetNormalized.includes(textNormalized)) return option;
         }
-        
-        // 5. Coincidencia parcial al inicio (mínimo 3 caracteres)
+
         if (targetNormalized.length >= 3) {
           const minChars = Math.min(3, targetNormalized.length);
           if (textNormalized.startsWith(targetNormalized.substring(0, minChars))) return option;
@@ -476,16 +377,13 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
     return null;
   };
 
-  // Si no se encontró, usar navegación con teclas de flecha
-  // Esto funciona mejor con virtual lists de Ant Design
   const scrollContainer = dropdown.querySelector('.rc-virtual-list-holder');
   const input = selectorElement.querySelector('input') || selectorElement.closest('.ant-select')?.querySelector('input');
   
   let attempts = 0;
-  const maxAttempts = 100; // Aumentado para listas largas (manzana puede tener 80+ opciones)
+  const maxAttempts = 100;
   
   while (attempts < maxAttempts) {
-    // Buscar la opción
     const option = findOption();
     if (option) {
       simulateClick(option);
@@ -494,7 +392,6 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       return true;
     }
     
-    // Enviar tecla flecha abajo al input del selector
     if (input) {
       const keydownEvent = new KeyboardEvent('keydown', {
         key: 'ArrowDown',
@@ -507,10 +404,9 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       input.dispatchEvent(keydownEvent);
     }
 
-    // También hacer scroll directo en el contenedor con incremento mayor
     if (scrollContainer) {
       const scrollElement = scrollContainer.querySelector('.rc-virtual-list-holder-inner')?.parentElement || scrollContainer;
-      scrollElement.scrollTop += 200; // Aumentado para scroll más rápido
+      scrollElement.scrollTop += 200;
       scrollElement.dispatchEvent(new Event('scroll', { bubbles: true }));
     }
     
@@ -519,18 +415,13 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
     attempts++;
   }
 
-  // Cerrar dropdown
   simulateClick(document.body);
   await delay(CONFIG.delays.short);
   log('No se encontro la opcion: ' + targetText, 'warning');
   return false;
 }
 
-/**
- * Funcion reutilizable para seleccionar en cualquier selector
- */
 async function selectByLegend(container, legendText, targetValue, exactMatch = false) {
-  // Buscar en fieldsets
   const fieldsets = container.querySelectorAll('fieldset');
   for (const fieldset of fieldsets) {
     const legend = fieldset.querySelector('legend, label, p, h1');
@@ -542,7 +433,6 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
     }
   }
   
-  // Buscar en ant-form-item (estructura comun en modales)
   const formItems = container.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, .ant-form-item-label, label');
@@ -554,7 +444,6 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
     }
   }
   
-  // Buscar directamente en selectores y subir al padre
   const selects = container.querySelectorAll('.ant-select');
   for (const select of selects) {
     const parent = select.closest('fieldset, .ant-form-item, .ant-col, .ant-row');
@@ -570,9 +459,6 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
   return false;
 }
 
-/**
- * Quita el atributo readonly de un selector
- */
 function removeReadonly(element) {
   if (!element) return;
   
@@ -586,33 +472,31 @@ function removeReadonly(element) {
   }
 }
 
-// ============================================
-// 5. FUNCIONES DE INTERACCION CON MODALES
-// ============================================
-
-/**
- * Espera a que aparezca un modal con un titulo especifico
- */
 async function waitForModal(titleText, timeout = 10000) {
   return new Promise((resolve, reject) => {
     let observer;
     const timeoutId = setTimeout(() => {
       if (observer) observer.disconnect();
-      // No rechazar, devolver null para que el código continúe
       resolve(null);
     }, timeout);
 
     const checkModal = () => {
-      const modals = document.querySelectorAll('.ant-modal');
-      for (const modal of modals) {
-        const title = modal.querySelector('.ant-modal-title');
-        // Búsqueda case-insensitive
-        if (title && title.textContent.toUpperCase().includes(titleText.toUpperCase())) {
-          // Verificar que el modal sea visible
-          if (modal.offsetParent !== null || modal.style.display !== 'none') {
-            return modal;
+      try {
+        const modals = document.querySelectorAll('.ant-modal');
+        for (const modal of modals) {
+          const title = modal.querySelector('.ant-modal-title');
+          if (title && title.textContent && title.textContent.toUpperCase().includes(titleText.toUpperCase())) {
+            try {
+              if (modal.offsetParent !== null || modal.style.display !== 'none') {
+                return modal;
+              }
+            } catch (e) {
+              continue;
+            }
           }
         }
+      } catch (e) {
+        return null;
       }
       return null;
     };
@@ -640,9 +524,6 @@ async function waitForModal(titleText, timeout = 10000) {
   });
 }
 
-/**
- * Busca en un modal de listado y espera resultados
- */
 async function searchInModal(modal, searchValue) {
   const searchInput = modal.querySelector('input[placeholder="Buscar"]');
   if (!searchInput) {
@@ -663,9 +544,6 @@ async function searchInModal(modal, searchValue) {
   return true;
 }
 
-/**
- * Espera a que el total de registros sea un valor especifico
- */
 async function waitForSearchResults(modal, expectedCount = 1, timeout = 10000) {
   return new Promise((resolve) => {
     const checkResults = () => {
@@ -694,9 +572,6 @@ async function waitForSearchResults(modal, expectedCount = 1, timeout = 10000) {
   });
 }
 
-/**
- * Selecciona el primer registro en una tabla de modal
- */
 async function selectFirstRecord(modal) {
   const selectButton = modal.querySelector('button span.anticon-select');
   if (selectButton) {
@@ -707,9 +582,6 @@ async function selectFirstRecord(modal) {
   return false;
 }
 
-/**
- * Espera a que el usuario seleccione manualmente un registro
- */
 function waitForUserSelection(modal) {
   return new Promise((resolve) => {
     const observer = new MutationObserver((mutations, obs) => {
@@ -740,9 +612,6 @@ function waitForUserSelection(modal) {
   });
 }
 
-/**
- * Maneja la busqueda y seleccion en un modal de listado
- */
 async function handleModalSearch(modalTitle, searchValue, autoSelectIfOne = true) {
   try {
     const modal = await waitForModal(modalTitle);
@@ -767,17 +636,9 @@ async function handleModalSearch(modalTitle, searchValue, autoSelectIfOne = true
   }
 }
 
-// ============================================
-// 6. FUNCIONES POR SECCION
-// ============================================
-
-/**
- * Busca un input por el texto de su legend/label dentro de una seccion
- */
 function findInputByLegend(section, legendText) {
   const searchText = legendText.toUpperCase();
   
-  // Buscar en fieldsets
   const fieldsets = section.querySelectorAll('fieldset');
   for (const fieldset of fieldsets) {
     const legend = fieldset.querySelector('legend');
@@ -787,7 +648,6 @@ function findInputByLegend(section, legendText) {
     }
   }
   
-  // Buscar en ant-form-item
   const formItems = section.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, label, legend');
@@ -797,17 +657,14 @@ function findInputByLegend(section, legendText) {
     }
   }
   
-  // Buscar por cualquier estructura padre-hijo
   const allLabels = section.querySelectorAll('label, legend, p, h1, h2, h3, span');
   for (const label of allLabels) {
     if (label.textContent.toUpperCase().includes(searchText)) {
-      // Buscar input en el mismo contenedor
       const container = label.closest('fieldset, .ant-form-item, .ant-col, .ant-row, div[class*="flex"]');
       if (container) {
         const input = container.querySelector('input:not([role="combobox"]):not([type="search"])');
         if (input) return input;
       }
-      // Buscar en hermano siguiente
       const parent = label.parentElement;
       if (parent) {
         const input = parent.querySelector('input:not([role="combobox"]):not([type="search"])');
@@ -819,13 +676,9 @@ function findInputByLegend(section, legendText) {
   return null;
 }
 
-/**
- * Busca un boton de busqueda por el texto del legend cercano
- */
 function findSearchButtonByLegend(section, legendText) {
   const searchText = legendText.toUpperCase();
   
-  // Buscar en fieldsets
   const fieldsets = section.querySelectorAll('fieldset');
   for (const fieldset of fieldsets) {
     const legend = fieldset.querySelector('legend');
@@ -835,7 +688,6 @@ function findSearchButtonByLegend(section, legendText) {
     }
   }
   
-  // Buscar en ant-form-item
   const formItems = section.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, label, legend, h1');
@@ -845,7 +697,6 @@ function findSearchButtonByLegend(section, legendText) {
     }
   }
   
-  // Buscar en cualquier contenedor con el texto
   const allElements = section.querySelectorAll('*');
   for (const el of allElements) {
     if (el.childElementCount === 0 && el.textContent.toUpperCase().includes(searchText)) {
@@ -860,9 +711,155 @@ function findSearchButtonByLegend(section, legendText) {
   return null;
 }
 
-/**
- * SECCION 01: PRINCIPALES
- */
+async function waitForSelectorToBeReady(selectId, maxWaitTime = 10000) {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < maxWaitTime) {
+    const selectInput = document.querySelector(`#${selectId}`);
+    if (!selectInput) {
+      await delay(200);
+      continue;
+    }
+    
+    const selectContainer = selectInput.closest('.ant-select');
+    if (!selectContainer) {
+      await delay(200);
+      continue;
+    }
+    
+    const isDisabled = selectContainer.classList.contains('ant-select-disabled');
+    if (!isDisabled) {
+      log(`Selector ${selectId} esta listo`, 'success');
+      return true;
+    }
+    
+    await delay(200);
+  }
+  
+  log(`Timeout esperando que ${selectId} este listo`, 'warning');
+  return false;
+}
+
+async function selectCascadeOption(selectId, targetValue) {
+  if (!targetValue) return false;
+  
+  const selectInput = document.querySelector(`#${selectId}`);
+  if (!selectInput) {
+    log(`Selector ${selectId} no encontrado`, 'error');
+    return false;
+  }
+  
+  const selectContainer = selectInput.closest('.ant-select');
+  if (!selectContainer) {
+    log(`Contenedor del selector ${selectId} no encontrado`, 'error');
+    return false;
+  }
+  
+  const selectionItem = selectContainer.querySelector('.ant-select-selection-item');
+  if (selectionItem) {
+    const currentValue = selectionItem.getAttribute('title') || selectionItem.textContent.trim();
+    if (currentValue === targetValue || currentValue.includes(targetValue)) {
+      log(`${selectId} ya tiene el valor: ${currentValue}`, 'info');
+      return true;
+    }
+  }
+  
+  log(`Seleccionando ${selectId}: ${targetValue}`, 'info');
+  
+  const selectorDiv = selectContainer.querySelector('.ant-select-selector');
+  if (selectorDiv) {
+    selectorDiv.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+    await delay(100);
+    selectorDiv.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+  }
+  
+  await delay(CONFIG.delays.medium);
+  
+  let dropdown = null;
+  
+  for (let attempt = 0; attempt < 15; attempt++) {
+    const dropdowns = document.querySelectorAll('.ant-select-dropdown');
+    for (const dd of dropdowns) {
+      const style = window.getComputedStyle(dd);
+      const isHidden = dd.classList.contains('ant-select-dropdown-hidden') || 
+                       style.display === 'none';
+      
+      if (!isHidden && dd.offsetParent !== null) {
+        dropdown = dd;
+        break;
+      }
+    }
+    
+    if (dropdown) break;
+    await delay(100);
+  }
+  
+  if (!dropdown) {
+    log(`No se pudo abrir el dropdown de ${selectId}`, 'error');
+    return false;
+  }
+  
+  const normalizeValue = (val) => {
+    return val.toString().trim().toUpperCase().replace(/^0+/, '');
+  };
+  const targetNormalized = normalizeValue(targetValue);
+  
+  const findAndClickOption = () => {
+    const options = dropdown.querySelectorAll('.ant-select-item-option:not(.ant-select-item-option-disabled)');
+    
+    for (const option of options) {
+      const content = option.querySelector('.ant-select-item-option-content');
+      const optionText = content ? content.textContent.trim() : option.textContent.trim();
+      const optionNormalized = normalizeValue(optionText);
+      
+      if (optionNormalized === targetNormalized || optionText === targetValue) {
+        simulateClick(option);
+        return true;
+      }
+    }
+    return false;
+  };
+  
+  const virtualList = dropdown.querySelector('.rc-virtual-list-holder');
+  const maxScrollAttempts = 150;
+  
+  for (let attempt = 0; attempt < maxScrollAttempts; attempt++) {
+    if (findAndClickOption()) {
+      await delay(CONFIG.delays.short);
+      log(`Opcion seleccionada en ${selectId}: ${targetValue}`, 'success');
+      return true;
+    }
+    
+    if (virtualList) {
+      const scrollableElement = virtualList;
+      const currentScroll = scrollableElement.scrollTop;
+      const scrollIncrement = 100;
+      
+      scrollableElement.scrollTop = currentScroll + scrollIncrement;
+      scrollableElement.dispatchEvent(new Event('scroll', { bubbles: true }));
+      
+      const inputElement = selectContainer.querySelector('input');
+      if (inputElement) {
+        inputElement.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          code: 'ArrowDown',
+          keyCode: 40,
+          which: 40,
+          bubbles: true,
+          cancelable: true
+        }));
+      }
+    }
+    
+    await delay(50);
+  }
+  
+  simulateClick(document.body);
+  await delay(CONFIG.delays.short);
+  log(`No se encontro la opcion ${targetValue} en ${selectId}`, 'warning');
+  return false;
+}
+
 async function handleSeccion01Principales() {
   log('Procesando Seccion 01: PRINCIPALES', 'info');
   
@@ -876,110 +873,46 @@ async function handleSeccion01Principales() {
     return;
   }
 
-  // Setear SECTOR si tiene valor
   if (principales['principales-sector']) {
     const sectorSelect = section.querySelector('#form_item_sector');
     if (sectorSelect) {
       const sectorContainer = sectorSelect.closest('.ant-select');
       const selectionItem = sectorContainer ? sectorContainer.querySelector('.ant-select-selection-item') : null;
-      // Verificar si el selector tiene un valor real (no vacío y con title no vacío)
-      const hasValue = selectionItem && 
-                       selectionItem.textContent.trim() !== '' && 
-                       selectionItem.getAttribute('title') && 
-                       selectionItem.getAttribute('title').trim() !== '';
+      const currentValue = selectionItem ? (selectionItem.getAttribute('title') || selectionItem.textContent.trim()) : '';
       
-      if (!hasValue) {
+      if (!currentValue || currentValue === '') {
         log('Sector no tiene valor, seleccionando: ' + principales['principales-sector'], 'info');
-        await selectOptionByText(sectorSelect, principales['principales-sector']);
-        await delay(CONFIG.delays.long); // Esperar más para que carguen las manzanas
+        await selectCascadeOption('form_item_sector', principales['principales-sector']);
+        await delay(CONFIG.delays.medium);
       } else {
-        log('Sector ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
+        log('Sector ya tiene valor: ' + currentValue, 'info');
       }
     }
   }
 
-  // Esperar a que se carguen las opciones de manzana después de seleccionar sector
-  await delay(CONFIG.delays.long);
-
-  // Setear MANZANA si tiene valor
   if (principales['principales-manzana']) {
-    const manzanaSelect = section.querySelector('#form_item_manzana');
-    if (manzanaSelect) {
-      const manzanaContainer = manzanaSelect.closest('.ant-select');
-      const selectionItem = manzanaContainer ? manzanaContainer.querySelector('.ant-select-selection-item') : null;
-      // Verificar si el selector tiene un valor real
-      const hasValue = selectionItem && 
-                       selectionItem.textContent.trim() !== '' && 
-                       selectionItem.getAttribute('title') && 
-                       selectionItem.getAttribute('title').trim() !== '';
-      
-      // También verificar que el selector no esté deshabilitado
-      const isDisabled = manzanaContainer && manzanaContainer.classList.contains('ant-select-disabled');
-      
-      if (!hasValue && !isDisabled) {
-        log('Manzana no tiene valor, seleccionando: ' + principales['principales-manzana'], 'info');
-        await selectOptionByText(manzanaSelect, principales['principales-manzana']);
-        await delay(CONFIG.delays.medium);
-      } else if (isDisabled) {
-        log('Manzana está deshabilitada, esperando a que se habilite...', 'warning');
-        // Esperar a que se habilite
-        let attempts = 0;
-        while (manzanaContainer.classList.contains('ant-select-disabled') && attempts < 20) {
-          await delay(CONFIG.delays.medium);
-          attempts++;
-        }
-        if (!manzanaContainer.classList.contains('ant-select-disabled')) {
-          log('Manzana habilitada, seleccionando: ' + principales['principales-manzana'], 'info');
-          await selectOptionByText(manzanaSelect, principales['principales-manzana']);
-          await delay(CONFIG.delays.medium);
-        } else {
-          log('Manzana sigue deshabilitada después de esperar', 'error');
-        }
-      } else {
-        log('Manzana ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
-      }
+    const manzanaReady = await waitForSelectorToBeReady('form_item_manzana', 15000);
+    
+    if (manzanaReady) {
+      await delay(CONFIG.delays.medium);
+      await selectCascadeOption('form_item_manzana', principales['principales-manzana']);
+      await delay(CONFIG.delays.medium);
+    } else {
+      log('El selector de manzana no se habilito a tiempo', 'error');
     }
   }
 
-  // Esperar a que se carguen las opciones de lote después de seleccionar manzana
-  await delay(CONFIG.delays.medium);
-
-  // Setear LOTE si tiene valor
   if (principales['principales-lote']) {
-    const loteSelect = section.querySelector('#form_item_lote');
-    if (loteSelect) {
-      const loteContainer = loteSelect.closest('.ant-select');
-      const selectionItem = loteContainer ? loteContainer.querySelector('.ant-select-selection-item') : null;
-      const hasValue = selectionItem && 
-                       selectionItem.textContent.trim() !== '' && 
-                       selectionItem.getAttribute('title') && 
-                       selectionItem.getAttribute('title').trim() !== '';
-      
-      const isDisabled = loteContainer && loteContainer.classList.contains('ant-select-disabled');
-      
-      if (!hasValue && !isDisabled) {
-        log('Lote no tiene valor, seleccionando: ' + principales['principales-lote'], 'info');
-        await selectOptionByText(loteSelect, principales['principales-lote']);
-        await delay(CONFIG.delays.medium);
-      } else if (isDisabled) {
-        log('Lote está deshabilitado, esperando a que se habilite...', 'warning');
-        let attempts = 0;
-        while (loteContainer.classList.contains('ant-select-disabled') && attempts < 20) {
-          await delay(CONFIG.delays.medium);
-          attempts++;
-        }
-        if (!loteContainer.classList.contains('ant-select-disabled')) {
-          log('Lote habilitado, seleccionando: ' + principales['principales-lote'], 'info');
-          await selectOptionByText(loteSelect, principales['principales-lote']);
-          await delay(CONFIG.delays.medium);
-        }
-      } else {
-        log('Lote ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
-      }
+    const loteReady = await waitForSelectorToBeReady('form_item_lote', 15000);
+    
+    if (loteReady) {
+      await delay(CONFIG.delays.medium);
+      await selectCascadeOption('form_item_lote', principales['principales-lote']);
+    } else {
+      log('El selector de lote no se habilito a tiempo', 'error');
     }
   }
 
-  // Setear valores fijos en inputs
   const edificaInput = section.querySelector('#form_item_codigoedifica');
   if (edificaInput) simulateInput(edificaInput, CONFIG.defaultValues.edifica);
 
@@ -992,7 +925,6 @@ async function handleSeccion01Principales() {
   const unidadInput = section.querySelector('#form_item_codigounidad');
   if (unidadInput) simulateInput(unidadInput, CONFIG.defaultValues.unidad);
 
-  // Buscar y setear OBSERVACIONES si existe
   if (final['final-observaciones']) {
     const observacionesInput = document.querySelector('textarea[id*="observacion"]') || 
                                document.querySelector('input[id*="observacion"]');
@@ -1010,9 +942,6 @@ async function handleSeccion01Principales() {
   await expandAndProcessSection(1);
 }
 
-/**
- * SECCION 02: UBICACION DEL PREDIO CATASTRAL
- */
 async function handleSeccion02Ubicacion() {
   log('Procesando Seccion 02: UBICACION DEL PREDIO', 'info');
 
@@ -1023,31 +952,26 @@ async function handleSeccion02Ubicacion() {
   const section = document.querySelectorAll('.ant-collapse-item')[1];
   if (!section) return;
 
-  // [17] MANZANA
   if (ubicacion['ubicacion-manzana']) {
     const manzanaInput = findInputByLegend(section, 'MANZANA');
     if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
   }
 
-  // [18] LOTE
   if (ubicacion['ubicacion-lote']) {
     const loteInput = findInputByLegend(section, 'LOTE');
     if (loteInput) simulateInput(loteInput, ubicacion['ubicacion-lote']);
   }
 
-  // [19] SUB-LOTE
   if (ubicacion['ubicacion-sub-lote']) {
     const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
                           findInputByLegend(section, 'SUBLOTE');
     if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
   }
 
-  // [11] TIPO DE EDIFICACION - Selector
   await selectByLegend(section, 'TIPO DE EDIFICACI', CONFIG.defaultValues.tipoEdificacion);
 
   await delay(CONFIG.delays.medium);
 
-  // [18] CODIGO HU - Buscar en modal
   if (ubicacion['ubicacion-codigo-hu']) {
     const searchButton = findSearchButtonByLegend(section, 'CODIGO HU') || 
                          findSearchButtonByLegend(section, 'COD. HU') ||
@@ -1060,7 +984,6 @@ async function handleSeccion02Ubicacion() {
 
   await delay(CONFIG.delays.medium);
 
-  // Hacer click en el boton NUEVO para ubicacion
   const buttons = section.querySelectorAll('button');
   for (const btn of buttons) {
     if (btn.textContent.includes('NUEVO') || btn.querySelector('.anticon-plus')) {
@@ -1081,14 +1004,10 @@ async function handleSeccion02Ubicacion() {
   await expandAndProcessSection(2);
 }
 
-/**
- * Maneja el modal de NUEVA UBICACION DEL PREDIO
- */
 async function handleNuevaUbicacionModal(ubicacion) {
   try {
     const modal = await waitForModal('NUEVA UBICACI');
     
-    // Click en boton de busqueda de 05 COD. VIA
     if (ubicacion['ubicacion-codigo-via']) {
       const searchButton = modal.querySelector('button .anticon-search');
       if (searchButton) {
@@ -1099,15 +1018,12 @@ async function handleNuevaUbicacionModal(ubicacion) {
 
     await delay(CONFIG.delays.medium);
 
-    // 08 - TIPO DE PUERTA (selector)
     await selectByLegend(modal, 'TIPO DE PUERTA', CONFIG.defaultValues.tipoPuerta);
 
     await delay(CONFIG.delays.short);
 
-    // 10 - COND. NUMER. (selector)
     await selectByLegend(modal, 'COND. NUMER', CONFIG.defaultValues.condNumeracion);
 
-    // 09 - NRO MUNICIPAL
     if (ubicacion['ubicacion-n-municipal']) {
       const nroMunicipalInput = modal.querySelector('#form_item_numeromunicipal');
       if (nroMunicipalInput) {
@@ -1127,9 +1043,6 @@ async function handleNuevaUbicacionModal(ubicacion) {
   }
 }
 
-/**
- * Captura datos de ubicacion antes de continuar
- */
 async function captureUbicacionData(section) {
   const data = AppState.storedData;
   
@@ -1169,9 +1082,6 @@ async function captureUbicacionData(section) {
   }
 }
 
-/**
- * SECCION 03: IDENTIFICACION DEL TITULAR CATASTRAL
- */
 async function handleSeccion03Titular() {
   log('Procesando Seccion 03: IDENTIFICACION DEL TITULAR', 'info');
 
@@ -1179,12 +1089,10 @@ async function handleSeccion03Titular() {
   const section = document.querySelectorAll('.ant-collapse-item')[2];
   if (!section) return;
 
-  // [20] TIPO DE TITULAR - Selector
   await selectByLegend(section, 'TIPO DE TITULAR', CONFIG.defaultValues.tipoTitular);
 
   await delay(CONFIG.delays.medium);
 
-  // Click en busqueda de [27] NRO DOC.
   const searchButton = findSearchButtonByLegend(section, 'NRO DOC');
   if (searchButton) {
     simulateClick(searchButton);
@@ -1199,9 +1107,6 @@ async function handleSeccion03Titular() {
   await expandAndProcessSection(3);
 }
 
-/**
- * SECCION 04: DOMICILIO FISCAL DEL TITULAR CATASTRAL
- */
 async function handleSeccion04Domicilio() {
   log('Procesando Seccion 04: DOMICILIO FISCAL', 'info');
 
@@ -1214,21 +1119,18 @@ async function handleSeccion04Domicilio() {
 
   log('Esperando que el usuario seleccione la ubicacion...', 'info');
   
-  // Esperar a que el usuario seleccione una opción en el selector de ubicación
   let userSelection = null;
   await new Promise((resolve) => {
     const checkSelection = setInterval(() => {
       const selectionItems = section.querySelectorAll('.ant-select-selection-item');
       for (const item of selectionItems) {
         const text = item.textContent || '';
-        // Verificar si ya hay una selección (diferente de placeholder vacío)
         if (text.includes('01 - IGUAL A UNIDAD UU.CC.')) {
           userSelection = 'IGUAL_UNIDAD';
           clearInterval(checkSelection);
           resolve();
           return;
         } else if (text.includes('02 -') || text.includes('03 -') || text.includes('00 -')) {
-          // El usuario seleccionó otra opción diferente a "01 - IGUAL A UNIDAD UU.CC."
           userSelection = 'OTRA_OPCION';
           clearInterval(checkSelection);
           resolve();
@@ -1246,12 +1148,9 @@ async function handleSeccion04Domicilio() {
   log(`Usuario selecciono ubicacion: ${userSelection}`, 'info');
   await delay(CONFIG.delays.medium);
 
-  // Solo auto-poblar si el usuario eligió "01 - IGUAL A UNIDAD UU.CC."
   if (userSelection === 'IGUAL_UNIDAD') {
-    // [28] DISTRITO - Setear automáticamente
     const distritoSelect = section.querySelector('.ant-select');
     if (distritoSelect) {
-      // Buscar el selector de DISTRITO por label
       const formItems = section.querySelectorAll('.ant-form-item, fieldset');
       for (const item of formItems) {
         const label = item.querySelector('label, legend');
@@ -1268,16 +1167,14 @@ async function handleSeccion04Domicilio() {
 
     await delay(CONFIG.delays.medium);
 
-    // [09] N MUNICIPAL - Buscar por ID o por texto mas especifico
     if (ubicacion['ubicacion-n-municipal']) {
       let nroMunicipalInput = section.querySelector('#form_item_numeromunicipal');
       
-      // Si no se encuentra por ID, buscar por legend
       if (!nroMunicipalInput) {
         const formItems = section.querySelectorAll('.ant-form-item');
         for (const formItem of formItems) {
           const label = formItem.querySelector('label, legend, p');
-          if (label && (label.textContent.includes('NÂ° MUNICIPAL') || 
+          if (label && (label.textContent.includes('N° MUNICIPAL') || 
                         label.textContent.includes('NRO MUNICIPAL') ||
                         label.textContent.includes('MUNICIPAL'))) {
             nroMunicipalInput = formItem.querySelector('input:not([role="combobox"])');
@@ -1286,7 +1183,6 @@ async function handleSeccion04Domicilio() {
         }
       }
       
-      // Fallback: buscar en fieldsets
       if (!nroMunicipalInput) {
         nroMunicipalInput = findInputByLegend(section, 'MUNICIPAL');
       }
@@ -1299,19 +1195,16 @@ async function handleSeccion04Domicilio() {
       }
     }
 
-    // [17] MANZANA
     if (ubicacion['ubicacion-manzana']) {
       const manzanaInput = findInputByLegend(section, 'MANZANA');
       if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
     }
 
-    // [18] LOTE
     if (ubicacion['ubicacion-lote']) {
       const loteInput = findInputByLegend(section, 'LOTE');
       if (loteInput) simulateInput(loteInput, ubicacion['ubicacion-lote']);
     }
 
-    // [19] SUB-LOTE
     if (ubicacion['ubicacion-sub-lote']) {
       const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
                             findInputByLegend(section, 'SUBLOTE');
@@ -1320,7 +1213,6 @@ async function handleSeccion04Domicilio() {
 
     await delay(CONFIG.delays.medium);
 
-    // [14] CODIGO HAB. URBANA
     if (ubicacion['ubicacion-codigo-hu']) {
       const searchButton = findSearchButtonByLegend(section, 'DIGO HAB') || 
                            findSearchButtonByLegend(section, 'COD. HAB');
@@ -1332,7 +1224,6 @@ async function handleSeccion04Domicilio() {
 
     await delay(CONFIG.delays.medium);
 
-    // [05] CODIGO VIA
     if (ubicacion['ubicacion-codigo-via']) {
       const searchButton = findSearchButtonByLegend(section, 'DIGO V') || 
                            findSearchButtonByLegend(section, 'COD. V');
@@ -1342,7 +1233,6 @@ async function handleSeccion04Domicilio() {
       }
     }
   } else {
-    // El usuario eligió otra opción, no auto-poblar
     log('Usuario eligió opción diferente a "IGUAL A UNIDAD UU.CC.", no se auto-poblará', 'info');
   }
 
@@ -1355,11 +1245,43 @@ async function handleSeccion04Domicilio() {
   await expandAndProcessSection(4);
 }
 
-/**
- * SECCION 05: CARACTERISTICAS DE LA TITULARIDAD
- */
 async function handleSeccion05Caracteristicas() {
   log('Procesando Seccion 05: CARACTERISTICAS DE LA TITULARIDAD', 'info');
+
+  await delay(CONFIG.delays.medium);
+  const section = document.querySelectorAll('.ant-collapse-item')[4];
+  if (!section) return;
+
+  const fieldsets = section.querySelectorAll('fieldset');
+  for (const fieldset of fieldsets) {
+    const legend = fieldset.querySelector('legend');
+    if (legend && (legend.textContent.includes('FECHA DE ADQUISI') || legend.textContent.includes('[39]'))) {
+      const selects = fieldset.querySelectorAll('.ant-select');
+      selects.forEach(select => {
+        const inputs = select.querySelectorAll('input');
+        inputs.forEach(input => {
+          input.removeAttribute('readonly');
+          log('Readonly removido del selector MES en FECHA DE ADQUISICION', 'success');
+        });
+      });
+      break;
+    }
+  }
+
+  const flexContainers = section.querySelectorAll('.flex.gap-3');
+  for (const container of flexContainers) {
+    const selects = container.querySelectorAll('.ant-select');
+    selects.forEach(select => {
+      const selectionItem = select.querySelector('.ant-select-selection-item');
+      if (selectionItem && selectionItem.textContent.trim() === 'Mes') {
+        const inputs = select.querySelectorAll('input');
+        inputs.forEach(input => {
+          input.removeAttribute('readonly');
+          log('Readonly removido del selector MES', 'success');
+        });
+      }
+    });
+  }
 
   log('Seccion 05 - Esperando click en "Guardar caracteristicas de la titularidad"...', 'success');
 
@@ -1370,9 +1292,6 @@ async function handleSeccion05Caracteristicas() {
   await expandAndProcessSection(5);
 }
 
-/**
- * SECCION 06: DESCRIPCION DEL PREDIO
- */
 async function handleSeccion06Descripcion() {
   log('Procesando Seccion 06: DESCRIPCION DEL PREDIO', 'info');
 
@@ -1383,41 +1302,34 @@ async function handleSeccion06Descripcion() {
   const section = document.querySelectorAll('.ant-collapse-item')[5];
   if (!section) return;
 
-  // [40] CLASIF. DE PREDIO - Selector
   await selectByLegend(section, 'CLASIF. DE PREDIO', CONFIG.defaultValues.clasificacionPredio);
 
   await delay(CONFIG.delays.short);
 
-  // [41] PREDIO CATASTRAL EN - Selector
   await selectByLegend(section, 'PREDIO CATASTRAL EN', CONFIG.defaultValues.predioCatastralEn);
 
   await delay(CONFIG.delays.short);
 
-  // [44] ZONIFICACION
   if (descripcion['descripcion-zonificacion']) {
     const input = findInputByLegend(section, 'ZONIFICACI');
     if (input) simulateInput(input, descripcion['descripcion-zonificacion']);
   }
 
-  // [45] AREA DE TERRENO ADQUIRIDA
   if (descripcion['descripcion-area-adquirida']) {
     const input = findInputByLegend(section, 'REA DE TERRENO ADQUIRIDA') ||
                   findInputByLegend(section, 'AREA DE TERRENO ADQUIRIDA');
     if (input) simulateInput(input, descripcion['descripcion-area-adquirida']);
   }
 
-  // [46] AREA DE TERRENO VERIFICADA
   if (descripcion['descripcion-area-verificada']) {
     const input = findInputByLegend(section, 'REA DE TERRENO VERIFICADA') ||
                   findInputByLegend(section, 'AREA DE TERRENO VERIFICADA');
     if (input) simulateInput(input, descripcion['descripcion-area-verificada']);
   }
 
-  // LINDEROS DEL LOTE - Buscar en estructura grid-cols-3
   const linderoLabels = ['FRENTE', 'DERECHA', 'IZQUIERDA', 'FONDO'];
   const linderoKeys = ['frente', 'derecha', 'izquierda', 'fondo'];
 
-  // Buscar contenedores de linderos (div.grid.grid-cols-3)
   const gridContainers = section.querySelectorAll('.grid.grid-cols-3, div[class*="grid-cols-3"]');
   
   for (let i = 0; i < linderoLabels.length; i++) {
@@ -1429,13 +1341,11 @@ async function handleSeccion06Descripcion() {
       if (legendText && legendText.textContent.trim().toUpperCase().includes(label)) {
         const inputs = grid.querySelectorAll('input');
         
-        // Primer input: medida
         if (inputs[0] && descripcion['lindero-' + key + '-medida']) {
           simulateInput(inputs[0], descripcion['lindero-' + key + '-medida']);
           log('Lindero ' + label + ' medida seteado', 'success');
         }
         
-        // Segundo input: colindancia
         if (inputs[1] && descripcion['lindero-' + key + '-colindancia']) {
           simulateInput(inputs[1], descripcion['lindero-' + key + '-colindancia']);
           log('Lindero ' + label + ' colindancia seteado', 'success');
@@ -1445,7 +1355,6 @@ async function handleSeccion06Descripcion() {
     }
   }
   
-  // Fallback: buscar por texto en toda la seccion
   if (gridContainers.length === 0) {
     for (let i = 0; i < linderoLabels.length; i++) {
       const label = linderoLabels[i];
@@ -1470,7 +1379,6 @@ async function handleSeccion06Descripcion() {
     }
   }
 
-  // [42] CODIGO DE USO - Solo hacer click en search
   const searchButton = findSearchButtonByLegend(section, 'DIGO DE USO') ||
                        findSearchButtonByLegend(section, 'COD. DE USO');
   if (searchButton) {
@@ -1486,9 +1394,6 @@ async function handleSeccion06Descripcion() {
   await expandAndProcessSection(6);
 }
 
-/**
- * SECCION 07: SERVICIOS BASICOS
- */
 async function handleSeccion07Servicios() {
   log('Procesando Seccion 07: SERVICIOS BASICOS', 'info');
 
@@ -1496,7 +1401,6 @@ async function handleSeccion07Servicios() {
   const section = document.querySelectorAll('.ant-collapse-item')[6];
   if (!section) return;
 
-  // Quitar readonly de todos los selectores de esta seccion
   const allSelects = section.querySelectorAll('.ant-select');
   allSelects.forEach(select => {
     removeReadonly(select);
@@ -1513,13 +1417,9 @@ async function handleSeccion07Servicios() {
   log('Usuario guardo SERVICIOS BASICOS', 'success');
   
   await delay(CONFIG.delays.medium);
-  // Saltar a seccion 11 (indice 10)
   await expandAndProcessSection(10);
 }
 
-/**
- * SECCION 11: INSCRIPCION DEL PREDIO CATASTRAL
- */
 async function handleSeccion11Inscripcion() {
   log('Procesando Seccion 11: INSCRIPCION DEL PREDIO', 'info');
 
@@ -1530,12 +1430,10 @@ async function handleSeccion11Inscripcion() {
   const section = document.querySelectorAll('.ant-collapse-item')[10];
   if (!section) return;
 
-  // [79] TIPO PARTIDA REGISTRAL - Selector
   await selectByLegend(section, 'TIPO PARTIDA', CONFIG.defaultValues.tipoPartidaRegistral);
 
   await delay(CONFIG.delays.short);
 
-  // [82] ASIENTO
   if (inscripcion['inscripcion-asiento']) {
     const input = findInputByLegend(section, 'ASIENTO');
     if (input) {
@@ -1544,12 +1442,10 @@ async function handleSeccion11Inscripcion() {
     }
   }
 
-  // [83] FECHA INSCRIPCION PREDIO - Formato dd/mm/yyyy como texto
   if (inscripcion['inscripcion-fecha']) {
-    const fecha = inscripcion['inscripcion-fecha']; // Formato esperado: dd/mm/yyyy
+    const fecha = inscripcion['inscripcion-fecha'];
     log('Buscando campo de fecha inscripcion...', 'info');
     
-    // Buscar el picker de fecha dentro de la sección
     let pickerContainer = null;
     const datePickers = section.querySelectorAll('.ant-picker');
     
@@ -1564,7 +1460,6 @@ async function handleSeccion11Inscripcion() {
       }
     }
     
-    // Fallback: usar el primer picker encontrado
     if (!pickerContainer && datePickers.length > 0) {
       pickerContainer = datePickers[0];
     }
@@ -1572,25 +1467,20 @@ async function handleSeccion11Inscripcion() {
     if (pickerContainer) {
       log('Picker de fecha encontrado, haciendo click para abrir...', 'info');
       
-      // Click en el picker para abrirlo
       simulateClick(pickerContainer);
       await delay(CONFIG.delays.medium);
       
-      // Buscar el input dentro del picker
       const fechaInput = pickerContainer.querySelector('input');
       
       if (fechaInput) {
-        // Enfocar el input
         fechaInput.focus();
         await delay(CONFIG.delays.short);
         
-        // Limpiar el input usando el setter nativo
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
         nativeInputValueSetter.call(fechaInput, '');
         fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
         await delay(100);
         
-        // Escribir la fecha caracter por caracter
         for (let i = 0; i < fecha.length; i++) {
           const currentValue = fechaInput.value + fecha[i];
           nativeInputValueSetter.call(fechaInput, currentValue);
@@ -1600,11 +1490,9 @@ async function handleSeccion11Inscripcion() {
         
         await delay(CONFIG.delays.medium);
         
-        // Disparar evento change
         fechaInput.dispatchEvent(new Event('change', { bubbles: true }));
         await delay(CONFIG.delays.short);
         
-        // Presionar Enter para confirmar
         const enterEvent = new KeyboardEvent('keydown', {
           key: 'Enter',
           code: 'Enter',
@@ -1626,7 +1514,6 @@ async function handleSeccion11Inscripcion() {
     }
   }
 
-  // [80] NUMERO
   if (inscripcion['inscripcion-numero']) {
     let input = findInputByLegend(section, 'NUMERO');
     if (!input) input = findInputByLegend(section, 'MERO');
@@ -1638,17 +1525,9 @@ async function handleSeccion11Inscripcion() {
 
   log('Seccion 11 completada. Iniciando proceso de observaciones y firmas...', 'success');
   
-  // Después de la sección 11, procesar la sección final (observaciones y firmas)
   await handleSeccionFinal();
 }
 
-// ============================================
-// 6B. SECCIÓN 08: CONSTRUCCIONES
-// ============================================
-
-/**
- * Mapeo de valores para selectores de construcciones
- */
 const CONSTRUCCION_MAPPINGS = {
   mep: {
     '0': '00 - NINGUNO', '00': '00 - NINGUNO',
@@ -1694,15 +1573,11 @@ const CONSTRUCCION_MAPPINGS = {
   }
 };
 
-/**
- * Selecciona una opción en un selector de modal
- */
 async function selectModalOption(modal, labelText, value) {
   if (!value || value.toString().trim() === '') return;
   
   log(`Buscando selector para: ${labelText} con valor: ${value}`, 'info');
   
-  // Buscar el form-item por label - buscar el texto en el label title o textContent
   const formItems = modal.querySelectorAll('.ant-form-item');
   let targetSelector = null;
   
@@ -1723,11 +1598,9 @@ async function selectModalOption(modal, labelText, value) {
     }
   }
   
-  // Fallback: buscar en divs que tengan el selector
   if (!targetSelector) {
     const allSelects = modal.querySelectorAll('.ant-select');
     for (const select of allSelects) {
-      // Subir al contenedor padre
       const parent = select.closest('.ant-form-item') || select.parentElement?.parentElement?.parentElement;
       if (parent) {
         const parentText = parent.textContent || '';
@@ -1745,7 +1618,6 @@ async function selectModalOption(modal, labelText, value) {
     return;
   }
 
-  // Usar la función existente selectOptionByText que ya funciona correctamente
   const result = await selectOptionByText(targetSelector, value, false);
   if (result) {
     log(`Seleccionado ${labelText}: ${value}`, 'success');
@@ -1754,20 +1626,15 @@ async function selectModalOption(modal, labelText, value) {
   }
 }
 
-/**
- * Selecciona mes en modal de construcción
- */
 async function selectMesModal(modal, mesValue) {
   if (!mesValue || mesValue.toString().trim() === '') return;
   
-  // El selector de mes está en la sección de FECHA DE CONSTRUCCIÓN
   const formItems = modal.querySelectorAll('.ant-form-item');
   let mesSelector = null;
   
   for (const item of formItems) {
     const label = item.querySelector('label');
     if (label && label.textContent.includes('FECHA DE CONSTRUCCI')) {
-      // Buscar el selector dentro del flex gap-3
       const flexContainer = item.querySelector('.flex.gap-3, .flex');
       if (flexContainer) {
         mesSelector = flexContainer.querySelector('.ant-select');
@@ -1776,7 +1643,6 @@ async function selectMesModal(modal, mesValue) {
     }
   }
   
-  // Fallback: buscar el primer selector con placeholder "Mes"
   if (!mesSelector) {
     const allSelectors = modal.querySelectorAll('.ant-select');
     for (const sel of allSelectors) {
@@ -1793,20 +1659,14 @@ async function selectMesModal(modal, mesValue) {
     return;
   }
   
-  // Normalizar el mes (puede venir como "1", "01", "12", etc.)
   const mesNormalized = mesValue.toString().padStart(2, '0');
   
-  // Usar selectOptionByText
   await selectOptionByText(mesSelector, mesNormalized, true);
 }
 
-/**
- * Establece el año en el input de modal
- */
 async function setAnioModal(modal, anioValue) {
   if (!anioValue || anioValue.toString().trim() === '') return;
   
-  // El input de año tiene placeholder="Año"
   const anioInput = modal.querySelector('input[placeholder="Año"]');
   if (anioInput) {
     simulateInput(anioInput, anioValue.toString());
@@ -1814,14 +1674,10 @@ async function setAnioModal(modal, anioValue) {
   }
 }
 
-/**
- * Procesa una fila de construcción
- */
 async function processConstruccionRow(rowData, rowIndex) {
   log(`Procesando construccion fila ${rowIndex + 1}`, 'info');
   
-  // Click en botón NUEVO de la sección 08
-  const section = document.querySelectorAll('.ant-collapse-item')[7]; // Índice 7 = sección 08
+  const section = document.querySelectorAll('.ant-collapse-item')[7];
   if (!section) {
     log('Sección 08 no encontrada', 'error');
     return;
@@ -1838,14 +1694,12 @@ async function processConstruccionRow(rowData, rowIndex) {
   simulateClick(nuevoBtn);
   await delay(CONFIG.delays.long);
   
-  // Esperar el modal
   const modal = await waitForModal('NUEVA CONSTRUCCI');
   if (!modal) {
     log('Modal de nueva construcción no apareció', 'error');
     return;
   }
-  
-  // [56] N° PISO SÓTANO MEZZASINE
+
   if (rowData.npiso) {
     const npisoInput = modal.querySelector('input.ant-input[type="text"]');
     if (npisoInput) {
@@ -1854,73 +1708,60 @@ async function processConstruccionRow(rowData, rowIndex) {
     }
   }
   
-  // [57] MES
   await selectMesModal(modal, rowData.mes);
-  
-  // [57] AÑO
+
   await setAnioModal(modal, rowData.anio);
   
-  // [58] MATERIAL ESTRUC. PREDOMINANTE
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(modal, 'MATERIAL ESTRUC', mappedValue);
   }
 
-  // [59] ESTADO CONSERVACIÓN
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(modal, 'ESTADO CONSERV', mappedValue);
   }
 
-  // [60] ESTADO CONSTRUCCIÓN
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(modal, 'ESTADO CONSTRUCC', mappedValue);
   }
   
-  // [61] MUROS Y COLUMNAS
   if (rowData.muro) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.muro] || rowData.muro.toUpperCase();
     await selectModalOption(modal, 'MUROS Y COLUMNAS', mappedValue);
   }
   
-  // [62] TECHOS
   if (rowData.techo) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.techo] || rowData.techo.toUpperCase();
     await selectModalOption(modal, 'TECHOS', mappedValue);
   }
   
-  // [63] PISOS
   if (rowData.piso) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.piso] || rowData.piso.toUpperCase();
     await selectModalOption(modal, 'PISOS', mappedValue);
   }
   
-  // [64] PUERTAS Y VENTANAS
   if (rowData.puerta) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.puerta] || rowData.puerta.toUpperCase();
     await selectModalOption(modal, 'PUERTAS Y VENTANAS', mappedValue);
   }
   
-  // [65] REVESTIMIENTOS
   if (rowData.revest) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.revest] || rowData.revest.toUpperCase();
     await selectModalOption(modal, 'REVESTIMIENTOS', mappedValue);
   }
 
-  // [66] BAÑOS
   if (rowData.banio) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.banio] || rowData.banio.toUpperCase();
     await selectModalOption(modal, 'BAÑOS', mappedValue);
   }
 
-  // [67] INST. ELÉCTRICAS SANITARIAS
   if (rowData.inst) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.inst] || rowData.inst.toUpperCase();
     await selectModalOption(modal, 'INST. EL', mappedValue);
   }
   
-  // [68] AREA VERIFICADA
   if (rowData.area) {
     const areaInput = modal.querySelector('input[type="number"][maxlength="11"]');
     if (areaInput) {
@@ -1929,7 +1770,6 @@ async function processConstruccionRow(rowData, rowIndex) {
     }
   }
   
-  // [69] UBI. CONSTRUC. ANTI.
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(modal, 'UBI. CONSTRUC', mappedValue);
@@ -1937,7 +1777,6 @@ async function processConstruccionRow(rowData, rowIndex) {
   
   await delay(CONFIG.delays.medium);
   
-  // Click en Guardar
   const guardarBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
@@ -1947,13 +1786,9 @@ async function processConstruccionRow(rowData, rowIndex) {
   await delay(CONFIG.delays.extraLong);
 }
 
-/**
- * Procesa la sección 08 - Construcciones
- */
 async function handleSeccion08Construcciones(construccionesData) {
   log('Procesando Seccion 08: CONSTRUCCIONES', 'info');
   
-  // Expandir sección 08 (índice 7)
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[7];
   
@@ -1968,7 +1803,6 @@ async function handleSeccion08Construcciones(construccionesData) {
     await delay(CONFIG.delays.long);
   }
   
-  // Iterar por cada fila de construcciones
   for (let i = 0; i < construccionesData.length; i++) {
     await processConstruccionRow(construccionesData[i], i);
     await delay(CONFIG.delays.medium);
@@ -1977,18 +1811,10 @@ async function handleSeccion08Construcciones(construccionesData) {
   log('Sección 08 completada', 'success');
 }
 
-// ============================================
-// 6C. SECCIÓN 09: OBRAS COMPLEMENTARIAS
-// ============================================
-
-/**
- * Procesa una fila de obra complementaria
- */
 async function processObraRow(rowData, rowIndex) {
   log(`Procesando obra fila ${rowIndex + 1}`, 'info');
   
-  // Click en botón NUEVO de la sección 09
-  const section = document.querySelectorAll('.ant-collapse-item')[8]; // Índice 8 = sección 09
+  const section = document.querySelectorAll('.ant-collapse-item')[8];
   if (!section) {
     log('Sección 09 no encontrada', 'error');
     return;
@@ -2005,34 +1831,29 @@ async function processObraRow(rowData, rowIndex) {
   simulateClick(nuevoBtn);
   await delay(CONFIG.delays.long);
   
-  // Esperar el modal de NUEVA OBRA COMPLEMENTARIA
   const obraModal = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModal) {
     log('Modal de nueva obra no apareció', 'error');
     return;
   }
 
-  // Click en botón de búsqueda de código
   const searchCodeBtn = obraModal.querySelector('button .anticon-search')?.closest('button');
   if (searchCodeBtn) {
     simulateClick(searchCodeBtn);
     await delay(CONFIG.delays.long);
   }
 
-  // Esperar modal de CÓDIGOS DE INSTALACIÓN
   const codigosModal = await waitForModal('CÓDIGOS DE INSTALACIÓN');
   if (!codigosModal) {
     log('Modal de códigos no apareció', 'error');
     return;
   }
 
-  // Buscar el código
   const searchInput = codigosModal.querySelector('input#form_item_search');
   if (searchInput && rowData.codigo) {
     simulateInput(searchInput, rowData.codigo);
     await delay(CONFIG.delays.short);
     
-    // Click en botón buscar
     const searchBtn = codigosModal.querySelector('button.ant-input-search-button');
     if (searchBtn) {
       simulateClick(searchBtn);
@@ -2040,54 +1861,44 @@ async function processObraRow(rowData, rowIndex) {
     }
   }
   
-  // Verificar total de registros
   const totalRegistros = codigosModal.querySelector('p.float-right span.text-black');
   const totalCount = totalRegistros ? parseInt(totalRegistros.textContent) : 0;
   
   if (totalCount === 1) {
-    // Click automático en seleccionar
     const selectBtn = codigosModal.querySelector('button .anticon-select')?.closest('button');
     if (selectBtn) {
       simulateClick(selectBtn);
       log('Código seleccionado automáticamente', 'success');
     }
   } else if (totalCount > 1) {
-    // Esperar click manual del usuario
     log(`Se encontraron ${totalCount} registros. Esperando selección manual...`, 'warning');
     await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
   }
   
   await delay(CONFIG.delays.long);
   
-  // Verificar que volvimos al modal de obra
   const obraModalUpdated = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModalUpdated) return;
   
-  // MES
   await selectMesModal(obraModalUpdated, rowData.mes);
   
-  // AÑO
   await setAnioModal(obraModalUpdated, rowData.anio);
   
-  // [58] MEP
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(obraModalUpdated, 'MEP', mappedValue);
   }
   
-  // [59] ECS
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(obraModalUpdated, 'ECS', mappedValue);
   }
   
-  // [60] ECC
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(obraModalUpdated, 'ECC', mappedValue);
   }
   
-  // [73] PRODUCTO TOTAL
   if (rowData.total) {
     const totalInput = obraModalUpdated.querySelector('input[type="number"]:not([placeholder])');
     if (totalInput) {
@@ -2096,7 +1907,6 @@ async function processObraRow(rowData, rowIndex) {
     }
   }
   
-  // [69] UCA
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(obraModalUpdated, 'UCA', mappedValue);
@@ -2104,7 +1914,6 @@ async function processObraRow(rowData, rowIndex) {
   
   await delay(CONFIG.delays.medium);
   
-  // Click en Guardar
   const guardarBtn = obraModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
@@ -2114,9 +1923,6 @@ async function processObraRow(rowData, rowIndex) {
   await delay(CONFIG.delays.extraLong);
 }
 
-/**
- * Espera a que un modal se cierre
- */
 async function waitForModalToClose(titleContains, timeout = 60000) {
   const startTime = Date.now();
   
@@ -2141,13 +1947,9 @@ async function waitForModalToClose(titleContains, timeout = 60000) {
   return false;
 }
 
-/**
- * Procesa la sección 09 - Obras Complementarias
- */
 async function handleSeccion09Obras(obrasData) {
-  log('Procesando Seccion 09: OBRAS COMPLEMENTARIAS', 'info');
+  log('Procesando Sección 09: OBRAS COMPLEMENTARIAS', 'info');
   
-  // Expandir sección 09 (índice 8)
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[8];
   
@@ -2162,24 +1964,15 @@ async function handleSeccion09Obras(obrasData) {
     await delay(CONFIG.delays.long);
   }
   
-  // Iterar por cada fila de obras
   for (let i = 0; i < obrasData.length; i++) {
     await processObraRow(obrasData[i], i);
     await delay(CONFIG.delays.medium);
   }
-  
+
   log('Sección 09 completada', 'success');
 }
 
-// ============================================
-// 6D. SECCIÓN FINAL: FIRMAS
-// ============================================
-
-/**
- * Busca y selecciona personal en el modal de listado
- */
 async function searchAndSelectPersonal(searchName) {
-  // Esperar el modal de LISTADO DEL PERSONAL
   const personalModal = await waitForModal('LISTADO DEL PERSONAL');
   if (!personalModal) {
     log('Modal de listado de personal no apareció', 'error');
@@ -2188,53 +1981,60 @@ async function searchAndSelectPersonal(searchName) {
   
   await delay(CONFIG.delays.medium);
   
-  // Buscar el input de búsqueda
   const searchInput = personalModal.querySelector('input#form_item_search') || 
                       personalModal.querySelector('input[placeholder="Buscar"]');
   
   if (searchInput && searchName) {
-    // Limpiar y escribir el nombre
     searchInput.focus();
     searchInput.value = '';
     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     await delay(CONFIG.delays.short);
     
-    // Escribir el nombre de búsqueda
     simulateInput(searchInput, searchName);
     await delay(CONFIG.delays.short);
     
-    // Presionar Enter para buscar
-    simulateEnter(searchInput);
+    const searchButton = personalModal.querySelector('button[type="submit"]') ||
+                         personalModal.querySelector('button .anticon-search')?.closest('button');
+    
+    if (searchButton) {
+      log('Click en boton de busqueda del modal', 'info');
+      simulateClick(searchButton);
+    } else {
+      const allButtons = personalModal.querySelectorAll('button');
+      for (const btn of allButtons) {
+        if (btn.textContent.includes('BUSCAR')) {
+          log('Click en boton BUSCAR del modal', 'info');
+          simulateClick(btn);
+          break;
+        }
+      }
+    }
+    
     await delay(CONFIG.delays.long);
     
-    // Esperar a que se actualice la tabla
     await delay(CONFIG.delays.long);
   }
   
-  // Verificar total de registros
   const totalRegistros = personalModal.querySelector('p.float-right span.text-black');
   const totalCount = totalRegistros ? parseInt(totalRegistros.textContent) : 0;
   
   log(`Total de registros encontrados: ${totalCount}`, 'info');
   
   if (totalCount === 1) {
-    // Click automático en el único botón de seleccionar
     const selectBtn = personalModal.querySelector('button .anticon-select')?.closest('button');
     if (selectBtn) {
       await delay(CONFIG.delays.short);
       simulateClick(selectBtn);
-      log('Personal seleccionado automáticamente', 'success');
+      log('Personal seleccionado automaticamente', 'success');
       await delay(CONFIG.delays.medium);
       return true;
     }
   } else if (totalCount > 1) {
-    // Esperar click manual del usuario
-    log(`Se encontraron ${totalCount} registros. Esperando selección manual...`, 'warning');
+    log(`Se encontraron ${totalCount} registros. Esperando seleccion manual...`, 'warning');
     await waitForModalToClose('LISTADO DEL PERSONAL');
     return true;
   } else {
     log('No se encontraron registros', 'warning');
-    // Cerrar modal si no hay resultados
     const closeBtn = personalModal.querySelector('.ant-modal-close');
     if (closeBtn) simulateClick(closeBtn);
   }
@@ -2242,19 +2042,13 @@ async function searchAndSelectPersonal(searchName) {
   return false;
 }
 
-/**
- * Establece la fecha en el modal de firma (formato dd/mm/yyyy - ya viene así del popup)
- */
 async function setFechaFirmaModal(modal, fecha) {
   if (!fecha) return;
   
-  // La fecha ya viene en formato DD/MM/YYYY desde el popup (input type="text")
-  // No necesitamos convertir
   const fechaFormateada = fecha;
   
   log(`Estableciendo fecha: ${fechaFormateada}`, 'info');
   
-  // Buscar el input de fecha directamente
   const dateInput = modal.querySelector('input#form_item_fecharegistro') ||
                     modal.querySelector('input[placeholder*="DD"]') ||
                     modal.querySelector('.ant-picker input');
@@ -2264,33 +2058,27 @@ async function setFechaFirmaModal(modal, fecha) {
     return;
   }
   
-  // Focus en el input
   dateInput.focus();
   await delay(CONFIG.delays.short);
   
-  // Limpiar el valor actual
   dateInput.value = '';
   dateInput.dispatchEvent(new Event('input', { bubbles: true }));
   await delay(100);
   simulateEnter(dateInput);
   
-  // Escribir la fecha caracter por caracter
   for (let i = 0; i < fechaFormateada.length; i++) {
     dateInput.value += fechaFormateada[i];
     dateInput.dispatchEvent(new Event('input', { bubbles: true }));
     await delay(30);
   }
   
-  // Disparar eventos de cambio
   dateInput.dispatchEvent(new Event('change', { bubbles: true }));
   dateInput.dispatchEvent(new Event('blur', { bubbles: true }));
   
-  // Presionar Enter para confirmar
   simulateEnter(dateInput);
   
   await delay(CONFIG.delays.short);
   
-  // Click fuera para cerrar cualquier picker abierto
   const modalBody = modal.querySelector('.ant-modal-body');
   if (modalBody) {
     simulateClick(modalBody);
@@ -2300,21 +2088,14 @@ async function setFechaFirmaModal(modal, fecha) {
   log(`Fecha establecida: ${fechaFormateada}`, 'success');
 }
 
-/**
- * Procesa la firma del supervisor
- */
 async function processFirmaSupervisor(data) {
   log('Procesando firma del supervisor', 'info');
   
-  // Buscar el contenedor que tiene "[95] FIRMA DEL SUPERVISOR"
-  // Estructura: div > div.flex > span con texto [95] FIRMA DEL SUPERVISOR > span > button.anticon-edit
   let editBtn = null;
   
-  // Buscar todos los spans que contienen el texto del supervisor
   const allSpans = document.querySelectorAll('span');
   for (const span of allSpans) {
     if (span.textContent.trim() === '[95] FIRMA DEL SUPERVISOR') {
-      // Encontramos el span correcto, ahora buscamos el botón de editar en el mismo contenedor
       const flexContainer = span.closest('.flex');
       if (flexContainer) {
         editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
@@ -2326,7 +2107,6 @@ async function processFirmaSupervisor(data) {
     }
   }
   
-  // Fallback: buscar por texto parcial
   if (!editBtn) {
     const containers = document.querySelectorAll('.flex.justify-between');
     for (const container of containers) {
@@ -2345,7 +2125,6 @@ async function processFirmaSupervisor(data) {
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
   
-  // Esperar modal de FIRMA DEL SUPERVISOR (puede ser "NUEVA FIRMA DEL SUPERVISOR")
   let firmaModal = await waitForModal('FIRMA DEL SUPERVISOR');
   if (!firmaModal) {
     firmaModal = await waitForModal('NUEVA FIRMA');
@@ -2355,31 +2134,26 @@ async function processFirmaSupervisor(data) {
     return;
   }
   
-  // Click en botón de búsqueda para abrir listado de personal
   const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
                     firmaModal.querySelector('button .anticon-search')?.closest('button');
   if (searchBtn) {
     simulateClick(searchBtn);
     await delay(CONFIG.delays.long);
     
-    // Buscar y seleccionar personal
     await searchAndSelectPersonal(data['final-supervisor-nombre']);
   }
   
   await delay(CONFIG.delays.long);
   
-  // Verificar que volvimos al modal de firma
   let firmaModalUpdated = await waitForModal('FIRMA DEL SUPERVISOR');
   if (!firmaModalUpdated) {
     firmaModalUpdated = await waitForModal('NUEVA FIRMA');
   }
   if (firmaModalUpdated) {
-    // Establecer fecha
     await setFechaFirmaModal(firmaModalUpdated, data['final-supervisor-fecha']);
     
     await delay(CONFIG.delays.medium);
     
-    // Click en Guardar
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
@@ -2390,22 +2164,15 @@ async function processFirmaSupervisor(data) {
   await delay(CONFIG.delays.extraLong);
 }
 
-/**
- * Procesa la firma del técnico catastral
- */
 async function processFirmaTecnico(data) {
   log('Procesando firma del técnico catastral', 'info');
   
-  // Buscar el contenedor que tiene "[96] FIRMA DEL TÉCNICO CATASTRAL"
-  // Estructura: div > div.flex > span con texto [96] FIRMA DEL TÉCNICO CATASTRAL > span > button.anticon-edit
   let editBtn = null;
   
-  // Buscar todos los spans que contienen el texto del técnico
   const allSpans = document.querySelectorAll('span');
   for (const span of allSpans) {
     const spanText = span.textContent.trim();
     if (spanText.includes('[96]') && spanText.includes('FIRMA') && spanText.includes('CNICO')) {
-      // Encontramos el span correcto, ahora buscamos el botón de editar en el mismo contenedor
       const flexContainer = span.closest('.flex');
       if (flexContainer) {
         editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
@@ -2417,7 +2184,6 @@ async function processFirmaTecnico(data) {
     }
   }
   
-  // Fallback: buscar por texto parcial en contenedores flex
   if (!editBtn) {
     const containers = document.querySelectorAll('.flex.justify-between');
     for (const container of containers) {
@@ -2436,7 +2202,6 @@ async function processFirmaTecnico(data) {
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
   
-  // Esperar modal de FIRMA DEL TÉCNICO (puede ser "NUEVA FIRMA DEL TÉCNICO")
   let firmaModal = await waitForModal('CNICO CATASTRAL');
   if (!firmaModal) {
     firmaModal = await waitForModal('NUEVA FIRMA');
@@ -2446,31 +2211,26 @@ async function processFirmaTecnico(data) {
     return;
   }
 
-  // Click en botón de búsqueda
   const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
                     firmaModal.querySelector('button .anticon-search')?.closest('button');
   if (searchBtn) {
     simulateClick(searchBtn);
     await delay(CONFIG.delays.long);
     
-    // Buscar y seleccionar personal
     await searchAndSelectPersonal(data['final-tecnico-nombre']);
   }
   
   await delay(CONFIG.delays.long);
   
-  // Verificar que volvimos al modal de firma
   let firmaModalUpdated = await waitForModal('CNICO CATASTRAL');
   if (!firmaModalUpdated) {
     firmaModalUpdated = await waitForModal('NUEVA FIRMA');
   }
   if (firmaModalUpdated) {
-    // Establecer fecha
     await setFechaFirmaModal(firmaModalUpdated, data['final-tecnico-fecha']);
     
     await delay(CONFIG.delays.medium);
     
-    // Click en Guardar
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
@@ -2481,33 +2241,25 @@ async function processFirmaTecnico(data) {
   await delay(CONFIG.delays.extraLong);
 }
 
-/**
- * Procesa la seccion final despues de guardar observaciones
- */
 async function handleSeccionFinal() {
   log('Procesando seccion final: FIRMAS', 'info');
   
   const data = AppState.storedData;
   const finalData = data.final || {};
   
-  // Buscar el botón de "Guardar observaciones" fuera del collapse
-  // Este botón está en un formulario separado al final de la página
   log('Esperando click en boton "Guardar observaciones"...', 'info');
   
-  // Usar una función especial que busca el botón fuera del collapse
   await waitForObservacionesButtonClick();
   log('Usuario guardo observaciones', 'success');
   
   await delay(CONFIG.delays.long);
   
-  // Procesar firma del supervisor
   if (finalData['final-supervisor-nombre']) {
     await processFirmaSupervisor(finalData);
   }
   
   await delay(CONFIG.delays.long);
   
-  // Procesar firma del tecnico
   if (finalData['final-tecnico-nombre']) {
     await processFirmaTecnico(finalData);
   }
@@ -2515,20 +2267,14 @@ async function handleSeccionFinal() {
   log('Seccion final completada', 'success');
 }
 
-/**
- * Espera a que el usuario haga click en el boton "Guardar observaciones"
- * Este botón está fuera del collapse, en un formulario separado
- */
 function waitForObservacionesButtonClick() {
   return new Promise((resolve) => {
     log('Configurando listener para boton Guardar observaciones...', 'info');
     
     const handler = (e) => {
-      // Buscar si el click fue en un botón
       const button = e.target.closest('button');
       if (!button) return;
       
-      // Verificar si el botón contiene el texto "Guardar observaciones"
       const buttonText = button.textContent || '';
       if (buttonText.includes('Guardar observaciones')) {
         log('Click detectado en Guardar observaciones!', 'success');
@@ -2537,10 +2283,8 @@ function waitForObservacionesButtonClick() {
       }
     };
     
-    // Usar capture phase (true) para capturar el evento antes de que llegue al target
     document.addEventListener('click', handler, true);
     
-    // También agregar un listener para mousedown por si acaso
     const mouseDownHandler = (e) => {
       const button = e.target.closest('button');
       if (!button) return;
@@ -2554,13 +2298,6 @@ function waitForObservacionesButtonClick() {
   });
 }
 
-// ============================================
-// 7. LISTENER DE MENSAJES DEL POPUP
-// ============================================
-
-/**
- * Escucha mensajes del popup para ejecutar acciones
- */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'executeSection') {
     log(`Recibida solicitud de ejecución: ${message.section}`, 'info');
@@ -2581,17 +2318,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     }
 
-    return true; // Indica respuesta asíncrona
+    return true;
   }
 });
 
-// ============================================
-// 7. CONTROLADOR PRINCIPAL DE FLUJO
-// ============================================
-
-/**
- * Expande una seccion y ejecuta su handler correspondiente
- */
 async function expandAndProcessSection(sectionIndex) {
   const sections = document.querySelectorAll('.ant-collapse-item');
   
@@ -2625,16 +2355,12 @@ async function expandAndProcessSection(sectionIndex) {
   }
 }
 
-/**
- * Inicializa la extension
- */
 async function init() {
   log('Iniciando automatizacion de Ficha Catastral Individual', 'info');
   
   AppState.storedData = await getStoredData();
   log('Datos cargados del storage', 'success');
 
-  // Configurar interceptor de tecla Tab para simular Enter
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
       simulateEnter(e.target);
@@ -2653,7 +2379,6 @@ async function init() {
   }
 }
 
-// Iniciar cuando el DOM este listo
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

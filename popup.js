@@ -1,23 +1,6 @@
-/**
- * ============================================
- * POPUP.JS - Gestor de Ficha Catastral Individual
- * ============================================
- * Gestiona:
- * - Guardar/Limpiar secciones individuales
- * - Tablas tipo Excel (agregar, duplicar, eliminar filas)
- * - Almacenamiento en chrome.storage.local
- * - Exportar/Importar datos en JSON
- * - Modo oscuro/claro
- */
-
-// ============================================
-// CONFIGURACIÓN Y CONSTANTES
-// ============================================
-
 const STORAGE_KEY = 'fichaCatastralData';
 const THEME_KEY = 'fichaCatastralTheme';
 
-// Secciones simples
 const SECCIONES_CONFIG = {
   principales: {
     fields: ['principales-sector', 'principales-manzana', 'principales-lote']
@@ -48,7 +31,6 @@ const SECCIONES_CONFIG = {
   }
 };
 
-// Tablas tipo Excel
 const TABLAS_CONFIG = {
   construcciones: {
     tableId: 'tabla-construcciones',
@@ -62,9 +44,6 @@ const TABLAS_CONFIG = {
   }
 };
 
-// ============================================
-// UTILIDADES
-// ============================================
 
 function showToast(message, type = 'info') {
   const existingToast = document.querySelector('.toast');
@@ -85,9 +64,6 @@ function generateRowId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// ============================================
-// MODO OSCURO
-// ============================================
 
 function initTheme() {
   chrome.storage.local.get([THEME_KEY], (result) => {
@@ -108,9 +84,6 @@ function toggleTheme() {
   showToast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
 }
 
-// ============================================
-// ALMACENAMIENTO
-// ============================================
 
 async function getAllStoredData() {
   return new Promise((resolve) => {
@@ -137,9 +110,6 @@ async function saveSectionData(section, data) {
   await saveAllData(allData);
 }
 
-// ============================================
-// SECCIONES SIMPLES
-// ============================================
 
 function getSectionValuesFromDOM(section) {
   const config = SECCIONES_CONFIG[section];
@@ -187,9 +157,6 @@ async function clearSection(section) {
   showToast(`"${section}" limpiado`, 'info');
 }
 
-// ============================================
-// TABLAS TIPO EXCEL
-// ============================================
 
 function createTableRow(tableType, values = {}) {
   const config = TABLAS_CONFIG[tableType];
@@ -317,15 +284,10 @@ async function clearTable(tableType) {
   showToast(`"${tableType}" limpiado`, 'info');
 }
 
-// ============================================
-// EJECUTAR AUTOMATIZACIÓN
-// ============================================
 
 async function executeAutomation(tableType) {
-  // Primero guardar los datos de la tabla
   const data = getTableDataFromDOM(tableType);
   
-  // Filtrar filas que tienen al menos un campo con datos
   const filasConDatos = data.filter(row => {
     const columns = TABLAS_CONFIG[tableType].columns;
     return columns.some(col => row[col] && row[col].trim() !== '');
@@ -336,11 +298,9 @@ async function executeAutomation(tableType) {
     return;
   }
   
-  // Guardar los datos
   await saveSectionData(tableType, filasConDatos);
   showToast(`Ejecutando ${tableType} (${filasConDatos.length} filas)...`, 'info');
   
-  // Enviar mensaje al content script para ejecutar la automatización
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       chrome.tabs.sendMessage(tabs[0].id, {
@@ -351,16 +311,13 @@ async function executeAutomation(tableType) {
         if (chrome.runtime.lastError) {
           showToast('Error: No se pudo conectar con la página', 'error');
         } else if (response && response.success) {
-          showToast('Automatización iniciada', 'success');
+          showToast('Automatización terminada', 'success');
         }
       });
     }
   });
 }
 
-// ============================================
-// ACCIONES GLOBALES
-// ============================================
 
 async function saveAll() {
   const allData = {};
@@ -437,9 +394,6 @@ async function importData(file) {
   }
 }
 
-// ============================================
-// CARGA INICIAL
-// ============================================
 
 async function loadStoredData() {
   const allData = await getAllStoredData();
@@ -455,18 +409,13 @@ async function loadStoredData() {
   }
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   loadStoredData();
 
-  // Botón de tema
   document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 
-  // Delegación de eventos para botones
   document.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -474,14 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const action = target.dataset.action;
     const section = target.dataset.section;
 
-    // Secciones simples
     if (action === 'save' && SECCIONES_CONFIG[section]) {
       await saveSection(section);
     } else if (action === 'clear' && SECCIONES_CONFIG[section]) {
       await clearSection(section);
     }
     
-    // Tablas
     else if (action === 'save' && TABLAS_CONFIG[section]) {
       await saveTable(section);
     } else if (action === 'clear' && TABLAS_CONFIG[section]) {
@@ -490,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
       addTableRow(section);
     }
     
-    // Acciones de fila
     else if (action === 'duplicate') {
       const row = target.closest('tr');
       const tableType = target.closest('table').id.replace('tabla-', '');
@@ -501,13 +447,11 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteTableRow(row, tableType);
     }
     
-    // Ejecutar automatización
     else if (action === 'execute' && TABLAS_CONFIG[section]) {
       await executeAutomation(section);
     }
   });
 
-  // Botones globales
   document.getElementById('btn-guardar-todo').addEventListener('click', saveAll);
   document.getElementById('btn-limpiar-todo').addEventListener('click', clearAll);
   document.getElementById('btn-exportar').addEventListener('click', exportData);
@@ -524,9 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ============================================
-// API PÚBLICA PARA CONTENT SCRIPTS
-// ============================================
 
 window.FichaCatastralAPI = {
   STORAGE_KEY,

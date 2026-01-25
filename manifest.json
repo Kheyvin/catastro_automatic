@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "0.9.9.2",
-  "description": "Automatización de ficha catastral individual",
+  "version": "0.9.9.7",
+  "description": "Automatización de ficha catastral individual C viene cotitularidad y bienes economicos luego",
   "permissions": [
     "storage"
   ],
