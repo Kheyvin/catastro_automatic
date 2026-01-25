@@ -54,7 +54,8 @@ const CONFIG = {
     clasificacionPredio: '01 - CASA HABITACION',
     predioCatastralEn: '07 - PREDIO INDEPENDIENTE',
     tipoPartidaRegistral: '03 - PARTIDA ELECTRONICA',
-    ubicacionDomicilio: '01 - IGUAL A UNIDAD UU.CC.'
+    ubicacionDomicilio: '01 - IGUAL A UNIDAD UU.CC.',
+    distritoDefault: 'CORONEL GREGORIO ALBARRACIN LANCHIPA'
   }
 };
 
@@ -438,7 +439,7 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       const content = option.querySelector('.ant-select-item-option-content');
       const text = content ? content.textContent.trim() : option.textContent.trim();
       const textNormalized = normalizeText(text);
-      
+
       // Extraer código del texto de opción
       const optionCode = textNormalized.split(' - ')[0].replace(/^0+/, '');
       
@@ -481,7 +482,7 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
   const input = selectorElement.querySelector('input') || selectorElement.closest('.ant-select')?.querySelector('input');
   
   let attempts = 0;
-  const maxAttempts = 20; // Máximo de flechas hacia abajo
+  const maxAttempts = 100; // Aumentado para listas largas (manzana puede tener 80+ opciones)
   
   while (attempts < maxAttempts) {
     // Buscar la opción
@@ -505,10 +506,12 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       });
       input.dispatchEvent(keydownEvent);
     }
-    
-    // También hacer scroll directo en el contenedor
+
+    // También hacer scroll directo en el contenedor con incremento mayor
     if (scrollContainer) {
-      scrollContainer.scrollTop += 35; // Altura aproximada de una opción
+      const scrollElement = scrollContainer.querySelector('.rc-virtual-list-holder-inner')?.parentElement || scrollContainer;
+      scrollElement.scrollTop += 200; // Aumentado para scroll más rápido
+      scrollElement.dispatchEvent(new Event('scroll', { bubbles: true }));
     }
     
     await delay(80);
@@ -877,37 +880,101 @@ async function handleSeccion01Principales() {
   if (principales['principales-sector']) {
     const sectorSelect = section.querySelector('#form_item_sector');
     if (sectorSelect) {
-      const currentValue = sectorSelect.closest('.ant-select');
-      const selectionItem = currentValue ? currentValue.querySelector('.ant-select-selection-item') : null;
-      if (!selectionItem || selectionItem.textContent.trim() === '') {
+      const sectorContainer = sectorSelect.closest('.ant-select');
+      const selectionItem = sectorContainer ? sectorContainer.querySelector('.ant-select-selection-item') : null;
+      // Verificar si el selector tiene un valor real (no vacío y con title no vacío)
+      const hasValue = selectionItem && 
+                       selectionItem.textContent.trim() !== '' && 
+                       selectionItem.getAttribute('title') && 
+                       selectionItem.getAttribute('title').trim() !== '';
+      
+      if (!hasValue) {
+        log('Sector no tiene valor, seleccionando: ' + principales['principales-sector'], 'info');
         await selectOptionByText(sectorSelect, principales['principales-sector']);
-        await delay(CONFIG.delays.medium);
+        await delay(CONFIG.delays.long); // Esperar más para que carguen las manzanas
+      } else {
+        log('Sector ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
       }
     }
   }
+
+  // Esperar a que se carguen las opciones de manzana después de seleccionar sector
+  await delay(CONFIG.delays.long);
 
   // Setear MANZANA si tiene valor
   if (principales['principales-manzana']) {
     const manzanaSelect = section.querySelector('#form_item_manzana');
     if (manzanaSelect) {
-      const currentValue = manzanaSelect.closest('.ant-select');
-      const selectionItem = currentValue ? currentValue.querySelector('.ant-select-selection-item') : null;
-      if (!selectionItem || selectionItem.textContent.trim() === '') {
+      const manzanaContainer = manzanaSelect.closest('.ant-select');
+      const selectionItem = manzanaContainer ? manzanaContainer.querySelector('.ant-select-selection-item') : null;
+      // Verificar si el selector tiene un valor real
+      const hasValue = selectionItem && 
+                       selectionItem.textContent.trim() !== '' && 
+                       selectionItem.getAttribute('title') && 
+                       selectionItem.getAttribute('title').trim() !== '';
+      
+      // También verificar que el selector no esté deshabilitado
+      const isDisabled = manzanaContainer && manzanaContainer.classList.contains('ant-select-disabled');
+      
+      if (!hasValue && !isDisabled) {
+        log('Manzana no tiene valor, seleccionando: ' + principales['principales-manzana'], 'info');
         await selectOptionByText(manzanaSelect, principales['principales-manzana']);
         await delay(CONFIG.delays.medium);
+      } else if (isDisabled) {
+        log('Manzana está deshabilitada, esperando a que se habilite...', 'warning');
+        // Esperar a que se habilite
+        let attempts = 0;
+        while (manzanaContainer.classList.contains('ant-select-disabled') && attempts < 20) {
+          await delay(CONFIG.delays.medium);
+          attempts++;
+        }
+        if (!manzanaContainer.classList.contains('ant-select-disabled')) {
+          log('Manzana habilitada, seleccionando: ' + principales['principales-manzana'], 'info');
+          await selectOptionByText(manzanaSelect, principales['principales-manzana']);
+          await delay(CONFIG.delays.medium);
+        } else {
+          log('Manzana sigue deshabilitada después de esperar', 'error');
+        }
+      } else {
+        log('Manzana ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
       }
     }
   }
+
+  // Esperar a que se carguen las opciones de lote después de seleccionar manzana
+  await delay(CONFIG.delays.medium);
 
   // Setear LOTE si tiene valor
   if (principales['principales-lote']) {
     const loteSelect = section.querySelector('#form_item_lote');
     if (loteSelect) {
-      const currentValue = loteSelect.closest('.ant-select');
-      const selectionItem = currentValue ? currentValue.querySelector('.ant-select-selection-item') : null;
-      if (!selectionItem || selectionItem.textContent.trim() === '') {
+      const loteContainer = loteSelect.closest('.ant-select');
+      const selectionItem = loteContainer ? loteContainer.querySelector('.ant-select-selection-item') : null;
+      const hasValue = selectionItem && 
+                       selectionItem.textContent.trim() !== '' && 
+                       selectionItem.getAttribute('title') && 
+                       selectionItem.getAttribute('title').trim() !== '';
+      
+      const isDisabled = loteContainer && loteContainer.classList.contains('ant-select-disabled');
+      
+      if (!hasValue && !isDisabled) {
+        log('Lote no tiene valor, seleccionando: ' + principales['principales-lote'], 'info');
         await selectOptionByText(loteSelect, principales['principales-lote']);
         await delay(CONFIG.delays.medium);
+      } else if (isDisabled) {
+        log('Lote está deshabilitado, esperando a que se habilite...', 'warning');
+        let attempts = 0;
+        while (loteContainer.classList.contains('ant-select-disabled') && attempts < 20) {
+          await delay(CONFIG.delays.medium);
+          attempts++;
+        }
+        if (!loteContainer.classList.contains('ant-select-disabled')) {
+          log('Lote habilitado, seleccionando: ' + principales['principales-lote'], 'info');
+          await selectOptionByText(loteSelect, principales['principales-lote']);
+          await delay(CONFIG.delays.medium);
+        }
+      } else {
+        log('Lote ya tiene valor: ' + selectionItem.getAttribute('title'), 'info');
       }
     }
   }
@@ -1147,11 +1214,22 @@ async function handleSeccion04Domicilio() {
 
   log('Esperando que el usuario seleccione la ubicacion...', 'info');
   
+  // Esperar a que el usuario seleccione una opción en el selector de ubicación
+  let userSelection = null;
   await new Promise((resolve) => {
     const checkSelection = setInterval(() => {
       const selectionItems = section.querySelectorAll('.ant-select-selection-item');
       for (const item of selectionItems) {
-        if (item.textContent.includes('01 - IGUAL A UNIDAD UU.CC.')) {
+        const text = item.textContent || '';
+        // Verificar si ya hay una selección (diferente de placeholder vacío)
+        if (text.includes('01 - IGUAL A UNIDAD UU.CC.')) {
+          userSelection = 'IGUAL_UNIDAD';
+          clearInterval(checkSelection);
+          resolve();
+          return;
+        } else if (text.includes('02 -') || text.includes('03 -') || text.includes('00 -')) {
+          // El usuario seleccionó otra opción diferente a "01 - IGUAL A UNIDAD UU.CC."
+          userSelection = 'OTRA_OPCION';
           clearInterval(checkSelection);
           resolve();
           return;
@@ -1165,81 +1243,107 @@ async function handleSeccion04Domicilio() {
     }, 60000);
   });
 
-  log('Usuario selecciono ubicacion', 'info');
+  log(`Usuario selecciono ubicacion: ${userSelection}`, 'info');
   await delay(CONFIG.delays.medium);
 
-  // [09] N MUNICIPAL - Buscar por ID o por texto mas especifico
-  if (ubicacion['ubicacion-n-municipal']) {
-    let nroMunicipalInput = section.querySelector('#form_item_numeromunicipal');
-    
-    // Si no se encuentra por ID, buscar por legend
-    if (!nroMunicipalInput) {
-      const formItems = section.querySelectorAll('.ant-form-item');
-      for (const formItem of formItems) {
-        const label = formItem.querySelector('label, legend, p');
-        if (label && (label.textContent.includes('N° MUNICIPAL') || 
-                      label.textContent.includes('NRO MUNICIPAL') ||
-                      label.textContent.includes('MUNICIPAL'))) {
-          nroMunicipalInput = formItem.querySelector('input:not([role="combobox"])');
-          break;
+  // Solo auto-poblar si el usuario eligió "01 - IGUAL A UNIDAD UU.CC."
+  if (userSelection === 'IGUAL_UNIDAD') {
+    // [28] DISTRITO - Setear automáticamente
+    const distritoSelect = section.querySelector('.ant-select');
+    if (distritoSelect) {
+      // Buscar el selector de DISTRITO por label
+      const formItems = section.querySelectorAll('.ant-form-item, fieldset');
+      for (const item of formItems) {
+        const label = item.querySelector('label, legend');
+        if (label && label.textContent.toUpperCase().includes('DISTRITO')) {
+          const select = item.querySelector('.ant-select');
+          if (select) {
+            await selectOptionByText(select, CONFIG.defaultValues.distritoDefault);
+            log('DISTRITO seteado: ' + CONFIG.defaultValues.distritoDefault, 'success');
+            break;
+          }
         }
       }
     }
-    
-    // Fallback: buscar en fieldsets
-    if (!nroMunicipalInput) {
-      nroMunicipalInput = findInputByLegend(section, 'MUNICIPAL');
+
+    await delay(CONFIG.delays.medium);
+
+    // [09] N MUNICIPAL - Buscar por ID o por texto mas especifico
+    if (ubicacion['ubicacion-n-municipal']) {
+      let nroMunicipalInput = section.querySelector('#form_item_numeromunicipal');
+      
+      // Si no se encuentra por ID, buscar por legend
+      if (!nroMunicipalInput) {
+        const formItems = section.querySelectorAll('.ant-form-item');
+        for (const formItem of formItems) {
+          const label = formItem.querySelector('label, legend, p');
+          if (label && (label.textContent.includes('NÂ° MUNICIPAL') || 
+                        label.textContent.includes('NRO MUNICIPAL') ||
+                        label.textContent.includes('MUNICIPAL'))) {
+            nroMunicipalInput = formItem.querySelector('input:not([role="combobox"])');
+            break;
+          }
+        }
+      }
+      
+      // Fallback: buscar en fieldsets
+      if (!nroMunicipalInput) {
+        nroMunicipalInput = findInputByLegend(section, 'MUNICIPAL');
+      }
+      
+      if (nroMunicipalInput) {
+        simulateInput(nroMunicipalInput, ubicacion['ubicacion-n-municipal']);
+        log('N Municipal seteado: ' + ubicacion['ubicacion-n-municipal'], 'success');
+      } else {
+        log('No se encontro input de N Municipal', 'warning');
+      }
     }
-    
-    if (nroMunicipalInput) {
-      simulateInput(nroMunicipalInput, ubicacion['ubicacion-n-municipal']);
-      log('N Municipal seteado: ' + ubicacion['ubicacion-n-municipal'], 'success');
-    } else {
-      log('No se encontro input de N Municipal', 'warning');
+
+    // [17] MANZANA
+    if (ubicacion['ubicacion-manzana']) {
+      const manzanaInput = findInputByLegend(section, 'MANZANA');
+      if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
     }
-  }
 
-  // [17] MANZANA
-  if (ubicacion['ubicacion-manzana']) {
-    const manzanaInput = findInputByLegend(section, 'MANZANA');
-    if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
-  }
-
-  // [18] LOTE
-  if (ubicacion['ubicacion-lote']) {
-    const loteInput = findInputByLegend(section, 'LOTE');
-    if (loteInput) simulateInput(loteInput, ubicacion['ubicacion-lote']);
-  }
-
-  // [19] SUB-LOTE
-  if (ubicacion['ubicacion-sub-lote']) {
-    const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
-                          findInputByLegend(section, 'SUBLOTE');
-    if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
-  }
-
-  await delay(CONFIG.delays.medium);
-
-  // [14] CODIGO HAB. URBANA
-  if (ubicacion['ubicacion-codigo-hu']) {
-    const searchButton = findSearchButtonByLegend(section, 'DIGO HAB') || 
-                         findSearchButtonByLegend(section, 'COD. HAB');
-    if (searchButton) {
-      simulateClick(searchButton);
-      await handleModalSearch('LISTADO DE HABITACIONES URBANAS', ubicacion['ubicacion-codigo-hu']);
+    // [18] LOTE
+    if (ubicacion['ubicacion-lote']) {
+      const loteInput = findInputByLegend(section, 'LOTE');
+      if (loteInput) simulateInput(loteInput, ubicacion['ubicacion-lote']);
     }
-  }
 
-  await delay(CONFIG.delays.medium);
-
-  // [05] CODIGO VIA
-  if (ubicacion['ubicacion-codigo-via']) {
-    const searchButton = findSearchButtonByLegend(section, 'DIGO V') || 
-                         findSearchButtonByLegend(section, 'COD. V');
-    if (searchButton) {
-      simulateClick(searchButton);
-      await handleModalSearch('LISTADO DE V', ubicacion['ubicacion-codigo-via']);
+    // [19] SUB-LOTE
+    if (ubicacion['ubicacion-sub-lote']) {
+      const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
+                            findInputByLegend(section, 'SUBLOTE');
+      if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
     }
+
+    await delay(CONFIG.delays.medium);
+
+    // [14] CODIGO HAB. URBANA
+    if (ubicacion['ubicacion-codigo-hu']) {
+      const searchButton = findSearchButtonByLegend(section, 'DIGO HAB') || 
+                           findSearchButtonByLegend(section, 'COD. HAB');
+      if (searchButton) {
+        simulateClick(searchButton);
+        await handleModalSearch('LISTADO DE HABITACIONES URBANAS', ubicacion['ubicacion-codigo-hu']);
+      }
+    }
+
+    await delay(CONFIG.delays.medium);
+
+    // [05] CODIGO VIA
+    if (ubicacion['ubicacion-codigo-via']) {
+      const searchButton = findSearchButtonByLegend(section, 'DIGO V') || 
+                           findSearchButtonByLegend(section, 'COD. V');
+      if (searchButton) {
+        simulateClick(searchButton);
+        await handleModalSearch('LISTADO DE V', ubicacion['ubicacion-codigo-via']);
+      }
+    }
+  } else {
+    // El usuario eligió otra opción, no auto-poblar
+    log('Usuario eligió opción diferente a "IGUAL A UNIDAD UU.CC.", no se auto-poblará', 'info');
   }
 
   log('Seccion 04 completada. Esperando click en "Guardar domicilio fiscal..."', 'success');
@@ -1431,16 +1535,6 @@ async function handleSeccion11Inscripcion() {
 
   await delay(CONFIG.delays.short);
 
-  // [80] NUMERO
-  if (inscripcion['inscripcion-numero']) {
-    let input = findInputByLegend(section, 'NUMERO');
-    if (!input) input = findInputByLegend(section, 'MERO');
-    if (input) {
-      simulateInput(input, inscripcion['inscripcion-numero']);
-      log('Numero de inscripcion seteado', 'success');
-    }
-  }
-
   // [82] ASIENTO
   if (inscripcion['inscripcion-asiento']) {
     const input = findInputByLegend(section, 'ASIENTO');
@@ -1453,66 +1547,99 @@ async function handleSeccion11Inscripcion() {
   // [83] FECHA INSCRIPCION PREDIO - Formato dd/mm/yyyy como texto
   if (inscripcion['inscripcion-fecha']) {
     const fecha = inscripcion['inscripcion-fecha']; // Formato esperado: dd/mm/yyyy
-    let fechaInput = null;
+    log('Buscando campo de fecha inscripcion...', 'info');
     
-    // Buscar el input dentro de ant-picker
+    // Buscar el picker de fecha dentro de la sección
+    let pickerContainer = null;
     const datePickers = section.querySelectorAll('.ant-picker');
+    
     for (const picker of datePickers) {
       const formItem = picker.closest('.ant-form-item, fieldset');
       if (formItem) {
         const label = formItem.querySelector('label, legend');
         if (label && label.textContent.toUpperCase().includes('FECHA')) {
-          fechaInput = picker.querySelector('input');
+          pickerContainer = picker;
           break;
         }
       }
     }
     
-    // Fallback: buscar por legend
-    if (!fechaInput) {
-      fechaInput = findInputByLegend(section, 'FECHA');
+    // Fallback: usar el primer picker encontrado
+    if (!pickerContainer && datePickers.length > 0) {
+      pickerContainer = datePickers[0];
     }
     
-    // Fallback: buscar cualquier input dentro de ant-picker
-    if (!fechaInput && datePickers.length > 0) {
-      fechaInput = datePickers[0].querySelector('input');
-    }
-    
-    if (fechaInput) {
-      // Enfocar el input
-      fechaInput.focus();
-      await delay(CONFIG.delays.short);
+    if (pickerContainer) {
+      log('Picker de fecha encontrado, haciendo click para abrir...', 'info');
       
-      // Limpiar el input
-      fechaInput.value = '';
-      
-      // Escribir la fecha caracter por caracter simulando escritura
-      for (let i = 0; i < fecha.length; i++) {
-        fechaInput.value += fecha[i];
-        fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
-        await delay(50);
-      }
-      
+      // Click en el picker para abrirlo
+      simulateClick(pickerContainer);
       await delay(CONFIG.delays.medium);
       
-      // Disparar evento change
-      fechaInput.dispatchEvent(new Event('change', { bubbles: true }));
-      await delay(CONFIG.delays.short);
+      // Buscar el input dentro del picker
+      const fechaInput = pickerContainer.querySelector('input');
       
-      // Simular Enter para confirmar
-      simulateEnter(fechaInput);
-      await delay(CONFIG.delays.short);
-      
-      // Segundo Enter por si acaso
-      simulateEnter(fechaInput);
-      
-      log('Fecha de inscripcion seteada: ' + fecha, 'success');
+      if (fechaInput) {
+        // Enfocar el input
+        fechaInput.focus();
+        await delay(CONFIG.delays.short);
+        
+        // Limpiar el input usando el setter nativo
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        nativeInputValueSetter.call(fechaInput, '');
+        fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await delay(100);
+        
+        // Escribir la fecha caracter por caracter
+        for (let i = 0; i < fecha.length; i++) {
+          const currentValue = fechaInput.value + fecha[i];
+          nativeInputValueSetter.call(fechaInput, currentValue);
+          fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
+          await delay(50);
+        }
+        
+        await delay(CONFIG.delays.medium);
+        
+        // Disparar evento change
+        fechaInput.dispatchEvent(new Event('change', { bubbles: true }));
+        await delay(CONFIG.delays.short);
+        
+        // Presionar Enter para confirmar
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true
+        });
+        fechaInput.dispatchEvent(enterEvent);
+        
+        await delay(CONFIG.delays.short);
+        
+        log('Fecha de inscripcion seteada: ' + fecha, 'success');
+      } else {
+        log('No se encontro el input dentro del picker de fecha', 'warning');
+      }
     } else {
-      log('No se encontro el input de fecha', 'warning');
+      log('No se encontro el picker de fecha', 'warning');
     }
   }
 
-  log('Seccion 11 completada', 'success');
+  // [80] NUMERO
+  if (inscripcion['inscripcion-numero']) {
+    let input = findInputByLegend(section, 'NUMERO');
+    if (!input) input = findInputByLegend(section, 'MERO');
+    if (input) {
+      simulateInput(input, inscripcion['inscripcion-numero']);
+      log('Numero de inscripcion seteado', 'success');
+    }
+  }
+
+  log('Seccion 11 completada. Iniciando proceso de observaciones y firmas...', 'success');
+  
+  // Después de la sección 11, procesar la sección final (observaciones y firmas)
+  await handleSeccionFinal();
 }
 
 // ============================================
@@ -1617,7 +1744,7 @@ async function selectModalOption(modal, labelText, value) {
     log(`Selector no encontrado para: ${labelText}`, 'warning');
     return;
   }
-  
+
   // Usar la función existente selectOptionByText que ya funciona correctamente
   const result = await selectOptionByText(targetSelector, value, false);
   if (result) {
@@ -1738,13 +1865,13 @@ async function processConstruccionRow(rowData, rowIndex) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(modal, 'MATERIAL ESTRUC', mappedValue);
   }
-  
+
   // [59] ESTADO CONSERVACIÓN
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(modal, 'ESTADO CONSERV', mappedValue);
   }
-  
+
   // [60] ESTADO CONSTRUCCIÓN
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
@@ -1780,13 +1907,13 @@ async function processConstruccionRow(rowData, rowIndex) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.revest] || rowData.revest.toUpperCase();
     await selectModalOption(modal, 'REVESTIMIENTOS', mappedValue);
   }
-  
+
   // [66] BAÑOS
   if (rowData.banio) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.banio] || rowData.banio.toUpperCase();
     await selectModalOption(modal, 'BAÑOS', mappedValue);
   }
-  
+
   // [67] INST. ELÉCTRICAS SANITARIAS
   if (rowData.inst) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.inst] || rowData.inst.toUpperCase();
@@ -1884,21 +2011,21 @@ async function processObraRow(rowData, rowIndex) {
     log('Modal de nueva obra no apareció', 'error');
     return;
   }
-  
+
   // Click en botón de búsqueda de código
   const searchCodeBtn = obraModal.querySelector('button .anticon-search')?.closest('button');
   if (searchCodeBtn) {
     simulateClick(searchCodeBtn);
     await delay(CONFIG.delays.long);
   }
-  
+
   // Esperar modal de CÓDIGOS DE INSTALACIÓN
   const codigosModal = await waitForModal('CÓDIGOS DE INSTALACIÓN');
   if (!codigosModal) {
     log('Modal de códigos no apareció', 'error');
     return;
   }
-  
+
   // Buscar el código
   const searchInput = codigosModal.querySelector('input#form_item_search');
   if (searchInput && rowData.codigo) {
@@ -2116,26 +2243,14 @@ async function searchAndSelectPersonal(searchName) {
 }
 
 /**
- * Establece la fecha en el modal de firma (formato dd/mm/yyyy)
+ * Establece la fecha en el modal de firma (formato dd/mm/yyyy - ya viene así del popup)
  */
 async function setFechaFirmaModal(modal, fecha) {
   if (!fecha) return;
   
-  // Formatear fecha a dd/mm/yyyy
-  let fechaFormateada = fecha;
-  if (fecha.includes('-')) {
-    // Viene en formato yyyy-mm-dd o similar
-    const parts = fecha.split('-');
-    if (parts.length === 3) {
-      if (parts[0].length === 4) {
-        // yyyy-mm-dd
-        fechaFormateada = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      } else {
-        // dd-mm-yyyy
-        fechaFormateada = `${parts[0]}/${parts[1]}/${parts[2]}`;
-      }
-    }
-  }
+  // La fecha ya viene en formato DD/MM/YYYY desde el popup (input type="text")
+  // No necesitamos convertir
+  const fechaFormateada = fecha;
   
   log(`Estableciendo fecha: ${fechaFormateada}`, 'info');
   
@@ -2157,6 +2272,7 @@ async function setFechaFirmaModal(modal, fecha) {
   dateInput.value = '';
   dateInput.dispatchEvent(new Event('input', { bubbles: true }));
   await delay(100);
+  simulateEnter(dateInput);
   
   // Escribir la fecha caracter por caracter
   for (let i = 0; i < fechaFormateada.length; i++) {
@@ -2190,27 +2306,32 @@ async function setFechaFirmaModal(modal, fecha) {
 async function processFirmaSupervisor(data) {
   log('Procesando firma del supervisor', 'info');
   
-  // Buscar el botón de editar cerca de "FIRMA DEL SUPERVISOR"
-  const allElements = document.querySelectorAll('*');
+  // Buscar el contenedor que tiene "[95] FIRMA DEL SUPERVISOR"
+  // Estructura: div > div.flex > span con texto [95] FIRMA DEL SUPERVISOR > span > button.anticon-edit
   let editBtn = null;
   
-  for (const el of allElements) {
-    if (el.textContent && el.textContent.includes('95') && el.textContent.includes('FIRMA') && el.textContent.includes('SUPERVISOR')) {
-      // Buscar el botón de editar cercano
-      const parent = el.closest('fieldset') || el.closest('.ant-form-item') || el.parentElement;
-      if (parent) {
-        editBtn = parent.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
+  // Buscar todos los spans que contienen el texto del supervisor
+  const allSpans = document.querySelectorAll('span');
+  for (const span of allSpans) {
+    if (span.textContent.trim() === '[95] FIRMA DEL SUPERVISOR') {
+      // Encontramos el span correcto, ahora buscamos el botón de editar en el mismo contenedor
+      const flexContainer = span.closest('.flex');
+      if (flexContainer) {
+        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
+        if (editBtn) {
+          log('Botón de editar supervisor encontrado', 'success');
+          break;
+        }
       }
     }
   }
   
-  // Fallback: buscar cualquier botón de editar en la zona de firmas
+  // Fallback: buscar por texto parcial
   if (!editBtn) {
-    const fieldsets = document.querySelectorAll('fieldset');
-    for (const fs of fieldsets) {
-      if (fs.textContent.includes('SUPERVISOR')) {
-        editBtn = fs.querySelector('button .anticon-edit')?.closest('button');
+    const containers = document.querySelectorAll('.flex.justify-between');
+    for (const container of containers) {
+      if (container.textContent.includes('[95]') && container.textContent.includes('SUPERVISOR')) {
+        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
         if (editBtn) break;
       }
     }
@@ -2275,26 +2396,33 @@ async function processFirmaSupervisor(data) {
 async function processFirmaTecnico(data) {
   log('Procesando firma del técnico catastral', 'info');
   
-  // Buscar el botón de editar cerca de "FIRMA DEL TÉCNICO"
-  const allElements = document.querySelectorAll('*');
+  // Buscar el contenedor que tiene "[96] FIRMA DEL TÉCNICO CATASTRAL"
+  // Estructura: div > div.flex > span con texto [96] FIRMA DEL TÉCNICO CATASTRAL > span > button.anticon-edit
   let editBtn = null;
   
-  for (const el of allElements) {
-    if (el.textContent && el.textContent.includes('96') && el.textContent.includes('FIRMA') && el.textContent.includes('CNICO')) {
-      const parent = el.closest('fieldset') || el.closest('.ant-form-item') || el.parentElement;
-      if (parent) {
-        editBtn = parent.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
+  // Buscar todos los spans que contienen el texto del técnico
+  const allSpans = document.querySelectorAll('span');
+  for (const span of allSpans) {
+    const spanText = span.textContent.trim();
+    if (spanText.includes('[96]') && spanText.includes('FIRMA') && spanText.includes('CNICO')) {
+      // Encontramos el span correcto, ahora buscamos el botón de editar en el mismo contenedor
+      const flexContainer = span.closest('.flex');
+      if (flexContainer) {
+        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
+        if (editBtn) {
+          log('Botón de editar técnico encontrado', 'success');
+          break;
+        }
       }
     }
   }
   
-  // Fallback
+  // Fallback: buscar por texto parcial en contenedores flex
   if (!editBtn) {
-    const fieldsets = document.querySelectorAll('fieldset');
-    for (const fs of fieldsets) {
-      if (fs.textContent.includes('CNICO') && fs.textContent.includes('CATASTRAL')) {
-        editBtn = fs.querySelector('button .anticon-edit')?.closest('button');
+    const containers = document.querySelectorAll('.flex.justify-between');
+    for (const container of containers) {
+      if (container.textContent.includes('[96]') && container.textContent.includes('CNICO')) {
+        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
         if (editBtn) break;
       }
     }
@@ -2317,7 +2445,7 @@ async function processFirmaTecnico(data) {
     log('Modal de firma técnico no apareció', 'error');
     return;
   }
-  
+
   // Click en botón de búsqueda
   const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
                     firmaModal.querySelector('button .anticon-search')?.closest('button');
@@ -2354,7 +2482,7 @@ async function processFirmaTecnico(data) {
 }
 
 /**
- * Procesa la sección final después de guardar observaciones
+ * Procesa la seccion final despues de guardar observaciones
  */
 async function handleSeccionFinal() {
   log('Procesando seccion final: FIRMAS', 'info');
@@ -2362,9 +2490,13 @@ async function handleSeccionFinal() {
   const data = AppState.storedData;
   const finalData = data.final || {};
   
-  // Esperar a que el usuario haga click en "Guardar observaciones"
-  await waitForButtonClick('button', 'Guardar observaciones');
-  log('Usuario guardó observaciones', 'success');
+  // Buscar el botón de "Guardar observaciones" fuera del collapse
+  // Este botón está en un formulario separado al final de la página
+  log('Esperando click en boton "Guardar observaciones"...', 'info');
+  
+  // Usar una función especial que busca el botón fuera del collapse
+  await waitForObservacionesButtonClick();
+  log('Usuario guardo observaciones', 'success');
   
   await delay(CONFIG.delays.long);
   
@@ -2375,12 +2507,51 @@ async function handleSeccionFinal() {
   
   await delay(CONFIG.delays.long);
   
-  // Procesar firma del técnico
+  // Procesar firma del tecnico
   if (finalData['final-tecnico-nombre']) {
     await processFirmaTecnico(finalData);
   }
   
   log('Seccion final completada', 'success');
+}
+
+/**
+ * Espera a que el usuario haga click en el boton "Guardar observaciones"
+ * Este botón está fuera del collapse, en un formulario separado
+ */
+function waitForObservacionesButtonClick() {
+  return new Promise((resolve) => {
+    log('Configurando listener para boton Guardar observaciones...', 'info');
+    
+    const handler = (e) => {
+      // Buscar si el click fue en un botón
+      const button = e.target.closest('button');
+      if (!button) return;
+      
+      // Verificar si el botón contiene el texto "Guardar observaciones"
+      const buttonText = button.textContent || '';
+      if (buttonText.includes('Guardar observaciones')) {
+        log('Click detectado en Guardar observaciones!', 'success');
+        document.removeEventListener('click', handler, true);
+        resolve(button);
+      }
+    };
+    
+    // Usar capture phase (true) para capturar el evento antes de que llegue al target
+    document.addEventListener('click', handler, true);
+    
+    // También agregar un listener para mousedown por si acaso
+    const mouseDownHandler = (e) => {
+      const button = e.target.closest('button');
+      if (!button) return;
+      
+      const buttonText = button.textContent || '';
+      if (buttonText.includes('Guardar observaciones')) {
+        log('MouseDown detectado en Guardar observaciones!', 'success');
+      }
+    };
+    document.addEventListener('mousedown', mouseDownHandler, true);
+  });
 }
 
 // ============================================
@@ -2409,7 +2580,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: err.message });
       });
     }
-    
+
     return true; // Indica respuesta asíncrona
   }
 });
