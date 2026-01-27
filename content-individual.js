@@ -872,6 +872,8 @@ async function handleSeccion01Principales() {
     log('Seccion PRINCIPALES no esta activa', 'error');
     return;
   }
+  
+  await delay(CONFIG.delays.medium);
 
   if (principales['principales-sector']) {
     const sectorSelect = section.querySelector('#form_item_sector');
