@@ -42,8 +42,94 @@ const CONFIG = {
 const AppState = {
   storedData: null,
   currentSection: null,
-  isProcessing: false
+  isProcessing: false,
+  licenseValid: false
 };
+
+async function verifyLicenseForContentScript() {
+  try {
+    const result = await LicenseManager.verifyLicense();
+    
+    if (result.valid) {
+      AppState.licenseValid = true;
+      log('Licencia verificada correctamente', 'success');
+      return true;
+    } else {
+      AppState.licenseValid = false;
+      log('Licencia no válida: ' + (result.message || 'Sin detalles'), 'error');
+      showLicenseNotification(result);
+      return false;
+    }
+  } catch (error) {
+    log('Error al verificar licencia: ' + error.message, 'error');
+    AppState.licenseValid = false;
+    return false;
+  }
+}
+
+function showLicenseNotification(result) {
+  const existingNotif = document.getElementById('license-notification-kda');
+  if (existingNotif) existingNotif.remove();
+  
+  const notification = document.createElement('div');
+  notification.id = 'license-notification-kda';
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      z-index: 999999;
+      max-width: 350px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    ">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+        <span style="font-size: 28px;">🔒</span>
+        <strong style="font-size: 16px;">Webinar Catastro - Licencia Requerida</strong>
+      </div>
+      <p style="margin: 0 0 15px 0; font-size: 13px; opacity: 0.95; line-height: 1.5;">
+        ${result.expired 
+          ? 'Su licencia ha expirado. Por favor renueve para continuar usando la extensión.' 
+          : result.notFound 
+            ? 'Licencia no encontrada. Por favor active su licencia.' 
+            : 'Se requiere una licencia válida para usar esta extensión.'}
+      </p>
+      <p style="margin: 0 0 15px 0; font-size: 12px; opacity: 0.8;">
+        La automatización no se ejecutará hasta que active una licencia válida.
+      </p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://wa.me/51${LICENSE_CONFIG.SUPPORT_PHONE}" target="_blank" style="
+          padding: 8px 16px;
+          background: white;
+          color: #16a34a;
+          text-decoration: none;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+        ">📱 Contactar: ${LICENSE_CONFIG.SUPPORT_PHONE}</a>
+        <button onclick="this.closest('#license-notification-kda').remove()" style="
+          padding: 8px 16px;
+          background: rgba(255,255,255,0.2);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+        ">Cerrar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    const notif = document.getElementById('license-notification-kda');
+    if (notif) notif.remove();
+  }, 30000);
+}
 
 async function getStoredData() {
   return new Promise((resolve) => {
@@ -860,6 +946,8 @@ async function selectCascadeOption(selectId, targetValue) {
   return false;
 }
 
+// ==================== HANDLERS DE SECCIONES ====================
+
 async function handleSeccion01Principales() {
   log('Procesando Seccion 01: PRINCIPALES', 'info');
   
@@ -867,13 +955,13 @@ async function handleSeccion01Principales() {
   const principales = data.principales || {};
   const final = data.final || {};
 
+  await delay(CONFIG.delays.medium);
+
   const section = document.querySelector('.ant-collapse-item-active');
   if (!section) {
     log('Seccion PRINCIPALES no esta activa', 'error');
     return;
   }
-  
-  await delay(CONFIG.delays.medium);
 
   if (principales['principales-sector']) {
     const sectorSelect = section.querySelector('#form_item_sector');
@@ -2325,6 +2413,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function expandAndProcessSection(sectionIndex) {
+
+  if (!AppState.licenseValid) {
+    log('Licencia no válida. Deteniendo automatización.', 'error');
+    return;
+  }
+  
   const sections = document.querySelectorAll('.ant-collapse-item');
   
   if (sectionIndex >= sections.length) {
@@ -2357,7 +2451,50 @@ async function expandAndProcessSection(sectionIndex) {
   }
 }
 
+// ==================== MENSAJE HANDLER ====================
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!AppState.licenseValid) {
+    sendResponse({ success: false, error: 'Licencia no válida' });
+    return true;
+  }
+  
+  if (message.action === 'executeSection') {
+    log(`Recibida solicitud de ejecución: ${message.section}`, 'info');
+    
+    if (message.section === 'construcciones') {
+      handleSeccion08Construcciones(message.data).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        log(`Error en construcciones: ${err.message}`, 'error');
+        sendResponse({ success: false, error: err.message });
+      });
+    } else if (message.section === 'obras') {
+      handleSeccion09Obras(message.data).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        log(`Error en obras: ${err.message}`, 'error');
+        sendResponse({ success: false, error: err.message });
+      });
+    }
+
+    return true;
+  }
+});
+
+// ==================== INICIALIZACIÓN ====================
+
 async function init() {
+  log('Verificando licencia antes de iniciar...', 'info');
+  
+  // VERIFICAR LICENCIA PRIMERO
+  const licenseValid = await verifyLicenseForContentScript();
+  
+  if (!licenseValid) {
+    log('Automatización detenida: Licencia no válida', 'error');
+    return;
+  }
+  
   log('Iniciando automatizacion de Ficha Catastral Individual', 'info');
   
   AppState.storedData = await getStoredData();

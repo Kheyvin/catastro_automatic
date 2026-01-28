@@ -1,70 +1,176 @@
-# 📑 Catastro_automatic
+# 📑 Catastro Automatic - Con Sistema de Licencias
 
-Esta extensión basada en Chromium está diseñada para optimizar y automatizar el llenado de fichas en plataformas de **Registro Catastral** basadas en **React** y **Ant Design**. Combina una interfaz de usuario (Popup) para la gestión de datos y un motor de inyección inteligente en segundo plano.
+Esta extensión basada en Chromium está diseñada para optimizar y automatizar el llenado de fichas en plataformas de **Registro Catastral** basadas en **React** y **Ant Design**. Incluye un sistema de validación de licencias para control de acceso.
+
+---
+
+## 🔐 Sistema de Licencias
+
+### Características del Sistema
+
+- **Validación Online**: Verifica la licencia contra un servidor API REST
+- **Cache Local**: Guarda la licencia válida localmente para evitar consultas innecesarias
+- **Verificación Periódica**: Consulta el servidor cada 24 horas para renovar la validación
+- **Manejo de Expiración**: Detecta licencias expiradas y muestra mensajes apropiados
+- **Soporte Offline**: Funciona con la licencia guardada cuando no hay conexión
+
+### Configuración de la API
+
+Edita el archivo `license-config.js` para configurar tu servidor:
+
+```javascript
+const LICENSE_CONFIG = {
+  // URL de tu servidor de licencias
+  API_URL: 'https://tu-servidor.com',
+  
+  // Endpoint de verificación
+  CHECK_ENDPOINT: '/license/api/check',
+  
+  // Número de soporte
+  SUPPORT_PHONE: '992517309',
+  
+  // Horas entre verificaciones online
+  LOCAL_CHECK_INTERVAL: 24
+};
+```
+
+### API REST Esperada
+
+**Endpoint**: `POST /license/api/check`
+
+**Request**:
+```json
+{
+  "codigo": "tu-codigo-de-licencia"
+}
+```
+
+**Responses**:
+
+Licencia válida:
+```json
+{
+  "success": true,
+  "expired": false,
+  "expira_en": "2026-12-31 23:59:59",
+  "message": "Licencia válida"
+}
+```
+
+Licencia expirada:
+```json
+{
+  "success": false,
+  "expired": true,
+  "message": "La licencia ha expirado",
+  "expira_en": "2025-01-01 00:00:00"
+}
+```
+
+Licencia no encontrada:
+```json
+{
+  "success": false,
+  "message": "Licencia no encontrada"
+}
+```
 
 ---
 
 ## 🚀 Características Principales
 
 ### 1. Interfaz de Control (Popup)
-La extensión cuenta con un panel flotante que permite al usuario pre-cargar la información antes de iniciar el proceso de registro:
-* **Persistencia:** Los datos se guardan en `chrome.storage.sync`, lo que permite que la información no se pierda al cerrar el navegador o cambiar de pestaña.
-* **Gestión de Memoria:** Botón **"Guardar"** para confirmar datos y **"Limpiar"** para vaciar tanto el formulario del popup como la memoria de la extensión.
+- **Persistencia**: Los datos se guardan en `chrome.storage.local`
+- **Indicador de Licencia**: Muestra días restantes de la licencia activa
+- **Gestión de Datos**: Botones para guardar, limpiar, exportar e importar
 
-### 2. Inyección de Datos
-* **Bypass de React:** Utiliza setters nativos para asegurar que los cambios se reflejen en el estado interno de React, evitando que los datos se pierdan al guardar la ficha.
-* **Mapeo Inteligente:** Identifica campos mediante selectores de ID directos o mediante etiquetas (`<legend>`).
+### 2. Verificación de Licencia
+- **Al abrir el popup**: Verifica la licencia antes de mostrar el contenido
+- **En content scripts**: Verifica antes de ejecutar cualquier automatización
+- **Mensajes claros**: Muestra información sobre el estado de la licencia
 
-### 3. Valores por Defecto Automáticos (Auto-Set)
-Independientemente de lo ingresado en el popup, la extensión establece valores estándar en campos específicos si estos se encuentran vacíos:
-
-| Campo | Referencia | Valor por Defecto |
-| :--- | :--- | :--- |
-| **Zonificación** | Etiqueta [44] | `R3` |
-| **Edifica** | `#form_item_codigoedifica` | `01` |
-| **Entrada** | `#form_item_codigoentrada` | `01` |
-| **Piso** | `#form_item_codigopiso` | `01` |
-| **Unidad** | `#form_item_codigounidad` | `001` |
+### 3. Inyección de Datos
+- **Bypass de React**: Usa setters nativos para compatibilidad con React
+- **Mapeo Inteligente**: Identifica campos por selectores o etiquetas
 
 ---
 
-## 🔄 Flujo de Trabajo
+## 📁 Estructura del Proyecto
 
-1. **Entrada de Datos:** El usuario abre el popup de la extensión e ingresa los datos de la ficha (Vía, Manzana, Lote, Personal, etc.).
-2. **Almacenamiento:** Al hacer clic en **"Guardar"**, la información se almacena de forma segura en el navegador.
-3. **Detección Dinámica:** El script de contenido detecta la apertura del formulario catastral y empieza a volcar los datos almacenados.
-4. **Firma Automática:** Al hacer clic en los botones de edición de Supervisor o Técnico, la extensión busca automáticamente al personal en la base de datos y completa la fecha.
+```
+catastro-extension/
+├── manifest.json              # Configuración de la extensión
+├── popup.html                 # HTML del popup principal
+├── popup.js                   # Lógica del popup con verificación de licencia
+├── popup.css                  # Estilos del popup
+├── popup-content.html         # Contenido del popup (cargado dinámicamente)
+├── license.html               # Página de activación de licencia
+├── license-config.js          # Configuración de la API de licencias
+├── license-manager.js         # Lógica de gestión de licencias
+├── license-ui.js              # UI para la página de licencias
+├── content-individual.js      # Script para ficha individual
+├── content-cotitularidad.js   # Script para cotitularidad
+└── bb.png                     # Ícono de la extensión
+```
 
 ---
 
 ## 🛠 Instalación
 
-Siga estos pasos para cargar la extensión:
+1. **Descargar el proyecto**: Asegúrese de tener todos los archivos en una carpeta
 
-1. **Descargar el proyecto:** Asegúrese de tener la carpeta con los siguientes archivos:
-   - `manifest.json` (Configuración)
-   - `content.js` (Lógica de inyección)
-   - `popup.html` (Interfaz de usuario)
-   - `popup.js` (Lógica del popup)
-2. **Abrir Extensiones:** En Chrome, vaya a `chrome://extensions/`.
-3. **Modo Desarrollador:** Active el interruptor de **"Modo de desarrollador"**.
-4. **Cargar carpeta:** Haga clic en **"Cargar descomprimida"** y seleccione la carpeta del proyecto.
+2. **Configurar la API**: Edite `license-config.js` con la URL de su servidor
+
+3. **Abrir Extensiones**: En Chrome, vaya a `chrome://extensions/`
+
+4. **Modo Desarrollador**: Active el interruptor de **"Modo de desarrollador"**
+
+5. **Cargar carpeta**: Haga clic en **"Cargar descomprimida"** y seleccione la carpeta
+
+---
+
+## 🔄 Flujo de Trabajo
+
+1. **Activación de Licencia**: El usuario ingresa su código de licencia
+2. **Verificación**: El sistema valida contra el servidor API
+3. **Almacenamiento**: La licencia válida se guarda localmente
+4. **Uso Normal**: La extensión funciona normalmente hasta que expire
+
+### Estados de Licencia
+
+| Estado | Comportamiento |
+|--------|----------------|
+| **Sin licencia** | Muestra pantalla de activación |
+| **Licencia válida** | Funciona normalmente |
+| **Licencia expirada** | Bloquea funcionalidad, pide renovación |
+| **Sin conexión** | Usa licencia guardada localmente |
 
 ---
 
 ## ⚙️ Especificaciones Técnicas
 
-### Campos Soportados en el Popup
-La extensión está configurada para gestionar los siguientes identificadores:
-* `numberMunicipal`
-* `numberManzana`, `numberLote`, `numberSubLote`
-* `observations`
-* `supervisorName`, `supervisorDate`
-* `technicianName`, `technicianDate`
+### Campos Soportados
+- `principales`: sector, manzana, lote
+- `ubicacion`: código vía, código HU, N° municipal, manzana, lote, sub-lote
+- `descripcion`: zonificación, áreas, linderos
+- `inscripcion`: número, asiento, fecha
+- `final`: observaciones, supervisor, técnico
 
-### Campos aun no Soportados en el Popup
-* `codeVia`, `codeHu`
+### Almacenamiento
+- `licenseCode`: Código de licencia activo
+- `licenseData`: Datos de la licencia (expiración, estado)
+- `lastLicenseCheck`: Última verificación online
+- `fichaCatastralData`: Datos del formulario
 
-### Optimización de UX
-* **Tab as Enter:** Mejora la navegación por teclado simulando una confirmación de campo al usar Tabulador.
-* **Selects Buscables:** Desbloquea los menús de Ant Design para permitir filtrado rápido mediante teclado.
+---
+
+## 📞 Soporte
+
+Si tiene problemas con la licencia, contacte al número de soporte configurado:
+- **WhatsApp**: [992517309](https://wa.me/51992517309)
+
+---
+
+## 📄 Licencia
+
+MIT License - Copyright (c) 2026 KDA

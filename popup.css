@@ -512,3 +512,12 @@ body {
   background: #7c3aed;
   transform: scale(1.1);
 }
+
+/* Indicador de licencia */
+.license-indicator {
+  margin-right: 10px;
+}
+
+.license-indicator:hover {
+  transform: scale(1.05);
+}

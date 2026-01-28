@@ -44,6 +44,153 @@ const TABLAS_CONFIG = {
   }
 };
 
+// ==================== VERIFICACIÓN DE LICENCIA ====================
+
+async function checkLicenseBeforeLoad() {
+  const mainContainer = document.querySelector('.container');
+  
+  mainContainer.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 20px;">
+      <div style="width: 50px; height: 50px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="color: #64748b; font-size: 14px;">Verificando licencia...</p>
+    </div>
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+  
+  try {
+    const result = await LicenseManager.verifyLicense();
+    
+    if (result.valid) {
+      await loadMainContent();
+      return true;
+    } else {
+      showLicenseError(result);
+      return false;
+    }
+  } catch (error) {
+    console.error('[Popup] Error verificando licencia:', error);
+    showLicenseError({
+      message: 'Error al verificar licencia. Por favor intente nuevamente.'
+    });
+    return false;
+  }
+}
+
+function showLicenseError(result) {
+  const mainContainer = document.querySelector('.container');
+  
+  let errorMessage = result.message || 'Licencia no válida';
+  let additionalInfo = '';
+  
+  if (result.notFound) {
+    additionalInfo = `
+      <p style="margin-top: 15px; font-size: 12px; color: #64748b;">
+        Licencia no encontrada.<br>
+        Por favor contacte al <strong>📱 ${LICENSE_CONFIG.SUPPORT_PHONE}</strong>
+      </p>
+    `;
+  } else if (result.expired) {
+    additionalInfo = `
+      <p style="margin-top: 10px; font-size: 12px; color: #dc2626;">
+        Expiró el: ${LicenseManager.formatExpirationDate(result.expira_en)}
+      </p>
+      <p style="margin-top: 10px; font-size: 12px; color: #64748b;">
+        Para renovar contacte al <strong>📱 ${LICENSE_CONFIG.SUPPORT_PHONE}</strong>
+      </p>
+    `;
+  } else if (result.needsActivation) {
+    additionalInfo = `
+      <p style="margin-top: 15px; font-size: 12px; color: #64748b;">
+        Por favor active su licencia para continuar.
+      </p>
+    `;
+  }
+  
+  mainContainer.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; padding: 30px; text-align: center;">
+      <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+      <h2 style="color: #dc2626; font-size: 18px; margin-bottom: 10px;">Licencia Requerida</h2>
+      <p style="color: #64748b; font-size: 13px;">${errorMessage}</p>
+      ${additionalInfo}
+      <button id="btn-open-license" style="
+        margin-top: 25px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      ">
+        🔐 Activar Licencia
+      </button>
+      <a href="https://wa.me/51${LICENSE_CONFIG.SUPPORT_PHONE}" target="_blank" style="
+        margin-top: 15px;
+        color: #16a34a;
+        font-size: 12px;
+        text-decoration: none;
+      ">
+        💬 Contactar soporte vía WhatsApp
+      </a>
+    </div>
+  `;
+  
+  document.getElementById('btn-open-license').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'license.html' });
+  });
+}
+
+async function loadMainContent() {
+  const response = await fetch('popup-content.html');
+  const html = await response.text();
+  
+  const mainContainer = document.querySelector('.container');
+  mainContainer.innerHTML = html;
+  
+  initTheme();
+  loadStoredData();
+  setupEventListeners();
+  
+  showLicenseIndicator();
+}
+
+async function showLicenseIndicator() {
+  const saved = await LicenseManager.getSavedLicenseData();
+  if (saved.data && saved.data.expira_en) {
+    const days = LicenseManager.getDaysRemaining(saved.data.expira_en);
+    const header = document.querySelector('.main-header');
+    
+    if (header) {
+      const indicator = document.createElement('div');
+      indicator.className = 'license-indicator';
+      indicator.style.cssText = `
+        font-size: 9px;
+        padding: 3px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        ${days <= 7 
+          ? 'background: #fef2f2; color: #dc2626;' 
+          : days <= 30 
+            ? 'background: #fef3c7; color: #92400e;' 
+            : 'background: #dcfce7; color: #166534;'}
+      `;
+      indicator.textContent = `📋 ${days} días`;
+      indicator.title = `Licencia válida hasta: ${LicenseManager.formatExpirationDate(saved.data.expira_en)}`;
+      
+      indicator.addEventListener('click', () => {
+        chrome.tabs.create({ url: 'license.html' });
+      });
+      
+      header.insertBefore(indicator, header.querySelector('.btn-theme'));
+    }
+  }
+}
 
 function showToast(message, type = 'info') {
   const existingToast = document.querySelector('.toast');
@@ -64,13 +211,13 @@ function generateRowId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-
 function initTheme() {
   chrome.storage.local.get([THEME_KEY], (result) => {
     const isDark = result[THEME_KEY] === 'dark';
     if (isDark) {
       document.body.classList.add('dark-mode');
-      document.getElementById('btn-theme').textContent = '☀️';
+      const themeBtn = document.getElementById('btn-theme');
+      if (themeBtn) themeBtn.textContent = '☀️';
     }
   });
 }
@@ -78,12 +225,11 @@ function initTheme() {
 function toggleTheme() {
   const isDark = document.body.classList.toggle('dark-mode');
   const btn = document.getElementById('btn-theme');
-  btn.textContent = isDark ? '☀️' : '🌙';
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
   
   chrome.storage.local.set({ [THEME_KEY]: isDark ? 'dark' : 'light' });
   showToast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
 }
-
 
 async function getAllStoredData() {
   return new Promise((resolve) => {
@@ -109,7 +255,6 @@ async function saveSectionData(section, data) {
   allData[section] = data;
   await saveAllData(allData);
 }
-
 
 function getSectionValuesFromDOM(section) {
   const config = SECCIONES_CONFIG[section];
@@ -157,7 +302,6 @@ async function clearSection(section) {
   showToast(`"${section}" limpiado`, 'info');
 }
 
-
 function createTableRow(tableType, values = {}) {
   const config = TABLAS_CONFIG[tableType];
   if (!config) return null;
@@ -192,6 +336,8 @@ function getTableDataFromDOM(tableType) {
   if (!config) return [];
 
   const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return [];
+  
   const rows = tbody.querySelectorAll('tr');
   const data = [];
 
@@ -212,6 +358,8 @@ function setTableDataInDOM(tableType, data) {
   if (!config) return;
 
   const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+  
   tbody.innerHTML = '';
 
   if (data && data.length > 0) {
@@ -229,6 +377,8 @@ function clearTableInDOM(tableType) {
   if (!config) return;
 
   const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+  
   tbody.innerHTML = '';
   tbody.appendChild(createTableRow(tableType));
 }
@@ -238,6 +388,8 @@ function addTableRow(tableType) {
   if (!config) return;
 
   const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+  
   const row = createTableRow(tableType);
   tbody.appendChild(row);
   row.querySelector('input').focus();
@@ -263,6 +415,8 @@ function deleteTableRow(row, tableType) {
   if (!config) return;
 
   const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+  
   if (tbody.querySelectorAll('tr').length <= 1) {
     showToast('No se puede eliminar la última fila', 'error');
     return;
@@ -283,7 +437,6 @@ async function clearTable(tableType) {
   await saveSectionData(tableType, []);
   showToast(`"${tableType}" limpiado`, 'info');
 }
-
 
 async function executeAutomation(tableType) {
   const data = getTableDataFromDOM(tableType);
@@ -317,7 +470,6 @@ async function executeAutomation(tableType) {
     }
   });
 }
-
 
 async function saveAll() {
   const allData = {};
@@ -394,7 +546,6 @@ async function importData(file) {
   }
 }
 
-
 async function loadStoredData() {
   const allData = await getAllStoredData();
 
@@ -409,12 +560,11 @@ async function loadStoredData() {
   }
 }
 
-
-document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  loadStoredData();
-
-  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+function setupEventListeners() {
+  const themeBtn = document.getElementById('btn-theme');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+  }
 
   document.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
@@ -452,23 +602,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('btn-guardar-todo').addEventListener('click', saveAll);
-  document.getElementById('btn-limpiar-todo').addEventListener('click', clearAll);
-  document.getElementById('btn-exportar').addEventListener('click', exportData);
+  const btnGuardar = document.getElementById('btn-guardar-todo');
+  if (btnGuardar) btnGuardar.addEventListener('click', saveAll);
   
-  document.getElementById('btn-importar').addEventListener('click', () => {
-    document.getElementById('input-importar').click();
-  });
+  const btnLimpiar = document.getElementById('btn-limpiar-todo');
+  if (btnLimpiar) btnLimpiar.addEventListener('click', clearAll);
   
-  document.getElementById('input-importar').addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      importData(e.target.files[0]);
-      e.target.value = '';
-    }
-  });
+  const btnExportar = document.getElementById('btn-exportar');
+  if (btnExportar) btnExportar.addEventListener('click', exportData);
+  
+  const btnImportar = document.getElementById('btn-importar');
+  if (btnImportar) {
+    btnImportar.addEventListener('click', () => {
+      document.getElementById('input-importar').click();
+    });
+  }
+  
+  const inputImportar = document.getElementById('input-importar');
+  if (inputImportar) {
+    inputImportar.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        importData(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+  }
+}
+
+// ==================== INICIALIZACIÓN ====================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar licencia antes de cargar cualquier cosa
+  checkLicenseBeforeLoad();
 });
 
-
+// Exportar API
 window.FichaCatastralAPI = {
   STORAGE_KEY,
   SECCIONES_CONFIG,

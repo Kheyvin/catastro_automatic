@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activación de Licencia - Catastro</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success-color: #16a34a;
+      --danger-color: #dc2626;
+      --warning-color: #f59e0b;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-color: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .license-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+    }
+
+    .license-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .license-header .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .license-header h1 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+
+    .license-header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .license-body {
+      padding: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-group input::placeholder {
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .btn-activate {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-activate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
+    }
+
+    .btn-activate:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-activate .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: none;
+    }
+
+    .btn-activate.loading .spinner {
+      display: block;
+    }
+
+    .btn-activate.loading .btn-text {
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .message-box {
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message-box.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      display: block;
+    }
+
+    .message-box.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    .message-box.warning {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+      display: block;
+    }
+
+    .message-box.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      display: block;
+    }
+
+    .contact-info {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .contact-info a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    .license-status {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .license-status.active {
+      display: block;
+    }
+
+    .license-status .status-icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+
+    .license-status h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--success-color);
+    }
+
+    .license-status .expiration {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .license-status .days-remaining {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .license-status .days-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .btn-continue {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .btn-continue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-change-license {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 15px;
+      text-decoration: underline;
+    }
+
+    .btn-change-license:hover {
+      color: var(--danger-color);
+    }
+
+    .activation-form.hidden {
+      display: none;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="license-container">
+    <div class="license-header">
+      <div class="icon">🔐</div>
+      <h1>Webinar Catastro - By KDA</h1>
+      <p>Sistema de Activación de Licencia</p>
+    </div>
+    
+    <div class="license-body">
+      <!-- Estado de licencia activa -->
+      <div class="license-status" id="license-status">
+        <div class="status-icon">✅</div>
+        <h2>Licencia Activa</h2>
+        <p class="expiration">Válida hasta: <span id="expiration-date">-</span></p>
+        <div class="days-remaining" id="days-remaining">0</div>
+        <div class="days-label">días restantes</div>
+        
+        <button class="btn-continue" id="btn-continue">
+          Continuar a la Aplicación
+        </button>
+        
+        <button class="btn-change-license" id="btn-change-license">
+          Cambiar licencia
+        </button>
+      </div>
+      
+      <!-- Formulario de activación -->
+      <div class="activation-form" id="activation-form">
+        <div class="form-group">
+          <label for="license-code">Código de Licencia</label>
+          <input 
+            type="text" 
+            id="license-code" 
+            placeholder="Ingrese su código de licencia"
+            maxlength="50"
+            autocomplete="off"
+          >
+        </div>
+        
+        <button class="btn-activate" id="btn-activate">
+          <span class="spinner"></span>
+          <span class="btn-text">🔓 Activar Licencia</span>
+        </button>
+        
+        <div class="message-box" id="message-box"></div>
+        
+        <div class="contact-info">
+          ¿No tienes una licencia? Ecribeme al<br>
+          <a href="https://wa.me/51992517309" target="_blank">📱 992517309</a>
+        </div>
+      </div>
+      
+      <div class="footer-text">
+        Webinar Catastro v1.0 - © 2026 KDA
+      </div>
+    </div>
+  </div>
+
+  <script src="license-config.js"></script>
+  <script src="license-manager.js"></script>
+  <script src="license-ui.js"></script>
+</body>
+</html>
