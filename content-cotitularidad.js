@@ -1237,6 +1237,9 @@ function setupNuevoCotitularListener() {
 function setupObservacionesListener() {
   log('Configurando listener para Guardar observaciones...', 'info');
   
+  // Setear observaciones desde el storage al cargar
+  setObservacionesFromStorage();
+  
   const handleObservacionesClick = async (e) => {
     const button = e.target.closest('button');
     if (!button) return;
@@ -1267,6 +1270,33 @@ function setupObservacionesListener() {
   };
   
   document.addEventListener('click', handleObservacionesClick, true);
+}
+
+function setObservacionesFromStorage() {
+  const finalData = CotitularidadState.storedData?.final || {};
+  
+  if (finalData['final-observaciones']) {
+    // Buscar el textarea de observaciones
+    const observacionesTextarea = document.querySelector('#form_item_observacion') ||
+                                   document.querySelector('textarea[id*="observacion"]');
+    
+    if (observacionesTextarea) {
+      simulateInput(observacionesTextarea, finalData['final-observaciones']);
+      log('Observaciones seteadas: ' + finalData['final-observaciones'].substring(0, 50) + '...', 'success');
+    } else {
+      log('Textarea de observaciones no encontrado, reintentando...', 'warning');
+      
+      // Reintentar después de un delay
+      setTimeout(() => {
+        const textarea = document.querySelector('#form_item_observacion') ||
+                         document.querySelector('textarea[id*="observacion"]');
+        if (textarea && finalData['final-observaciones']) {
+          simulateInput(textarea, finalData['final-observaciones']);
+          log('Observaciones seteadas en reintento', 'success');
+        }
+      }, CONFIG.delays.extraLong);
+    }
+  }
 }
 
 // Inicialización
