@@ -2388,30 +2388,6 @@ function waitForObservacionesButtonClick() {
   });
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'executeSection') {
-    log(`Recibida solicitud de ejecución: ${message.section}`, 'info');
-    
-    if (message.section === 'construcciones') {
-      handleSeccion08Construcciones(message.data).then(() => {
-        sendResponse({ success: true });
-      }).catch(err => {
-        log(`Error en construcciones: ${err.message}`, 'error');
-        sendResponse({ success: false, error: err.message });
-      });
-    } else if (message.section === 'obras') {
-      handleSeccion09Obras(message.data).then(() => {
-        sendResponse({ success: true });
-      }).catch(err => {
-        log(`Error en obras: ${err.message}`, 'error');
-        sendResponse({ success: false, error: err.message });
-      });
-    }
-
-    return true;
-  }
-});
-
 async function expandAndProcessSection(sectionIndex) {
 
   if (!AppState.licenseValid) {

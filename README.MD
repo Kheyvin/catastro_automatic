@@ -58,13 +58,11 @@ catastro-extension/
 
 1. **Descargar el proyecto**: Asegúrese de tener todos los archivos en una carpeta
 
-2. **Configurar la API**: Edite `license-config.js` con la URL de su servidor
+2. **Abrir Extensiones**: En Chrome, vaya a `chrome://extensions/`
 
-3. **Abrir Extensiones**: En Chrome, vaya a `chrome://extensions/`
+3. **Modo Desarrollador**: Active el interruptor de **"Modo de desarrollador"**
 
-4. **Modo Desarrollador**: Active el interruptor de **"Modo de desarrollador"**
-
-5. **Cargar carpeta**: Haga clic en **"Cargar descomprimida"** y seleccione la carpeta
+4. **Cargar carpeta**: Haga clic en **"Cargar descomprimida"** y seleccione la carpeta
 
 ---
 
