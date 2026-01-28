@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Automatización de ficha catastral individual con sistema de licencias",
   "permissions": [
     "storage",
@@ -32,8 +32,8 @@
         "http://161.132.42.244:9006/ficha-individual/*"
       ],
       "js": [
-        "license-config.js",
-        "license-manager.js",
+        "license-config.min.js",
+        "license-manager.min.js",
         "content-individual.js"
       ],
       "run_at": "document_idle"
@@ -43,9 +43,9 @@
         "http://161.132.42.244:9006/ficha-cotitularidad/*"
       ],
       "js": [
-        "license-config.js",
-        "license-manager.js",
-        "content-cotitularidad.js"
+        "license-config.min.js",
+        "license-manager.min.js",
+        "content-cotitularidad.min.js"
       ],
       "run_at": "document_idle"
     }
@@ -55,9 +55,9 @@
       "resources": [
         "popup-content.html",
         "license.html",
-        "license-config.js",
-        "license-manager.js",
-        "license-ui.js",
+        "license-config.min.js",
+        "license-manager.min.js",
+        "license-ui.min.js",
         "bb.png"
       ],
       "matches": ["<all_urls>"]
