@@ -34,7 +34,7 @@
       "js": [
         "license-config.min.js",
         "license-manager.min.js",
-        "content-individual.js"
+        "content-individual.min.js"
       ],
       "run_at": "document_idle"
     },
@@ -46,6 +46,17 @@
         "license-config.min.js",
         "license-manager.min.js",
         "content-cotitularidad.min.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://161.132.42.244:9006/ficha-economica/*"
+      ],
+      "js": [
+        "license-config.min.js",
+        "license-manager.min.js",
+        "content-economica.min.js"
       ],
       "run_at": "document_idle"
     }
