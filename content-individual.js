@@ -2,10 +2,10 @@ const STORAGE_KEY = 'fichaCatastralData';
 
 const CONFIG = {
   delays: {
-    short: 100,
+    short: 200,
     medium: 300,
     long: 500,
-    extraLong: 1000
+    extraLong: 800
   },
   selectors: {
     sectionHeader: '.ant-collapse-header',
