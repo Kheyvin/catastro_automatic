@@ -44,6 +44,379 @@ const TABLAS_CONFIG = {
   }
 };
 
+// ==================== CONFIGURACIÓN DE VALIDACIONES ====================
+
+const VALIDACIONES = {
+  // Validaciones para CONSTRUCCIONES
+  construcciones: {
+    npiso: { type: 'any', label: 'NPISO' },
+    mes: { type: 'mes', label: 'MES', errorMsg: 'Debe ser 0-12 (ej: 1, 01, 02)' },
+    anio: { type: 'anio', label: 'AÑO', errorMsg: 'Debe tener 4 dígitos' },
+    mep: { type: 'mep', label: 'MEP', errorMsg: 'Debe ser 0-3 (ej: 0, 01, 02, 03)' },
+    ecs: { type: 'ecs', label: 'ECS', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' },
+    ecc: { type: 'ecc', label: 'ECC', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' },
+    muro: { type: 'letra', label: 'MURO', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    techo: { type: 'letra', label: 'TECHO', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    piso: { type: 'letra', label: 'PISO', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    puerta: { type: 'letra', label: 'PUERTA', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    revest: { type: 'letra', label: 'REVEST', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    banio: { type: 'letra', label: 'BAÑO', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    inst: { type: 'letra', label: 'INST', errorMsg: 'Debe ser A-I, vacío, 0 o 00' },
+    area: { type: 'any', label: 'AREA' },
+    uca: { type: 'uca', label: 'UCA', errorMsg: 'Debe ser 0-7 (ej: 0, 01, 02...07)' }
+  },
+  // Validaciones para OBRAS
+  obras: {
+    codigo: { type: 'numero', label: 'CÓDIGO', errorMsg: 'Solo números permitidos' },
+    mes: { type: 'mes', label: 'MES', errorMsg: 'Debe ser 0-12 (ej: 1, 01, 02)' },
+    anio: { type: 'anio', label: 'AÑO', errorMsg: 'Debe tener 4 dígitos' },
+    mep: { type: 'mep', label: 'MEP', errorMsg: 'Debe ser 0-3 (ej: 0, 01, 02, 03)' },
+    ecs: { type: 'ecs', label: 'ECS', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' },
+    ecc: { type: 'ecc', label: 'ECC', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' },
+    total: { type: 'any', label: 'TOTAL' },
+    uca: { type: 'uca', label: 'UCA', errorMsg: 'Debe ser 0-7 (ej: 0, 01, 02...07)' }
+  }
+};
+
+// ==================== FUNCIONES DE VALIDACIÓN ====================
+
+function validarCampo(valor, tipo) {
+  const v = valor.trim();
+  
+  switch (tipo) {
+    case 'any':
+      return { valid: true, normalized: v };
+    
+    case 'mes':
+      // 0-12, puede ser 1, 2 o 01, 02
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      const mesNum = parseInt(v, 10);
+      if (!isNaN(mesNum) && mesNum >= 0 && mesNum <= 12) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    case 'anio':
+      // Solo 4 dígitos
+      if (v === '') return { valid: true, normalized: '' };
+      if (/^\d{4}$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    case 'mep':
+      // 0,1,2,3 o 00,01,02,03 o vacío (se considera 0)
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      if (/^(0?[0-3])$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    case 'ecs':
+    case 'ecc':
+      // 0,1,2,3,4 o 00,01,02,03,04 o vacío (se considera 0)
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      if (/^(0?[0-4])$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    case 'letra':
+      // A-I (mayúscula o minúscula), vacío, 0 o 00 (se consideran 0)
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      if (/^[A-Ia-i]$/.test(v)) {
+        return { valid: true, normalized: v.toUpperCase() };
+      }
+      return { valid: false };
+    
+    case 'uca':
+      // 0-7 o 00-07 o vacío (se considera 0)
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      if (/^(0?[0-7])$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    case 'numero':
+      // Solo números
+      if (v === '') return { valid: true, normalized: '' };
+      if (/^\d+$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
+    
+    default:
+      return { valid: true, normalized: v };
+  }
+}
+
+function validarFilaTabla(row, tableType) {
+  const config = VALIDACIONES[tableType];
+  if (!config) return { valid: true, errors: [] };
+  
+  const errors = [];
+  const inputs = row.querySelectorAll('input[name]');
+  
+  inputs.forEach(input => {
+    const fieldName = input.name;
+    const fieldConfig = config[fieldName];
+    
+    if (fieldConfig) {
+      const resultado = validarCampo(input.value, fieldConfig.type);
+      
+      // Limpiar clases previas
+      input.classList.remove('valid', 'invalid');
+      
+      if (!resultado.valid) {
+        input.classList.add('invalid');
+        errors.push({
+          field: fieldConfig.label,
+          message: fieldConfig.errorMsg || 'Valor inválido',
+          input: input
+        });
+      } else if (input.value.trim() !== '') {
+        input.classList.add('valid');
+      }
+    }
+  });
+  
+  return { valid: errors.length === 0, errors };
+}
+
+function validarTablaCompleta(tableType) {
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return { valid: true, allErrors: [] };
+  
+  const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return { valid: true, allErrors: [] };
+  
+  const rows = tbody.querySelectorAll('tr');
+  const allErrors = [];
+  let rowIndex = 1;
+  
+  rows.forEach(row => {
+    const { valid, errors } = validarFilaTabla(row, tableType);
+    if (!valid) {
+      errors.forEach(err => {
+        allErrors.push({
+          fila: rowIndex,
+          ...err
+        });
+      });
+    }
+    rowIndex++;
+  });
+  
+  return { valid: allErrors.length === 0, allErrors };
+}
+
+function mostrarErroresValidacion(tableType, allErrors) {
+  // Remover resumen anterior si existe
+  const existingSummary = document.querySelector(`#seccion-${tableType} .validation-summary`);
+  if (existingSummary) existingSummary.remove();
+  
+  if (allErrors.length === 0) return;
+  
+  const container = document.querySelector(`#seccion-${tableType} .tabla-excel-container`);
+  const summary = document.createElement('div');
+  summary.className = 'validation-summary';
+  
+  const errorList = allErrors.map(err => 
+    `<li>Fila ${err.fila}, ${err.field}: ${err.message}</li>`
+  ).join('');
+  
+  summary.innerHTML = `
+    <strong>⚠️ Errores de validación (${allErrors.length}):</strong>
+    <ul>${errorList}</ul>
+  `;
+  
+  container.appendChild(summary);
+}
+
+function limpiarErroresValidacion(tableType) {
+  const existingSummary = document.querySelector(`#seccion-${tableType} .validation-summary`);
+  if (existingSummary) existingSummary.remove();
+  
+  const config = TABLAS_CONFIG[tableType];
+  if (!config) return;
+  
+  const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+  
+  tbody.querySelectorAll('input').forEach(input => {
+    input.classList.remove('valid', 'invalid');
+  });
+}
+
+// ==================== NAVEGACIÓN TIPO EXCEL ====================
+
+function setupExcelNavigation() {
+  const tables = document.querySelectorAll('.tabla-navegable');
+  
+  tables.forEach(table => {
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    
+    // Evento de teclado para navegación
+    tbody.addEventListener('keydown', (e) => {
+      const input = e.target;
+      if (input.tagName !== 'INPUT') return;
+      
+      const cell = input.closest('td');
+      const row = input.closest('tr');
+      const tableType = table.dataset.tableType;
+      
+      // Obtener posición actual
+      const allRows = Array.from(tbody.querySelectorAll('tr'));
+      const rowIndex = allRows.indexOf(row);
+      const cells = Array.from(row.querySelectorAll('td:not(.acciones-cell)'));
+      const colIndex = cells.indexOf(cell);
+      
+      let targetInput = null;
+      
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          if (rowIndex > 0) {
+            const prevRow = allRows[rowIndex - 1];
+            const prevCells = prevRow.querySelectorAll('td:not(.acciones-cell)');
+            if (prevCells[colIndex]) {
+              targetInput = prevCells[colIndex].querySelector('input');
+            }
+          }
+          break;
+          
+        case 'ArrowDown':
+          e.preventDefault();
+          if (rowIndex < allRows.length - 1) {
+            const nextRow = allRows[rowIndex + 1];
+            const nextCells = nextRow.querySelectorAll('td:not(.acciones-cell)');
+            if (nextCells[colIndex]) {
+              targetInput = nextCells[colIndex].querySelector('input');
+            }
+          }
+          break;
+          
+        case 'ArrowLeft':
+          if (input.selectionStart === 0 && input.selectionEnd === 0) {
+            e.preventDefault();
+            if (colIndex > 0) {
+              targetInput = cells[colIndex - 1].querySelector('input');
+            } else if (rowIndex > 0) {
+              // Ir a última celda de fila anterior
+              const prevRow = allRows[rowIndex - 1];
+              const prevCells = prevRow.querySelectorAll('td:not(.acciones-cell)');
+              targetInput = prevCells[prevCells.length - 1].querySelector('input');
+            }
+          }
+          break;
+          
+        case 'ArrowRight':
+          if (input.selectionStart === input.value.length) {
+            e.preventDefault();
+            if (colIndex < cells.length - 1) {
+              targetInput = cells[colIndex + 1].querySelector('input');
+            } else if (rowIndex < allRows.length - 1) {
+              // Ir a primera celda de siguiente fila
+              const nextRow = allRows[rowIndex + 1];
+              const nextCells = nextRow.querySelectorAll('td:not(.acciones-cell)');
+              targetInput = nextCells[0].querySelector('input');
+            }
+          }
+          break;
+          
+        case 'Enter':
+          e.preventDefault();
+          // Mover a siguiente celda o siguiente fila
+          if (colIndex < cells.length - 1) {
+            targetInput = cells[colIndex + 1].querySelector('input');
+          } else if (rowIndex < allRows.length - 1) {
+            const nextRow = allRows[rowIndex + 1];
+            const nextCells = nextRow.querySelectorAll('td:not(.acciones-cell)');
+            targetInput = nextCells[0].querySelector('input');
+          } else {
+            // Última celda de última fila - agregar nueva fila
+            addTableRow(tableType);
+            setTimeout(() => {
+              const newRows = tbody.querySelectorAll('tr');
+              const lastRow = newRows[newRows.length - 1];
+              const firstInput = lastRow.querySelector('td:not(.acciones-cell) input');
+              if (firstInput) firstInput.focus();
+            }, 50);
+          }
+          break;
+          
+        case 'Tab':
+          // Comportamiento por defecto de Tab, pero validar al salir
+          setTimeout(() => {
+            validarCampoEnTiempoReal(input, tableType);
+          }, 0);
+          break;
+          
+        case 'Escape':
+          input.blur();
+          break;
+      }
+      
+      if (targetInput) {
+        targetInput.focus();
+        targetInput.select();
+      }
+    });
+    
+    // Marcar fila activa
+    tbody.addEventListener('focusin', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        // Remover clase activa de todas las filas
+        tbody.querySelectorAll('tr').forEach(r => r.classList.remove('row-active'));
+        // Agregar clase activa a la fila actual
+        e.target.closest('tr').classList.add('row-active');
+      }
+    });
+    
+    tbody.addEventListener('focusout', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        const tableType = table.dataset.tableType;
+        validarCampoEnTiempoReal(e.target, tableType);
+      }
+    });
+    
+    // Seleccionar todo al hacer focus
+    tbody.addEventListener('focus', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        setTimeout(() => e.target.select(), 0);
+      }
+    }, true);
+  });
+}
+
+function validarCampoEnTiempoReal(input, tableType) {
+  const fieldName = input.name;
+  const config = VALIDACIONES[tableType];
+  
+  if (!config || !config[fieldName]) return;
+  
+  const fieldConfig = config[fieldName];
+  const resultado = validarCampo(input.value, fieldConfig.type);
+  
+  input.classList.remove('valid', 'invalid');
+  
+  if (input.value.trim() === '') {
+    // Campo vacío - sin estado visual
+    return;
+  }
+  
+  if (resultado.valid) {
+    input.classList.add('valid');
+    // Normalizar valor si es necesario
+    if (resultado.normalized !== input.value) {
+      input.value = resultado.normalized;
+    }
+  } else {
+    input.classList.add('invalid');
+  }
+}
+
 // ==================== VERIFICACIÓN DE LICENCIA ====================
 
 async function checkLicenseBeforeLoad() {
@@ -156,6 +529,7 @@ async function loadMainContent() {
   initTheme();
   loadStoredData();
   setupEventListeners();
+  setupExcelNavigation(); // Nueva función para navegación tipo Excel
   
   showLicenseIndicator();
 }
@@ -310,12 +684,20 @@ function createTableRow(tableType, values = {}) {
   const rowId = values.rowId || generateRowId();
   row.setAttribute('data-row-id', rowId);
 
-  config.columns.forEach(colName => {
+  config.columns.forEach((colName, index) => {
     const td = document.createElement('td');
     const input = document.createElement('input');
     input.type = 'text';
     input.name = colName;
     input.value = values[colName] || '';
+    input.setAttribute('data-col', index);
+    
+    // Agregar atributo de validación
+    const validationConfig = VALIDACIONES[tableType]?.[colName];
+    if (validationConfig) {
+      input.setAttribute('data-validation', validationConfig.type);
+    }
+    
     td.appendChild(input);
     row.appendChild(td);
   });
@@ -381,6 +763,9 @@ function clearTableInDOM(tableType) {
   
   tbody.innerHTML = '';
   tbody.appendChild(createTableRow(tableType));
+  
+  // Limpiar errores de validación
+  limpiarErroresValidacion(tableType);
 }
 
 function addTableRow(tableType) {
@@ -427,9 +812,27 @@ function deleteTableRow(row, tableType) {
 }
 
 async function saveTable(tableType) {
+  // Validar antes de guardar
+  const { valid, allErrors } = validarTablaCompleta(tableType);
+  
+  if (!valid) {
+    mostrarErroresValidacion(tableType, allErrors);
+    showToast(`Hay ${allErrors.length} error(es) de validación`, 'error');
+    
+    // Enfocar en el primer error
+    if (allErrors.length > 0 && allErrors[0].input) {
+      allErrors[0].input.focus();
+      allErrors[0].input.select();
+    }
+    return;
+  }
+  
+  // Limpiar errores previos
+  limpiarErroresValidacion(tableType);
+  
   const data = getTableDataFromDOM(tableType);
   await saveSectionData(tableType, data);
-  showToast(`"${tableType}" guardado`, 'success');
+  showToast(`"${tableType}" guardado ✓`, 'success');
 }
 
 async function clearTable(tableType) {
@@ -451,20 +854,55 @@ async function executeAutomation(tableType) {
     return;
   }
   
-  await saveSectionData(tableType, filasConDatos);
-  showToast(`Ejecutando ${tableType} (${filasConDatos.length} filas)...`, 'info');
+  // Validar antes de ejecutar
+  const { valid, allErrors } = validarTablaCompleta(tableType);
+  
+  if (!valid) {
+    mostrarErroresValidacion(tableType, allErrors);
+    showToast(`Corrige ${allErrors.length} error(es) antes de ejecutar`, 'error');
+    
+    // Enfocar en el primer error
+    if (allErrors.length > 0 && allErrors[0].input) {
+      allErrors[0].input.focus();
+      allErrors[0].input.select();
+    }
+    return;
+  }
+  
+  // Limpiar errores previos
+  limpiarErroresValidacion(tableType);
+  
+  // Normalizar valores antes de enviar
+  const filasNormalizadas = filasConDatos.map(row => {
+    const normalizedRow = { ...row };
+    const config = VALIDACIONES[tableType];
+    
+    Object.keys(row).forEach(key => {
+      if (config && config[key]) {
+        const resultado = validarCampo(row[key], config[key].type);
+        if (resultado.valid) {
+          normalizedRow[key] = resultado.normalized;
+        }
+      }
+    });
+    
+    return normalizedRow;
+  });
+  
+  await saveSectionData(tableType, filasNormalizadas);
+  showToast(`Ejecutando ${tableType} (${filasNormalizadas.length} filas)...`, 'info');
   
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       chrome.tabs.sendMessage(tabs[0].id, {
         action: 'executeSection',
         section: tableType,
-        data: filasConDatos
+        data: filasNormalizadas
       }, (response) => {
         if (chrome.runtime.lastError) {
           showToast('Error: No se pudo conectar con la página', 'error');
         } else if (response && response.success) {
-          showToast('Automatización terminada', 'success');
+          showToast('Automatización terminada ✓', 'success');
         }
       });
     }
@@ -473,17 +911,35 @@ async function executeAutomation(tableType) {
 
 async function saveAll() {
   const allData = {};
+  let hasErrors = false;
+  let totalErrors = 0;
 
   for (const section of Object.keys(SECCIONES_CONFIG)) {
     allData[section] = getSectionValuesFromDOM(section);
   }
 
+  // Validar tablas antes de guardar
   for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    const { valid, allErrors } = validarTablaCompleta(tableType);
+    
+    if (!valid) {
+      hasErrors = true;
+      totalErrors += allErrors.length;
+      mostrarErroresValidacion(tableType, allErrors);
+    } else {
+      limpiarErroresValidacion(tableType);
+    }
+    
     allData[tableType] = getTableDataFromDOM(tableType);
   }
 
+  if (hasErrors) {
+    showToast(`Hay ${totalErrors} error(es) de validación`, 'error');
+    return;
+  }
+
   await saveAllData(allData);
-  showToast('Todo guardado correctamente', 'success');
+  showToast('Todo guardado correctamente ✓', 'success');
 }
 
 async function clearAll() {
@@ -641,7 +1097,10 @@ window.FichaCatastralAPI = {
   STORAGE_KEY,
   SECCIONES_CONFIG,
   TABLAS_CONFIG,
+  VALIDACIONES,
   getAllData: getAllStoredData,
   getSectionData,
-  saveSectionData
+  saveSectionData,
+  validarCampo,
+  validarTablaCompleta
 };

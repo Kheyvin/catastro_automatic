@@ -142,44 +142,50 @@
     </div>
   </div>
   <div class="tabla-excel-container">
-    <table class="tabla-excel" id="tabla-construcciones">
+    <div class="tabla-instrucciones">
+      <span class="instruccion-item">⌨️ Navega con flechas</span>
+      <span class="instruccion-item">↵ Enter = siguiente celda</span>
+      <span class="instruccion-item">⇥ Tab = siguiente columna</span>
+    </div>
+    <table class="tabla-excel tabla-navegable" id="tabla-construcciones" data-table-type="construcciones">
       <thead>
         <tr>
-          <th>NPISO</th>
-          <th>MES</th>
-          <th>AÑO</th>
-          <th>MEP</th>
-          <th>ECS</th>
-          <th>ECC</th>
-          <th>MURO</th>
-          <th>TECHO</th>
-          <th>PISO</th>
-          <th>PUERTA</th>
-          <th>REVEST</th>
-          <th>BAÑO</th>
-          <th>INST</th>
-          <th>AREA</th>
-          <th>UCA</th>
+          <th title="Cualquier valor">1</th>
+          <th title="Cualquier valor">NPISO</th>
+          <th title="0-12 (ej: 1, 01)">MES</th>
+          <th title="4 dígitos">AÑO</th>
+          <th title="0-3">MEP</th>
+          <th title="0-4">ECS</th>
+          <th title="0-4">ECC</th>
+          <th title="A-I">MURO</th>
+          <th title="A-I">TECHO</th>
+          <th title="A-I">PISO</th>
+          <th title="A-I">PUERTA</th>
+          <th title="A-I">REVEST</th>
+          <th title="A-I">BAÑO</th>
+          <th title="A-I">INST</th>
+          <th title="Cualquier valor">AREA</th>
+          <th title="0-7">UCA</th>
           <th>ACC</th>
         </tr>
       </thead>
       <tbody id="tbody-construcciones">
         <tr data-row-id="1">
-          <td><input type="text" name="npiso"></td>
-          <td><input type="text" name="mes"></td>
-          <td><input type="text" name="anio"></td>
-          <td><input type="text" name="mep"></td>
-          <td><input type="text" name="ecs"></td>
-          <td><input type="text" name="ecc"></td>
-          <td><input type="text" name="muro"></td>
-          <td><input type="text" name="techo"></td>
-          <td><input type="text" name="piso"></td>
-          <td><input type="text" name="puerta"></td>
-          <td><input type="text" name="revest"></td>
-          <td><input type="text" name="banio"></td>
-          <td><input type="text" name="inst"></td>
-          <td><input type="text" name="area"></td>
-          <td><input type="text" name="uca"></td>
+          <td><input type="text" name="npiso" data-col="0" data-validation="any"></td>
+          <td><input type="text" name="mes" data-col="1" data-validation="mes"></td>
+          <td><input type="text" name="anio" data-col="2" data-validation="anio"></td>
+          <td><input type="text" name="mep" data-col="3" data-validation="mep"></td>
+          <td><input type="text" name="ecs" data-col="4" data-validation="ecs"></td>
+          <td><input type="text" name="ecc" data-col="5" data-validation="ecc"></td>
+          <td><input type="text" name="muro" data-col="6" data-validation="letra"></td>
+          <td><input type="text" name="techo" data-col="7" data-validation="letra"></td>
+          <td><input type="text" name="piso" data-col="8" data-validation="letra"></td>
+          <td><input type="text" name="puerta" data-col="9" data-validation="letra"></td>
+          <td><input type="text" name="revest" data-col="10" data-validation="letra"></td>
+          <td><input type="text" name="banio" data-col="11" data-validation="letra"></td>
+          <td><input type="text" name="inst" data-col="12" data-validation="letra"></td>
+          <td><input type="text" name="area" data-col="13" data-validation="any"></td>
+          <td><input type="text" name="uca" data-col="14" data-validation="uca"></td>
           <td class="acciones-cell">
             <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
             <button class="btn-row btn-delete" data-action="delete">❌</button>
@@ -202,30 +208,36 @@
     </div>
   </div>
   <div class="tabla-excel-container">
-    <table class="tabla-excel" id="tabla-obras">
+    <div class="tabla-instrucciones">
+      <span class="instruccion-item">⌨️ Navega con flechas</span>
+      <span class="instruccion-item">↵ Enter = siguiente celda</span>
+      <span class="instruccion-item">⇥ Tab = siguiente columna</span>
+    </div>
+    <table class="tabla-excel tabla-navegable" id="tabla-obras" data-table-type="obras">
       <thead>
         <tr>
-          <th>CÓDIGO</th>
-          <th>MES</th>
-          <th>AÑO</th>
-          <th>MEP</th>
-          <th>ECS</th>
-          <th>ECC</th>
-          <th>TOTAL</th>
-          <th>UCA</th>
+          <th title="Cualquier valor">1</th>
+          <th title="Solo números">CÓDIGO</th>
+          <th title="0-12 (ej: 1, 01)">MES</th>
+          <th title="4 dígitos">AÑO</th>
+          <th title="0-3">MEP</th>
+          <th title="0-4">ECS</th>
+          <th title="0-4">ECC</th>
+          <th title="Cualquier valor">TOTAL</th>
+          <th title="0-7">UCA</th>
           <th>ACC</th>
         </tr>
       </thead>
       <tbody id="tbody-obras">
         <tr data-row-id="1">
-          <td><input type="text" name="codigo"></td>
-          <td><input type="text" name="mes"></td>
-          <td><input type="text" name="anio"></td>
-          <td><input type="text" name="mep"></td>
-          <td><input type="text" name="ecs"></td>
-          <td><input type="text" name="ecc"></td>
-          <td><input type="text" name="total"></td>
-          <td><input type="text" name="uca"></td>
+          <td><input type="text" name="codigo" data-col="0" data-validation="numero"></td>
+          <td><input type="text" name="mes" data-col="1" data-validation="mes"></td>
+          <td><input type="text" name="anio" data-col="2" data-validation="anio"></td>
+          <td><input type="text" name="mep" data-col="3" data-validation="mep"></td>
+          <td><input type="text" name="ecs" data-col="4" data-validation="ecs"></td>
+          <td><input type="text" name="ecc" data-col="5" data-validation="ecc"></td>
+          <td><input type="text" name="total" data-col="6" data-validation="any"></td>
+          <td><input type="text" name="uca" data-col="7" data-validation="uca"></td>
           <td class="acciones-cell">
             <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
             <button class="btn-row btn-delete" data-action="delete">❌</button>
@@ -312,3 +324,156 @@
   <button class="btn btn-global-import" id="btn-importar">📥 Importar</button>
   <input type="file" id="input-importar" accept=".json" style="display: none;">
 </div>
+
+<!-- Estilos adicionales para validación y navegación -->
+<style>
+/* Instrucciones de navegación */
+.tabla-instrucciones {
+  display: flex;
+  gap: 15px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #bae6fd;
+  border-bottom: none;
+  font-size: 11px;
+  color: #0369a1;
+}
+
+.dark-mode .tabla-instrucciones {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-color: #334155;
+  color: #7dd3fc;
+}
+
+.instruccion-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Estilos de validación */
+.tabla-excel input.valid {
+  background-color: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+.tabla-excel input.invalid {
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  animation: shake 0.3s ease-in-out;
+}
+
+.dark-mode .tabla-excel input.valid {
+  background-color: #14532d !important;
+  border-color: #22c55e !important;
+}
+
+.dark-mode .tabla-excel input.invalid {
+  background-color: #450a0a !important;
+  border-color: #ef4444 !important;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* Celda activa/seleccionada */
+.tabla-excel input:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+}
+
+.dark-mode .tabla-excel input:focus {
+  box-shadow: 0 0 0 2px #60a5fa !important;
+  border-color: #60a5fa !important;
+  background-color: #1e3a5f !important;
+}
+
+/* Indicador de celda seleccionada en fila */
+.tabla-excel tr.row-active {
+  background-color: #f0f9ff !important;
+}
+
+.dark-mode .tabla-excel tr.row-active {
+  background-color: #1e293b !important;
+}
+
+/* Tooltip de validación */
+.tabla-excel th {
+  cursor: help;
+  position: relative;
+}
+
+.tabla-excel th:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Indicador de errores en sección */
+.validation-summary {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.dark-mode .validation-summary {
+  background: #450a0a;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.validation-summary ul {
+  margin: 5px 0 0 20px;
+  padding: 0;
+}
+
+.validation-summary li {
+  margin: 3px 0;
+}
+
+/* Mejoras en tabla excel para navegación */
+.tabla-excel tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.tabla-excel input {
+  transition: all 0.15s ease;
+}
+
+/* Contador de filas */
+.tabla-excel tbody tr::before {
+  content: attr(data-row-index);
+  position: absolute;
+  left: -25px;
+  color: #94a3b8;
+  font-size: 10px;
+  width: 20px;
+  text-align: right;
+}
+</style>
