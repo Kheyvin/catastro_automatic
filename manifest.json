@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Automatización de ficha catastral individual, cotitular y economica",
   "permissions": [
     "storage",
@@ -24,7 +24,7 @@
       "128": "bb.png"
     },
     "default_title": "Webinar Catastro - By KDA",
-    "default_popup": "popup.html"
+    "default_popup": "popup-content.html"
   },
   "content_scripts": [
     {
@@ -32,9 +32,7 @@
         "http://161.132.42.244:9006/ficha-individual/*"
       ],
       "js": [
-        "license-config.min.js",
-        "license-manager.min.js",
-        "content-individual.min.js"
+        "content-individual.js"
       ],
       "run_at": "document_idle"
     },
@@ -43,9 +41,7 @@
         "http://161.132.42.244:9006/ficha-cotitularidad/*"
       ],
       "js": [
-        "license-config.min.js",
-        "license-manager.min.js",
-        "content-cotitularidad.min.js"
+        "content-cotitularidad.js"
       ],
       "run_at": "document_idle"
     },
@@ -54,9 +50,7 @@
         "http://161.132.42.244:9006/ficha-economica/*"
       ],
       "js": [
-        "license-config.min.js",
-        "license-manager.min.js",
-        "content-economica.min.js"
+        "content-economica.js"
       ],
       "run_at": "document_idle"
     }
@@ -64,11 +58,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "popup-content.html",
-        "license.html",
-        "license-config.min.js",
-        "license-manager.min.js",
-        "license-ui.min.js",
         "bb.png"
       ],
       "matches": ["<all_urls>"]
