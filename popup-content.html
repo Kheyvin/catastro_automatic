@@ -14,6 +14,36 @@
       <button class="btn-theme" id="btn-theme" title="Cambiar tema">🌙</button>
     </header>
 
+    <!-- CONTADOR DE FICHAS NETAS -->
+    <section class="seccion" id="seccion-fichas-counter">
+      <div class="seccion-header">
+        <h2>📊 Fichas Netas</h2>
+        <div class="seccion-buttons">
+          <button class="btn btn-clear" id="btn-reset-fichas" title="Reiniciar contador">🔄</button>
+        </div>
+      </div>
+      <div class="seccion-content">
+        <div class="fichas-counter-row">
+          <div class="field-group">
+            <label for="fichas-meta">META</label>
+            <input type="number" id="fichas-meta" name="fichas_meta" placeholder="Ej: 50" min="1">
+          </div>
+          <div class="field-group">
+            <label>AVANCE</label>
+            <div class="fichas-display" id="fichas-avance">0</div>
+          </div>
+          <div class="field-group">
+            <label>FALTAN</label>
+            <div class="fichas-display fichas-faltantes" id="fichas-faltantes">0</div>
+          </div>
+        </div>
+        <div class="fichas-progress-bar">
+          <div class="fichas-progress-fill" id="fichas-progress" style="width: 0%"></div>
+        </div>
+        <p class="fichas-info" id="fichas-info-text">Configura tu meta para iniciar el seguimiento</p>
+      </div>
+    </section>
+
   <!-- SECCIÓN PRINCIPALES -->
   <section class="seccion" id="seccion-principales">
     <div class="seccion-header">
@@ -38,6 +68,11 @@
           <input type="text" id="principales-lote" name="lote">
         </div>
       </div>
+      <!-- Botón crear lotes -->
+      <div class="lote-creation-row">
+        <button class="btn btn-execute btn-lote-create" id="btn-crear-lotes" title="Crear lotes faltantes hasta el valor de LOTE">🏗️ Crear Lotes</button>
+        <span class="lote-info" id="lote-info-text">Ingresa un valor en LOTE y ejecuta para crear los lotes faltantes</span>
+      </div>
     </div>
   </section>
 
@@ -52,16 +87,8 @@
     </div>
     <div class="seccion-content grid-3">
       <div class="field-group">
-        <label for="ubicacion-codigo-via">CÓDIGO VÍA</label>
-        <input type="text" id="ubicacion-codigo-via" name="codigo_via">
-      </div>
-      <div class="field-group">
         <label for="ubicacion-codigo-hu">CÓDIGO HU</label>
         <input type="text" id="ubicacion-codigo-hu" name="codigo_hu">
-      </div>
-      <div class="field-group">
-        <label for="ubicacion-n-municipal">N° MUNICIPAL</label>
-        <input type="text" id="ubicacion-n-municipal" name="n_municipal">
       </div>
       <div class="field-group">
         <label for="ubicacion-manzana">MANZANA</label>
@@ -74,6 +101,89 @@
       <div class="field-group">
         <label for="ubicacion-sub-lote">SUB-LOTE</label>
         <input type="text" id="ubicacion-sub-lote" name="sub_lote">
+      </div>
+    </div>
+
+    <!-- Tabla de Vías (reemplaza código vía y n° municipal) -->
+    <div class="seccion-sub-header">
+      <h3>🛣️ Vías</h3>
+      <div class="seccion-buttons">
+        <button class="btn btn-add" data-action="add-row" data-section="vias">➕</button>
+        <button class="btn btn-save" data-action="save" data-section="vias">💾</button>
+        <button class="btn btn-clear" data-action="clear" data-section="vias">🗑️</button>
+        <button class="btn btn-execute" data-action="execute" data-section="vias" title="Ejecutar automatización de vías">▶️</button>
+      </div>
+    </div>
+    <div class="tabla-excel-container">
+      <div class="tabla-instrucciones">
+        <span class="instruccion-item">⌨️ Navega con flechas</span>
+        <span class="instruccion-item">↵ Enter = siguiente celda</span>
+        <span class="instruccion-item">P=Principal, S=Secundaria, G=Garage, E=Estacionamiento</span>
+      </div>
+      <table class="tabla-excel tabla-navegable" id="tabla-vias" data-table-type="vias">
+        <thead>
+          <tr>
+            <th></th>
+            <th title="Solo números - Código de vía">CÓDIGO</th>
+            <th title="P=Principal, S=Secundaria, G=Garage, E=Estacionamiento, 0/vacío=Ninguno">PUERTA</th>
+            <th title="Solo números - Número municipal">NRO MUNICIPAL</th>
+            <th title="0-4: 0=Ninguno, 1=Municipalidad, 2=Titular, 3=Técnico, 4=Sin número">COND NUM</th>
+            <th>ACC</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-vias">
+          <tr data-row-id="1">
+            <td><input type="text" name="codigo" data-col="0" data-validation="numero"></td>
+            <td><input type="text" name="puerta" data-col="1" data-validation="puerta"></td>
+            <td><input type="text" name="nro_municipal" data-col="2" data-validation="numero"></td>
+            <td><input type="text" name="cond_num" data-col="3" data-validation="cond_num"></td>
+            <td class="acciones-cell">
+              <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
+              <button class="btn-row btn-delete" data-action="delete">❌</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SECCIÓN SERVICIOS BÁSICOS -->
+  <section class="seccion" id="seccion-servicios">
+    <div class="seccion-header">
+      <h2>⚡ Servicios Básicos</h2>
+      <div class="seccion-buttons">
+        <button class="btn btn-save" data-action="save" data-section="servicios">💾</button>
+        <button class="btn btn-clear" data-action="clear" data-section="servicios">🗑️</button>
+      </div>
+    </div>
+    <div class="seccion-content servicios-grid">
+      <div class="field-group">
+        <label for="servicios-luz">LUZ</label>
+        <input type="text" id="servicios-luz" name="luz" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-agua">AGUA</label>
+        <input type="text" id="servicios-agua" name="agua" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-telf">TELF</label>
+        <input type="text" id="servicios-telf" name="telf" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-desague">DESAGÜE</label>
+        <input type="text" id="servicios-desague" name="desague" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-gas">GAS</label>
+        <input type="text" id="servicios-gas" name="gas" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-internet">INTERNET</label>
+        <input type="text" id="servicios-internet" name="internet" placeholder="1, 0 o vacío" maxlength="1">
+      </div>
+      <div class="field-group">
+        <label for="servicios-tv">TV</label>
+        <input type="text" id="servicios-tv" name="tv" placeholder="1, 0 o vacío" maxlength="1">
       </div>
     </div>
   </section>

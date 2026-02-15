@@ -7,7 +7,7 @@ const SECCIONES_CONFIG = {
   },
   ubicacion: {
     fields: [
-      'ubicacion-codigo-via', 'ubicacion-codigo-hu', 'ubicacion-n-municipal',
+      'ubicacion-codigo-hu',
       'ubicacion-manzana', 'ubicacion-lote', 'ubicacion-sub-lote'
     ]
   },
@@ -18,6 +18,12 @@ const SECCIONES_CONFIG = {
       'lindero-derecha-medida', 'lindero-derecha-colindancia',
       'lindero-izquierda-medida', 'lindero-izquierda-colindancia',
       'lindero-fondo-medida', 'lindero-fondo-colindancia'
+    ]
+  },
+  servicios: {
+    fields: [
+      'servicios-luz', 'servicios-agua', 'servicios-telf',
+      'servicios-desague', 'servicios-gas', 'servicios-internet', 'servicios-tv'
     ]
   },
   inscripcion: {
@@ -32,6 +38,11 @@ const SECCIONES_CONFIG = {
 };
 
 const TABLAS_CONFIG = {
+  vias: {
+    tableId: 'tabla-vias',
+    tbodyId: 'tbody-vias',
+    columns: ['codigo', 'puerta', 'nro_municipal', 'cond_num']
+  },
   construcciones: {
     tableId: 'tabla-construcciones',
     tbodyId: 'tbody-construcciones',
@@ -47,6 +58,12 @@ const TABLAS_CONFIG = {
 // ==================== CONFIGURACIÓN DE VALIDACIONES ====================
 
 const VALIDACIONES = {
+  vias: {
+    codigo: { type: 'numero', label: 'CÓDIGO', errorMsg: 'Solo números permitidos' },
+    puerta: { type: 'puerta', label: 'PUERTA', errorMsg: 'Debe ser P, S, G, E, 0 o vacío' },
+    nro_municipal: { type: 'numero', label: 'NRO MUNICIPAL', errorMsg: 'Solo números permitidos' },
+    cond_num: { type: 'cond_num', label: 'COND NUM', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' }
+  },
   construcciones: {
     npiso: { type: 'any', label: 'NPISO' },
     mes: { type: 'mes', label: 'MES', errorMsg: 'Debe ser 0-12 (ej: 1, 01, 02)' },
@@ -127,6 +144,22 @@ function validarCampo(valor, tipo) {
         return { valid: true, normalized: v };
       }
       return { valid: false };
+    case 'puerta':
+      // FIX: usar 'v' en vez de 'value' (variable no definida)
+      if (v === '' || v === '0') return { valid: true, normalized: v };
+      const upperPuerta = v.toUpperCase();
+      if (['P', 'S', 'G', 'E'].includes(upperPuerta)) {
+        return { valid: true, normalized: upperPuerta };
+      }
+      return { valid: false };
+    case 'cond_num':
+      // FIX: usar 'v' en vez de 'value' (variable no definida)
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: v };
+      const numCond = parseInt(v, 10);
+      if (!isNaN(numCond) && numCond >= 0 && numCond <= 4) {
+        return { valid: true, normalized: numCond.toString().padStart(2, '0') };
+      }
+      return { valid: false };
     default:
       return { valid: true, normalized: v };
   }
@@ -186,27 +219,173 @@ function mostrarErroresValidacion(tableType, allErrors) {
   if (existingSummary) existingSummary.remove();
   if (allErrors.length === 0) return;
   const container = document.querySelector(`#seccion-${tableType} .tabla-excel-container`);
+  // Para vías, el contenedor está dentro de seccion-ubicacion
+  const altContainer = document.querySelector(`#seccion-ubicacion .tabla-excel-container`);
+  const targetContainer = container || altContainer;
+  if (!targetContainer) return;
   const summary = document.createElement('div');
   summary.className = 'validation-summary';
-  const errorList = allErrors.map(err => 
+  const errorList = allErrors.map(err =>
     `<li>Fila ${err.fila}, ${err.field}: ${err.message}</li>`
   ).join('');
   summary.innerHTML = `
     <strong>⚠️ Errores de validación (${allErrors.length}):</strong>
     <ul>${errorList}</ul>
   `;
-  container.appendChild(summary);
+  targetContainer.appendChild(summary);
 }
 
 function limpiarErroresValidacion(tableType) {
   const existingSummary = document.querySelector(`#seccion-${tableType} .validation-summary`);
   if (existingSummary) existingSummary.remove();
+  // También limpiar en ubicacion (para vías)
+  if (tableType === 'vias') {
+    const altSummary = document.querySelector(`#seccion-ubicacion .validation-summary`);
+    if (altSummary) altSummary.remove();
+  }
   const config = TABLAS_CONFIG[tableType];
   if (!config) return;
   const tbody = document.getElementById(config.tbodyId);
   if (!tbody) return;
   tbody.querySelectorAll('input').forEach(input => {
     input.classList.remove('valid', 'invalid');
+  });
+}
+
+// ==================== FUNCIONES PARA FICHAS NETAS ====================
+
+const FICHAS_COUNTER_KEY = 'fichasCounterData';
+
+async function loadFichasCounter() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([FICHAS_COUNTER_KEY], (result) => {
+      resolve(result[FICHAS_COUNTER_KEY] || { meta: 0, avance: 0 });
+    });
+  });
+}
+
+async function saveFichasCounter(data) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [FICHAS_COUNTER_KEY]: data }, resolve);
+  });
+}
+
+async function updateFichasUI() {
+  const data = await loadFichasCounter();
+  const metaInput = document.getElementById('fichas-meta');
+  const avanceEl = document.getElementById('fichas-avance');
+  const faltantesEl = document.getElementById('fichas-faltantes');
+  const progressEl = document.getElementById('fichas-progress');
+  const infoEl = document.getElementById('fichas-info-text');
+
+  if (metaInput && !metaInput.dataset.loaded) {
+    metaInput.value = data.meta || '';
+    metaInput.dataset.loaded = 'true';
+  }
+
+  if (avanceEl) avanceEl.textContent = data.avance || 0;
+
+  const faltantes = Math.max(0, (data.meta || 0) - (data.avance || 0));
+  if (faltantesEl) faltantesEl.textContent = faltantes;
+
+  const percent = data.meta > 0 ? Math.min(100, ((data.avance || 0) / data.meta) * 100) : 0;
+  if (progressEl) progressEl.style.width = percent.toFixed(1) + '%';
+
+  if (infoEl) {
+    if (!data.meta || data.meta === 0) {
+      infoEl.textContent = 'Configura tu meta para iniciar el seguimiento';
+    } else if (faltantes === 0) {
+      infoEl.textContent = '🎉 ¡Meta alcanzada! Completaste todas las fichas';
+      infoEl.style.color = '#22c55e';
+    } else {
+      infoEl.textContent = `📋 ${data.avance}/${data.meta} fichas completadas (${percent.toFixed(0)}%)`;
+      infoEl.style.color = '';
+    }
+  }
+}
+
+function setupFichasCounter() {
+  const metaInput = document.getElementById('fichas-meta');
+  if (metaInput) {
+    metaInput.addEventListener('change', async () => {
+      const data = await loadFichasCounter();
+      data.meta = parseInt(metaInput.value) || 0;
+      await saveFichasCounter(data);
+      await updateFichasUI();
+      showToast('Meta actualizada', 'success');
+    });
+  }
+
+  const resetBtn = document.getElementById('btn-reset-fichas');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      if (confirm('¿Reiniciar el contador de fichas?')) {
+        await saveFichasCounter({ meta: 0, avance: 0 });
+        const metaInput = document.getElementById('fichas-meta');
+        if (metaInput) {
+          metaInput.value = '';
+          metaInput.dataset.loaded = '';
+        }
+        await updateFichasUI();
+        showToast('Contador reiniciado', 'info');
+      }
+    });
+  }
+
+  updateFichasUI();
+}
+
+// ==================== HELPER: Obtener fila con puerta P de vías ====================
+
+function getViaPrincipalFromStorage() {
+  const viasData = getTableDataFromDOM('vias');
+  if (!viasData || viasData.length === 0) return null;
+
+  // Buscar fila con PUERTA = P
+  const filaPrincipal = viasData.find(row =>
+    row.puerta && row.puerta.toUpperCase() === 'P'
+  );
+
+  return filaPrincipal || null;
+}
+
+// ==================== FUNCIÓN CREAR LOTES ====================
+
+function setupCrearLotes() {
+  const btn = document.getElementById('btn-crear-lotes');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const loteInput = document.getElementById('principales-lote');
+    if (!loteInput || !loteInput.value.trim()) {
+      showToast('Ingresa un valor en LOTE primero', 'error');
+      return;
+    }
+
+    const targetLote = loteInput.value.trim();
+
+    // Guardar datos primero
+    const principales = getSectionValuesFromDOM('principales');
+    await saveSectionData('principales', principales);
+
+    showToast(`Ejecutando creación de lotes hasta ${targetLote}...`, 'info');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'createLotes',
+          targetLote: targetLote
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            showToast('Error: No se pudo conectar con la página', 'error');
+          } else if (response && response.success) {
+            showToast(`Lotes creados correctamente ✓`, 'success');
+          } else {
+            showToast('Error al crear lotes: ' + (response?.error || 'desconocido'), 'error');
+          }
+        });
+      }
+    });
   });
 }
 
@@ -239,7 +418,7 @@ function setupExcelNavigation() {
             }
           }
           break;
-          
+
         case 'ArrowDown':
           e.preventDefault();
           if (rowIndex < allRows.length - 1) {
@@ -250,7 +429,7 @@ function setupExcelNavigation() {
             }
           }
           break;
-          
+
         case 'ArrowLeft':
           if (input.selectionStart === 0 && input.selectionEnd === 0) {
             e.preventDefault();
@@ -633,6 +812,35 @@ async function executeAutomation(tableType) {
     return normalizedRow;
   });
   await saveSectionData(tableType, filasNormalizadas);
+
+  // ==================== CASO ESPECIAL: VÍAS ====================
+  // Para vías, enviar también los datos de ubicación junto con las filas de vías
+  if (tableType === 'vias') {
+    const ubicacionData = getSectionValuesFromDOM('ubicacion');
+    showToast(`Ejecutando vías (${filasNormalizadas.length} filas)...`, 'info');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'executeSection',
+          section: 'vias',
+          data: filasNormalizadas,
+          ubicacion: ubicacionData
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            showToast('Error: No se pudo conectar con la página', 'error');
+          } else if (response && response.success) {
+            showToast('Automatización de vías terminada ✓', 'success');
+          } else {
+            showToast('Error en vías: ' + (response?.error || 'desconocido'), 'error');
+          }
+        });
+      }
+    });
+    return; // Salir, ya se manejó el caso de vías
+  }
+
+  // ==================== CASO GENÉRICO: construcciones, obras, etc. ====================
   showToast(`Ejecutando ${tableType} (${filasNormalizadas.length} filas)...`, 'info');
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
@@ -667,7 +875,7 @@ async function saveAll() {
     } else {
       limpiarErroresValidacion(tableType);
     }
-    
+
     allData[tableType] = getTableDataFromDOM(tableType);
   }
   if (hasErrors) {
@@ -793,6 +1001,8 @@ function setupEventListeners() {
       }
     });
   }
+  setupFichasCounter();
+  setupCrearLotes();
 }
 
 // ==================== INICIALIZACIÓN ====================
@@ -810,5 +1020,6 @@ window.FichaCatastralAPI = {
   getSectionData,
   saveSectionData,
   validarCampo,
-  validarTablaCompleta
+  validarTablaCompleta,
+  getViaPrincipalFromStorage
 };

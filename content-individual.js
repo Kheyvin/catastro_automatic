@@ -41,11 +41,104 @@ const CONFIG = {
   }
 };
 
+// ==================== MAPPINGS DE SERVICIOS ====================
+
+const SERVICIOS_MAPPINGS = {
+  '1': '01 - SI',
+  '2': '02 - NO'
+};
+
+const SERVICIOS_FIELDS = [
+  { key: 'servicios-luz', legend: 'LUZ' },
+  { key: 'servicios-agua', legend: 'AGUA' },
+  { key: 'servicios-telf', legend: 'TELF' },
+  { key: 'servicios-desague', legend: 'DESAG' },
+  { key: 'servicios-gas', legend: 'GAS' },
+  { key: 'servicios-internet', legend: 'INTERNET' },
+  { key: 'servicios-tv', legend: 'TV' }
+];
+
+// ==================== MAPPINGS DE VIAS ====================
+
+const VIAS_PUERTA_MAPPING = {
+  '': '00 - NINGUNO',
+  '0': '00 - NINGUNO',
+  'E': 'E - ESTACIONAMIENTO',
+  'G': 'G - GARAGE',
+  'P': 'P - PRINCIPAL',
+  'S': 'S - SECUNDARIA'
+};
+
+const VIAS_COND_NUM_MAPPING = {
+  '': '00 - NINGUNO',
+  '0': '00 - NINGUNO',
+  '00': '00 - NINGUNO',
+  '1': '01 - GENERADO POR MUNICIPALIDAD',
+  '01': '01 - GENERADO POR MUNICIPALIDAD',
+  '2': '02 - AUTOGENERADO POR EL TITULAR CAT.',
+  '02': '02 - AUTOGENERADO POR EL TITULAR CAT.',
+  '3': '03 - GENERADO POR EL TECNICO CAT.',
+  '03': '03 - GENERADO POR EL TECNICO CAT.',
+  '4': '04 - SIN NUMERO',
+  '04': '04 - SIN NUMERO'
+};
+
+// ==================== MAPPINGS DE CONSTRUCCIONES ====================
+
+const CONSTRUCCION_MAPPINGS = {
+  mep: {
+    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
+    '1': '01 - CONCRETO', '01': '01 - CONCRETO',
+    '2': '02 - LADRILLO', '02': '02 - LADRILLO',
+    '3': '03 - ADOBE', '03': '03 - ADOBE'
+  },
+  ecs: {
+    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
+    '1': '01 - MUY BUENO', '01': '01 - MUY BUENO',
+    '2': '02 - BUENO', '02': '02 - BUENO',
+    '3': '03 - REGULAR', '03': '03 - REGULAR',
+    '4': '04 - MALO', '04': '04 - MALO'
+  },
+  ecc: {
+    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
+    '1': '01 - TERMINADO', '01': '01 - TERMINADO',
+    '2': '02 - EN CONSTRUCCION', '02': '02 - EN CONSTRUCCION',
+    '3': '03 - INCONCLUSA', '03': '03 - INCONCLUSA',
+    '4': '04 - EN RUINAS', '04': '04 - EN RUINAS'
+  },
+  uca: {
+    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
+    '1': '01 - EN RETIRO', '01': '01 - EN RETIRO',
+    '2': '02 - EN JARDIN', '02': '02 - EN JARDIN',
+    '3': '03 - EN VIA', '03': '03 - EN VIA',
+    '4': '04 - EN LOTE', '04': '04 - EN LOTE',
+    '5': '05 - ALTURA', '05': '05 - ALTURA',
+    '6': '06 - EN PARQUE', '06': '06 - EN PARQUE',
+    '7': '07 - EN BIEN', '07': '07 - EN BIEN'
+  },
+  letras: {
+    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
+    'a': 'A', 'A': 'A',
+    'b': 'B', 'B': 'B',
+    'c': 'C', 'C': 'C',
+    'd': 'D', 'D': 'D',
+    'e': 'E', 'E': 'E',
+    'f': 'F', 'F': 'F',
+    'g': 'G', 'G': 'G',
+    'h': 'H', 'H': 'H',
+    'i': 'I', 'I': 'I'
+  }
+};
+
+// ==================== ESTADO DE LA APLICACIÓN ====================
+
 const AppState = {
   storedData: null,
   currentSection: null,
   isProcessing: false,
 };
+
+// ==================== FUNCIONES DE STORAGE ====================
 
 async function getStoredData() {
   return new Promise((resolve) => {
@@ -68,6 +161,8 @@ async function updateStoredValue(section, key, value) {
   await saveStoredData(data);
   AppState.storedData = data;
 }
+
+// ==================== UTILIDADES ====================
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -102,7 +197,7 @@ function simulateInput(element, value) {
 
 function simulateClick(element) {
   if (!element) return false;
-  
+
   const eventOptions = {
     bubbles: true,
     cancelable: true,
@@ -112,11 +207,11 @@ function simulateClick(element) {
     clientX: element.getBoundingClientRect ? element.getBoundingClientRect().x + 5 : 0,
     clientY: element.getBoundingClientRect ? element.getBoundingClientRect().y + 5 : 0
   };
-  
+
   if (element.focus) {
     element.focus();
   }
-  
+
   element.dispatchEvent(new MouseEvent('mousedown', eventOptions));
   element.dispatchEvent(new MouseEvent('mouseup', eventOptions));
   element.dispatchEvent(new MouseEvent('click', eventOptions));
@@ -125,7 +220,7 @@ function simulateClick(element) {
 
 function simulateEnter(element) {
   if (!element) return;
-  
+
   const enterEvent = new KeyboardEvent('keydown', {
     key: 'Enter',
     code: 'Enter',
@@ -134,7 +229,7 @@ function simulateEnter(element) {
     bubbles: true
   });
   element.dispatchEvent(enterEvent);
-  
+
   const enterEventUp = new KeyboardEvent('keyup', {
     key: 'Enter',
     code: 'Enter',
@@ -155,6 +250,8 @@ function log(message, type = 'info') {
   };
   console.log('%c' + prefix + ' ' + message, styles[type] || styles.info);
 }
+
+// ==================== FUNCIONES DE ESPERA ====================
 
 function waitForElement(selector, timeout = 10000, parent = document) {
   return new Promise((resolve, reject) => {
@@ -223,7 +320,7 @@ function waitForSectionToExpand(sectionIndex) {
     observer = new MutationObserver((mutations) => {
       const sections = document.querySelectorAll('.ant-collapse-item');
       const section = sections[sectionIndex];
-      
+
       if (section && section.classList.contains('ant-collapse-item-active')) {
         const content = section.querySelector('.ant-collapse-content-active');
         if (content) {
@@ -273,6 +370,8 @@ function waitForButtonClick(buttonSelector, buttonText = null) {
   });
 }
 
+// ==================== FUNCIONES DE SELECTORES ====================
+
 async function openSelector(selectorElement) {
   if (!selectorElement) {
     log('Selector no encontrado', 'error');
@@ -280,9 +379,9 @@ async function openSelector(selectorElement) {
   }
 
   const selectContainer = selectorElement.closest('.ant-select') || selectorElement;
-  
+
   const selectorInput = selectContainer.querySelector('.ant-select-selector');
-  
+
   if (selectorInput) {
     selectorInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
     await delay(50);
@@ -292,35 +391,35 @@ async function openSelector(selectorElement) {
   } else {
     simulateClick(selectContainer);
   }
-  
+
   await delay(CONFIG.delays.medium);
 
   let dropdown = null;
   const maxAttempts = 10;
-  
+
   for (let i = 0; i < maxAttempts; i++) {
     const dropdowns = document.querySelectorAll('.ant-select-dropdown');
     for (const dd of dropdowns) {
       const style = window.getComputedStyle(dd);
-      const isHidden = dd.classList.contains('ant-select-dropdown-hidden') || 
-                       style.display === 'none' || 
+      const isHidden = dd.classList.contains('ant-select-dropdown-hidden') ||
+                       style.display === 'none' ||
                        dd.style.display === 'none';
-      
+
       if (!isHidden && dd.offsetParent !== null) {
         dropdown = dd;
         break;
       }
     }
-    
+
     if (dropdown) break;
     await delay(100);
   }
-  
+
   if (!dropdown) {
     log('No se pudo abrir el dropdown del selector', 'error');
     return null;
   }
-  
+
   return dropdown;
 }
 
@@ -337,7 +436,7 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
   };
 
   const targetNormalized = normalizeText(targetText);
-  
+
   const targetCode = targetNormalized.split(' - ')[0].replace(/^0+/, '');
 
   const findOption = () => {
@@ -348,19 +447,19 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       const textNormalized = normalizeText(text);
 
       const optionCode = textNormalized.split(' - ')[0].replace(/^0+/, '');
-      
+
       if (exactMatch) {
         if (textNormalized === targetNormalized) return option;
       } else {
         if (textNormalized === targetNormalized) return option;
-        
+
         if (targetNormalized.length === 1 && /^[A-I]$/.test(targetNormalized)) {
           if (textNormalized === targetNormalized) return option;
           continue;
         }
 
         if (targetCode && optionCode && targetCode === optionCode) return option;
-        
+
         if (targetNormalized.length > 1) {
           if (textNormalized.includes(targetNormalized) || targetNormalized.includes(textNormalized)) return option;
         }
@@ -376,10 +475,10 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
 
   const scrollContainer = dropdown.querySelector('.rc-virtual-list-holder');
   const input = selectorElement.querySelector('input') || selectorElement.closest('.ant-select')?.querySelector('input');
-  
+
   let attempts = 0;
   const maxAttempts = 100;
-  
+
   while (attempts < maxAttempts) {
     const option = findOption();
     if (option) {
@@ -388,7 +487,7 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       log('Opcion seleccionada: ' + targetText, 'success');
       return true;
     }
-    
+
     if (input) {
       const keydownEvent = new KeyboardEvent('keydown', {
         key: 'ArrowDown',
@@ -406,9 +505,9 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       scrollElement.scrollTop += 200;
       scrollElement.dispatchEvent(new Event('scroll', { bubbles: true }));
     }
-    
+
     await delay(80);
-    
+
     attempts++;
   }
 
@@ -429,7 +528,7 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
       }
     }
   }
-  
+
   const formItems = container.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, .ant-form-item-label, label');
@@ -440,7 +539,7 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
       }
     }
   }
-  
+
   const selects = container.querySelectorAll('.ant-select');
   for (const select of selects) {
     const parent = select.closest('fieldset, .ant-form-item, .ant-col, .ant-row');
@@ -451,23 +550,25 @@ async function selectByLegend(container, legendText, targetValue, exactMatch = f
       }
     }
   }
-  
+
   log('No se encontro selector para: ' + legendText, 'warning');
   return false;
 }
 
 function removeReadonly(element) {
   if (!element) return;
-  
+
   const input = element.querySelector('input') || element;
   input.removeAttribute('readonly');
-  
+
   const selectContainer = element.closest('.ant-select');
   if (selectContainer) {
     const allInputs = selectContainer.querySelectorAll('input');
     allInputs.forEach(inp => inp.removeAttribute('readonly'));
   }
 }
+
+// ==================== FUNCIONES DE MODAL ====================
 
 async function waitForModal(titleText, timeout = 10000) {
   return new Promise((resolve, reject) => {
@@ -521,6 +622,30 @@ async function waitForModal(titleText, timeout = 10000) {
   });
 }
 
+async function waitForModalToClose(titleContains, timeout = 60000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const modals = document.querySelectorAll('.ant-modal');
+    let found = false;
+
+    for (const modal of modals) {
+      const title = modal.querySelector('.ant-modal-title');
+      if (title && title.textContent.toUpperCase().includes(titleContains.toUpperCase())) {
+        if (modal.offsetParent !== null) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) return true;
+    await delay(500);
+  }
+
+  return false;
+}
+
 async function searchInModal(modal, searchValue) {
   const searchInput = modal.querySelector('input[placeholder="Buscar"]');
   if (!searchInput) {
@@ -554,7 +679,7 @@ async function waitForSearchResults(modal, expectedCount = 1, timeout = 10000) {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const count = checkResults();
-      
+
       if (count === expectedCount) {
         clearInterval(interval);
         resolve({ count, autoSelect: true });
@@ -613,9 +738,9 @@ async function handleModalSearch(modalTitle, searchValue, autoSelectIfOne = true
   try {
     const modal = await waitForModal(modalTitle);
     await searchInModal(modal, searchValue);
-    
+
     const result = await waitForSearchResults(modal);
-    
+
     if (result.autoSelect && autoSelectIfOne) {
       await selectFirstRecord(modal);
       log('Registro seleccionado automaticamente en ' + modalTitle, 'success');
@@ -624,7 +749,7 @@ async function handleModalSearch(modalTitle, searchValue, autoSelectIfOne = true
       await waitForUserSelection(modal);
       log('Usuario selecciono un registro', 'success');
     }
-    
+
     await delay(CONFIG.delays.medium);
     return true;
   } catch (e) {
@@ -633,9 +758,11 @@ async function handleModalSearch(modalTitle, searchValue, autoSelectIfOne = true
   }
 }
 
+// ==================== FUNCIONES DE BÚSQUEDA EN DOM ====================
+
 function findInputByLegend(section, legendText) {
   const searchText = legendText.toUpperCase();
-  
+
   const fieldsets = section.querySelectorAll('fieldset');
   for (const fieldset of fieldsets) {
     const legend = fieldset.querySelector('legend');
@@ -644,7 +771,7 @@ function findInputByLegend(section, legendText) {
       if (input) return input;
     }
   }
-  
+
   const formItems = section.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, label, legend');
@@ -653,7 +780,7 @@ function findInputByLegend(section, legendText) {
       if (input) return input;
     }
   }
-  
+
   const allLabels = section.querySelectorAll('label, legend, p, h1, h2, h3, span');
   for (const label of allLabels) {
     if (label.textContent.toUpperCase().includes(searchText)) {
@@ -669,13 +796,13 @@ function findInputByLegend(section, legendText) {
       }
     }
   }
-  
+
   return null;
 }
 
 function findSearchButtonByLegend(section, legendText) {
   const searchText = legendText.toUpperCase();
-  
+
   const fieldsets = section.querySelectorAll('fieldset');
   for (const fieldset of fieldsets) {
     const legend = fieldset.querySelector('legend');
@@ -684,7 +811,7 @@ function findSearchButtonByLegend(section, legendText) {
       if (btn) return btn.closest('button');
     }
   }
-  
+
   const formItems = section.querySelectorAll('.ant-form-item');
   for (const formItem of formItems) {
     const label = formItem.querySelector('.ant-form-item-label label, label, legend, h1');
@@ -693,7 +820,7 @@ function findSearchButtonByLegend(section, legendText) {
       if (btn) return btn.closest('button');
     }
   }
-  
+
   const allElements = section.querySelectorAll('*');
   for (const el of allElements) {
     if (el.childElementCount === 0 && el.textContent.toUpperCase().includes(searchText)) {
@@ -704,54 +831,56 @@ function findSearchButtonByLegend(section, legendText) {
       }
     }
   }
-  
+
   return null;
 }
 
+// ==================== FUNCIONES DE SELECTOR CASCADE ====================
+
 async function waitForSelectorToBeReady(selectId, maxWaitTime = 10000) {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < maxWaitTime) {
     const selectInput = document.querySelector(`#${selectId}`);
     if (!selectInput) {
       await delay(200);
       continue;
     }
-    
+
     const selectContainer = selectInput.closest('.ant-select');
     if (!selectContainer) {
       await delay(200);
       continue;
     }
-    
+
     const isDisabled = selectContainer.classList.contains('ant-select-disabled');
     if (!isDisabled) {
       log(`Selector ${selectId} esta listo`, 'success');
       return true;
     }
-    
+
     await delay(200);
   }
-  
+
   log(`Timeout esperando que ${selectId} este listo`, 'warning');
   return false;
 }
 
 async function selectCascadeOption(selectId, targetValue) {
   if (!targetValue) return false;
-  
+
   const selectInput = document.querySelector(`#${selectId}`);
   if (!selectInput) {
     log(`Selector ${selectId} no encontrado`, 'error');
     return false;
   }
-  
+
   const selectContainer = selectInput.closest('.ant-select');
   if (!selectContainer) {
     log(`Contenedor del selector ${selectId} no encontrado`, 'error');
     return false;
   }
-  
+
   const selectionItem = selectContainer.querySelector('.ant-select-selection-item');
   if (selectionItem) {
     const currentValue = selectionItem.getAttribute('title') || selectionItem.textContent.trim();
@@ -760,55 +889,55 @@ async function selectCascadeOption(selectId, targetValue) {
       return true;
     }
   }
-  
+
   log(`Seleccionando ${selectId}: ${targetValue}`, 'info');
-  
+
   const selectorDiv = selectContainer.querySelector('.ant-select-selector');
   if (selectorDiv) {
     selectorDiv.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
     await delay(100);
     selectorDiv.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
   }
-  
+
   await delay(CONFIG.delays.medium);
-  
+
   let dropdown = null;
-  
+
   for (let attempt = 0; attempt < 15; attempt++) {
     const dropdowns = document.querySelectorAll('.ant-select-dropdown');
     for (const dd of dropdowns) {
       const style = window.getComputedStyle(dd);
-      const isHidden = dd.classList.contains('ant-select-dropdown-hidden') || 
+      const isHidden = dd.classList.contains('ant-select-dropdown-hidden') ||
                        style.display === 'none';
-      
+
       if (!isHidden && dd.offsetParent !== null) {
         dropdown = dd;
         break;
       }
     }
-    
+
     if (dropdown) break;
     await delay(100);
   }
-  
+
   if (!dropdown) {
     log(`No se pudo abrir el dropdown de ${selectId}`, 'error');
     return false;
   }
-  
+
   const normalizeValue = (val) => {
     return val.toString().trim().toUpperCase().replace(/^0+/, '');
   };
   const targetNormalized = normalizeValue(targetValue);
-  
+
   const findAndClickOption = () => {
     const options = dropdown.querySelectorAll('.ant-select-item-option:not(.ant-select-item-option-disabled)');
-    
+
     for (const option of options) {
       const content = option.querySelector('.ant-select-item-option-content');
       const optionText = content ? content.textContent.trim() : option.textContent.trim();
       const optionNormalized = normalizeValue(optionText);
-      
+
       if (optionNormalized === targetNormalized || optionText === targetValue) {
         simulateClick(option);
         return true;
@@ -816,25 +945,25 @@ async function selectCascadeOption(selectId, targetValue) {
     }
     return false;
   };
-  
+
   const virtualList = dropdown.querySelector('.rc-virtual-list-holder');
   const maxScrollAttempts = 150;
-  
+
   for (let attempt = 0; attempt < maxScrollAttempts; attempt++) {
     if (findAndClickOption()) {
       await delay(CONFIG.delays.short);
       log(`Opcion seleccionada en ${selectId}: ${targetValue}`, 'success');
       return true;
     }
-    
+
     if (virtualList) {
       const scrollableElement = virtualList;
       const currentScroll = scrollableElement.scrollTop;
       const scrollIncrement = 100;
-      
+
       scrollableElement.scrollTop = currentScroll + scrollIncrement;
       scrollableElement.dispatchEvent(new Event('scroll', { bubbles: true }));
-      
+
       const inputElement = selectContainer.querySelector('input');
       if (inputElement) {
         inputElement.dispatchEvent(new KeyboardEvent('keydown', {
@@ -847,21 +976,64 @@ async function selectCascadeOption(selectId, targetValue) {
         }));
       }
     }
-    
+
     await delay(50);
   }
-  
+
   simulateClick(document.body);
   await delay(CONFIG.delays.short);
   log(`No se encontro la opcion ${targetValue} en ${selectId}`, 'warning');
   return false;
 }
 
+// ==================== HELPER: Obtener vía principal del storage ====================
+
+function getViaPrincipalFromStorage() {
+  const data = AppState.storedData;
+  const vias = data.vias;
+
+  if (!vias || !Array.isArray(vias) || vias.length === 0) return null;
+
+  // Buscar fila con puerta = P
+  const filaPrincipal = vias.find(row =>
+    row.puerta && row.puerta.toUpperCase() === 'P'
+  );
+
+  if (filaPrincipal) {
+    return {
+      codigo: filaPrincipal.codigo || '',
+      puerta: filaPrincipal.puerta || 'P',
+      nro_municipal: filaPrincipal.nro_municipal || '',
+      cond_num: filaPrincipal.cond_num || ''
+    };
+  }
+
+  return null;
+}
+
+// ==================== FICHAS COUNTER ====================
+
+const FICHAS_COUNTER_KEY = 'fichasCounterData';
+
+async function incrementFichasCounter() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([FICHAS_COUNTER_KEY], (result) => {
+      const data = result[FICHAS_COUNTER_KEY] || { meta: 0, avance: 0 };
+      data.avance = (data.avance || 0) + 1;
+      chrome.storage.local.set({ [FICHAS_COUNTER_KEY]: data }, () => {
+        const faltantes = Math.max(0, data.meta - data.avance);
+        log(`📊 FICHAS: ${data.avance}/${data.meta} completadas. Faltan: ${faltantes}`, 'success');
+        resolve(data);
+      });
+    });
+  });
+}
+
 // ==================== HANDLERS DE SECCIONES ====================
 
 async function handleSeccion01Principales() {
   log('Procesando Seccion 01: PRINCIPALES', 'info');
-  
+
   const data = AppState.storedData;
   const principales = data.principales || {};
   const final = data.final || {};
@@ -880,7 +1052,7 @@ async function handleSeccion01Principales() {
       const sectorContainer = sectorSelect.closest('.ant-select');
       const selectionItem = sectorContainer ? sectorContainer.querySelector('.ant-select-selection-item') : null;
       const currentValue = selectionItem ? (selectionItem.getAttribute('title') || selectionItem.textContent.trim()) : '';
-      
+
       if (!currentValue || currentValue === '') {
         log('Sector no tiene valor, seleccionando: ' + principales['principales-sector'], 'info');
         await selectCascadeOption('form_item_sector', principales['principales-sector']);
@@ -893,7 +1065,7 @@ async function handleSeccion01Principales() {
 
   if (principales['principales-manzana']) {
     const manzanaReady = await waitForSelectorToBeReady('form_item_manzana', 15000);
-    
+
     if (manzanaReady) {
       await delay(CONFIG.delays.medium);
       await selectCascadeOption('form_item_manzana', principales['principales-manzana']);
@@ -905,7 +1077,7 @@ async function handleSeccion01Principales() {
 
   if (principales['principales-lote']) {
     const loteReady = await waitForSelectorToBeReady('form_item_lote', 15000);
-    
+
     if (loteReady) {
       await delay(CONFIG.delays.medium);
       await selectCascadeOption('form_item_lote', principales['principales-lote']);
@@ -927,7 +1099,7 @@ async function handleSeccion01Principales() {
   if (unidadInput) simulateInput(unidadInput, CONFIG.defaultValues.unidad);
 
   if (final['final-observaciones']) {
-    const observacionesInput = document.querySelector('textarea[id*="observacion"]') || 
+    const observacionesInput = document.querySelector('textarea[id*="observacion"]') ||
                                document.querySelector('input[id*="observacion"]');
     if (observacionesInput) {
       simulateInput(observacionesInput, final['final-observaciones']);
@@ -938,7 +1110,7 @@ async function handleSeccion01Principales() {
 
   await waitForButtonClick('button', 'Guardar principales');
   log('Usuario guardo PRINCIPALES', 'success');
-  
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(1);
 }
@@ -953,6 +1125,7 @@ async function handleSeccion02Ubicacion() {
   const section = document.querySelectorAll('.ant-collapse-item')[1];
   if (!section) return;
 
+  // Setear campos básicos
   if (ubicacion['ubicacion-manzana']) {
     const manzanaInput = findInputByLegend(section, 'MANZANA');
     if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
@@ -964,7 +1137,7 @@ async function handleSeccion02Ubicacion() {
   }
 
   if (ubicacion['ubicacion-sub-lote']) {
-    const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
+    const subLoteInput = findInputByLegend(section, 'SUB-LOTE') ||
                           findInputByLegend(section, 'SUBLOTE');
     if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
   }
@@ -974,7 +1147,7 @@ async function handleSeccion02Ubicacion() {
   await delay(CONFIG.delays.medium);
 
   if (ubicacion['ubicacion-codigo-hu']) {
-    const searchButton = findSearchButtonByLegend(section, 'CODIGO HU') || 
+    const searchButton = findSearchButtonByLegend(section, 'CODIGO HU') ||
                          findSearchButtonByLegend(section, 'COD. HU') ||
                          findSearchButtonByLegend(section, 'DIGO HU');
     if (searchButton) {
@@ -985,84 +1158,459 @@ async function handleSeccion02Ubicacion() {
 
   await delay(CONFIG.delays.medium);
 
-  const buttons = section.querySelectorAll('button');
-  for (const btn of buttons) {
-    if (btn.textContent.includes('NUEVO') || btn.querySelector('.anticon-plus')) {
-      simulateClick(btn);
-      await delay(CONFIG.delays.long);
-      await handleNuevaUbicacionModal(ubicacion);
-      break;
-    }
-  }
+  // Obtener la fila principal (puerta P) de vías para crear la ubicación principal
+  // const viaPrincipal = getViaPrincipalFromStorage();
+
+  // if (viaPrincipal) {
+  //   // Crear UNA ubicación con la vía principal
+  //   const buttons = section.querySelectorAll('button');
+  //   for (const btn of buttons) {
+  //     if (btn.textContent.includes('NUEVO') || btn.querySelector('.anticon-plus')) {
+  //       simulateClick(btn);
+  //       await delay(CONFIG.delays.long);
+  //       await handleNuevaUbicacionModalFromVia(viaPrincipal);
+  //       break;
+  //     }
+  //   }
+  // } else {
+  //   log('No hay vía principal (P) configurada, omitiendo creación de ubicación', 'warning');
+  // }
 
   log('Seccion 02 completada. Esperando click en "Guardar ubicacion de predio"...', 'success');
 
   await waitForButtonClick('button', 'Guardar ubicaci');
   await captureUbicacionData(section);
-  
+
   log('Usuario guardo UBICACION', 'success');
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(2);
 }
 
-async function handleNuevaUbicacionModal(ubicacion) {
+// ==================== handleNuevaUbicacionModalFromVia ====================
+
+async function handleNuevaUbicacionModalFromVia(viaData) {
   try {
     const modal = await waitForModal('NUEVA UBICACI');
-    
-    if (ubicacion['ubicacion-codigo-via']) {
+    if (!modal) {
+      log('Modal NUEVA UBICACION no apareció', 'error');
+      return;
+    }
+
+    // 1. Buscar código de vía
+    if (viaData.codigo) {
       const searchButton = modal.querySelector('button .anticon-search');
       if (searchButton) {
         simulateClick(searchButton.closest('button'));
-        await handleModalSearch('LISTADO DE V', ubicacion['ubicacion-codigo-via']);
+        await handleModalSearch('LISTADO DE V', viaData.codigo);
       }
     }
 
     await delay(CONFIG.delays.medium);
 
-    await selectByLegend(modal, 'TIPO DE PUERTA', CONFIG.defaultValues.tipoPuerta);
+    // 2. Setear TIPO DE PUERTA según el valor
+    const puertaValue = (viaData.puerta || '').toUpperCase();
+    const puertaMapped = VIAS_PUERTA_MAPPING[puertaValue] || VIAS_PUERTA_MAPPING['0'];
+    await selectByLegend(modal, 'TIPO DE PUERTA', puertaMapped);
 
     await delay(CONFIG.delays.short);
 
-    await selectByLegend(modal, 'COND. NUMER', CONFIG.defaultValues.condNumeracion);
+    // 3. Setear COND. NUMER según el valor
+    const condValue = (viaData.cond_num || '').toString().trim();
+    const condMapped = VIAS_COND_NUM_MAPPING[condValue] || VIAS_COND_NUM_MAPPING['0'];
+    await selectByLegend(modal, 'COND. NUMER', condMapped);
 
-    if (ubicacion['ubicacion-n-municipal']) {
-      const nroMunicipalInput = modal.querySelector('#form_item_numeromunicipal');
-      if (nroMunicipalInput) {
-        simulateInput(nroMunicipalInput, ubicacion['ubicacion-n-municipal']);
-        
-        nroMunicipalInput.addEventListener('change', async () => {
-          await updateStoredValue('ubicacion', 'ubicacion-n-municipal', nroMunicipalInput.value);
-        });
+    // 4. Setear NRO MUNICIPAL
+    if (viaData.nro_municipal) {
+      const nroInput = modal.querySelector('#form_item_numeromunicipal');
+      if (nroInput) {
+        simulateInput(nroInput, viaData.nro_municipal);
       }
     }
 
     await waitForButtonClick('button.ant-btn-primary', 'Guardar');
     await delay(CONFIG.delays.medium);
-
   } catch (e) {
-    log('Error en modal Nueva Ubicacion: ' + e.message, 'error');
+    log('Error en modal Nueva Ubicacion (via): ' + e.message, 'error');
   }
 }
 
+// ==================== Ejecutar automatización de VÍAS ====================
+
+async function handleSeccion02Vias(viasData) {
+  log('Procesando automatización de VÍAS (' + viasData.length + ' filas)', 'info');
+
+  await delay(CONFIG.delays.medium);
+
+  // Expandir sección 02 si no está abierta
+  const sections = document.querySelectorAll('.ant-collapse-item');
+  const section = sections[1];
+  if (!section) {
+    log('Sección 02 no encontrada', 'error');
+    return;
+  }
+
+  const header = section.querySelector('.ant-collapse-header');
+  if (!section.classList.contains('ant-collapse-item-active')) {
+    simulateClick(header);
+    await waitForSectionToExpand(1);
+  }
+
+  await delay(CONFIG.delays.medium);
+
+  // Iterar por cada fila de vías
+  for (let i = 0; i < viasData.length; i++) {
+    const viaRow = viasData[i];
+    log(`Procesando vía ${i + 1}/${viasData.length}: código=${viaRow.codigo}, puerta=${viaRow.puerta}`, 'info');
+
+    // Hacer click en botón NUEVO
+    const buttons = section.querySelectorAll('button');
+    let nuevoBtn = null;
+    for (const btn of buttons) {
+      if (btn.textContent.includes('NUEVO') || btn.querySelector('.anticon-plus')) {
+        nuevoBtn = btn;
+        break;
+      }
+    }
+
+    if (!nuevoBtn) {
+      log('Botón NUEVO no encontrado', 'error');
+      break;
+    }
+
+    simulateClick(nuevoBtn);
+    await delay(CONFIG.delays.long);
+
+    // Esperar modal NUEVA UBICACIÓN DEL PREDIO
+    const modal = await waitForModal('NUEVA UBICACI');
+    if (!modal) {
+      log('Modal NUEVA UBICACIÓN no apareció para vía ' + (i + 1), 'error');
+      continue;
+    }
+
+    // 1. Click en botón buscar de 05 CÓD. VIA
+    if (viaRow.codigo) {
+      const searchButtons = modal.querySelectorAll('button .anticon-search');
+      let codViaSearchBtn = null;
+
+      for (const icon of searchButtons) {
+        const btn = icon.closest('button');
+        const parent = btn.closest('.ant-form-item, fieldset, div');
+        if (parent) {
+          const label = parent.querySelector('label, h1, legend');
+          if (label && (label.textContent.includes('CÓD') || label.textContent.includes('COD') || label.textContent.includes('05'))) {
+            codViaSearchBtn = btn;
+            break;
+          }
+        }
+      }
+
+      // Si no se encontró por label, usar el primer botón de búsqueda
+      if (!codViaSearchBtn && searchButtons.length > 0) {
+        codViaSearchBtn = searchButtons[0].closest('button');
+      }
+
+      if (codViaSearchBtn) {
+        simulateClick(codViaSearchBtn);
+        await delay(CONFIG.delays.long);
+
+        // Buscar modal LISTADO DE VÍAS
+        const viasModal = await waitForModal('LISTADO DE V') || await waitForModal('VÍA') || await waitForModal('VIA');
+        if (viasModal) {
+          // Pegar código y buscar
+          const searchInput = viasModal.querySelector('input#form_item_search') ||
+                              viasModal.querySelector('input[type="text"]');
+          if (searchInput) {
+            simulateInput(searchInput, viaRow.codigo);
+            await delay(CONFIG.delays.short);
+
+            const searchBtn = viasModal.querySelector('button.ant-input-search-button') ||
+                              viasModal.querySelector('button .anticon-search')?.closest('button');
+            if (searchBtn) {
+              simulateClick(searchBtn);
+              await delay(CONFIG.delays.long);
+            }
+          }
+
+          // Seleccionar resultado
+          const countSpan = viasModal.querySelector('p.float-right span.text-black');
+          const count = countSpan ? parseInt(countSpan.textContent) : 0;
+          if (count >= 1) {
+            const selectBtn = viasModal.querySelector('button .anticon-select')?.closest('button');
+            if (selectBtn) {
+              simulateClick(selectBtn);
+              log('Código vía seleccionado: ' + viaRow.codigo, 'success');
+              await delay(CONFIG.delays.medium);
+            }
+          } else {
+            log('No se encontró resultado para código vía: ' + viaRow.codigo, 'warning');
+            const closeBtn = viasModal.querySelector('.ant-modal-close');
+            if (closeBtn) simulateClick(closeBtn);
+            await delay(CONFIG.delays.short);
+          }
+        }
+      }
+    }
+
+    await delay(CONFIG.delays.medium);
+
+    // Volver a buscar el modal principal (puede haberse cerrado/abierto)
+    let ubicacionModal = document.querySelector('.ant-modal:not([style*="display: none"])');
+    if (!ubicacionModal) {
+      ubicacionModal = await waitForModal('NUEVA UBICACI', 3000);
+    }
+
+    if (ubicacionModal) {
+      // 2. Setear TIPO DE PUERTA
+      const puertaValue = (viaRow.puerta || '').toUpperCase();
+      const puertaMapped = VIAS_PUERTA_MAPPING[puertaValue] || VIAS_PUERTA_MAPPING['0'];
+      await selectByLegend(ubicacionModal, 'TIPO DE PUERTA', puertaMapped);
+      await delay(CONFIG.delays.short);
+
+      // 3. Setear NRO MUNICIPAL
+      if (viaRow.nro_municipal) {
+        const nroInput = ubicacionModal.querySelector('#form_item_numeromunicipal') ||
+                         findInputByLegend(ubicacionModal, 'NRO MUNICIPAL') ||
+                         findInputByLegend(ubicacionModal, 'MUNICIPAL');
+        if (nroInput) {
+          simulateInput(nroInput, viaRow.nro_municipal);
+        }
+      }
+
+      // 4. Setear COND. NUMER.
+      const condValue = (viaRow.cond_num || '').toString().trim();
+      const condMapped = VIAS_COND_NUM_MAPPING[condValue] || VIAS_COND_NUM_MAPPING['0'];
+      await selectByLegend(ubicacionModal, 'COND. NUMER', condMapped);
+
+      await delay(CONFIG.delays.short);
+
+      // 5. Click en Guardar del modal
+      const saveBtn = ubicacionModal.querySelector('.ant-modal-footer button.ant-btn-primary');
+      if (saveBtn) {
+        simulateClick(saveBtn);
+        log(`Vía ${i + 1} guardada correctamente`, 'success');
+      }
+    }
+
+    await delay(CONFIG.delays.long);
+  }
+
+  log('Automatización de vías completada', 'success');
+}
+
+// ==================== Crear Lotes ====================
+
+async function handleCreateLotes(targetLote) {
+  log('Iniciando creación de lotes hasta: ' + targetLote, 'info');
+
+  const targetNum = parseInt(targetLote, 10);
+  if (isNaN(targetNum) || targetNum <= 0) {
+    log('Valor de lote inválido: ' + targetLote, 'error');
+    return;
+  }
+
+  const section = document.querySelectorAll('.ant-collapse-item')[0];
+  if (!section) {
+    log('Sección 01 no encontrada', 'error');
+    return;
+  }
+
+  // Extraer todos los lotes existentes del desplegable
+  const existingLotes = await extractAllLotesFromDropdown(section);
+  log(`Lotes existentes encontrados: ${existingLotes.join(', ')}`, 'info');
+
+  const existingNums = new Set(existingLotes.map(l => parseInt(l, 10)).filter(n => !isNaN(n) && n > 0));
+
+  // Determinar qué lotes faltan crear
+  const lotesToCreate = [];
+  for (let i = 1; i <= targetNum; i++) {
+    if (!existingNums.has(i)) {
+      lotesToCreate.push(i.toString().padStart(3, '0'));
+    }
+  }
+
+  if (lotesToCreate.length === 0) {
+    log('Todos los lotes ya existen hasta ' + targetLote, 'success');
+    return;
+  }
+
+  log(`Lotes a crear: ${lotesToCreate.join(', ')} (${lotesToCreate.length} lotes)`, 'info');
+
+  // Buscar el botón "+" al lado de LOTE
+  const loteFieldsets = section.querySelectorAll('fieldset');
+  let lotePlusBtn = null;
+  for (const fs of loteFieldsets) {
+    const label = fs.querySelector('p, legend');
+    if (label && label.textContent.toUpperCase().includes('LOTE') && !label.textContent.toUpperCase().includes('SUB')) {
+      const plusBtn = fs.querySelector('button.ant-btn-primary');
+      if (plusBtn && plusBtn.textContent.includes('+')) {
+        lotePlusBtn = plusBtn;
+        break;
+      }
+    }
+  }
+
+  if (!lotePlusBtn) {
+    log('Botón + de LOTE no encontrado', 'error');
+    return;
+  }
+
+  // Iterar creando lotes
+  for (let i = 0; i < lotesToCreate.length; i++) {
+    const loteCode = lotesToCreate[i];
+    log(`Creando lote ${i + 1}/${lotesToCreate.length}: ${loteCode}`, 'info');
+
+    simulateClick(lotePlusBtn);
+    await delay(CONFIG.delays.long);
+
+    const modal = await waitForModal('Nuevo Lote') || await waitForModal('NUEVO LOTE');
+    if (!modal) {
+      log('Modal Nuevo Lote no apareció', 'error');
+      break;
+    }
+
+    const codigoInput = modal.querySelector('#form_item_codigo') ||
+                        modal.querySelector('input[placeholder="001"]') ||
+                        findInputByLegend(modal, 'Codigo') ||
+                        findInputByLegend(modal, 'CODIGO');
+
+    if (codigoInput) {
+      simulateInput(codigoInput, loteCode);
+      log(`Código ${loteCode} ingresado`, 'success');
+    } else {
+      log('Input de código no encontrado en modal', 'error');
+      const cancelBtn = modal.querySelector('.ant-modal-footer button:not(.ant-btn-primary)');
+      if (cancelBtn) simulateClick(cancelBtn);
+      await delay(CONFIG.delays.short);
+      continue;
+    }
+
+    await delay(CONFIG.delays.short);
+
+    const saveBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
+    if (saveBtn) {
+      simulateClick(saveBtn);
+      log(`Lote ${loteCode} guardado`, 'success');
+    }
+
+    await delay(CONFIG.delays.long);
+
+    // Verificar si el modal se cerró (éxito) o quedó abierto (error)
+    await delay(CONFIG.delays.short);
+    const stillOpen = document.querySelector('.ant-modal:not([style*="display: none"])');
+    if (stillOpen) {
+      const errorMsg = stillOpen.querySelector('.ant-form-item-explain-error');
+      if (errorMsg) {
+        log(`Error al crear lote ${loteCode}: ${errorMsg.textContent}`, 'warning');
+        const cancelBtn = stillOpen.querySelector('.ant-modal-footer button:not(.ant-btn-primary)') ||
+                          stillOpen.querySelector('.ant-modal-close');
+        if (cancelBtn) simulateClick(cancelBtn);
+        await delay(CONFIG.delays.short);
+      }
+    }
+  }
+
+  log('Creación de lotes completada', 'success');
+}
+
+async function extractAllLotesFromDropdown(section) {
+  const lotes = [];
+
+  let loteSelect = null;
+  const fieldsets = section.querySelectorAll('fieldset');
+  for (const fs of fieldsets) {
+    const label = fs.querySelector('p, legend');
+    if (label && label.textContent.toUpperCase().includes('LOTE') && !label.textContent.toUpperCase().includes('SUB')) {
+      loteSelect = fs.querySelector('.ant-select');
+      break;
+    }
+  }
+
+  if (!loteSelect) {
+    log('Selector de lote no encontrado', 'warning');
+    return lotes;
+  }
+
+  const dropdown = await openSelector(loteSelect);
+  if (!dropdown) {
+    log('No se pudo abrir el dropdown de lote', 'warning');
+    return lotes;
+  }
+
+  const extractVisibleOptions = () => {
+    const options = dropdown.querySelectorAll('.ant-select-item-option');
+    const optionTexts = [];
+    for (const opt of options) {
+      const content = opt.querySelector('.ant-select-item-option-content');
+      const text = (content ? content.textContent : opt.textContent).trim();
+      if (text && text !== '0') {
+        optionTexts.push(text);
+      }
+    }
+    return optionTexts;
+  };
+
+  const holder = dropdown.querySelector('.rc-virtual-list-holder');
+  const input = loteSelect.querySelector('input');
+
+  let prevCount = 0;
+  let scrollAttempts = 0;
+  const maxScrollAttempts = 50;
+
+  while (scrollAttempts < maxScrollAttempts) {
+    const currentOptions = extractVisibleOptions();
+    currentOptions.forEach(opt => {
+      if (!lotes.includes(opt)) lotes.push(opt);
+    });
+
+    if (lotes.length === prevCount && scrollAttempts > 5) break;
+    prevCount = lotes.length;
+
+    if (input) {
+      const downEvent = new KeyboardEvent('keydown', {
+        key: 'ArrowDown', code: 'ArrowDown',
+        keyCode: 40, which: 40, bubbles: true, cancelable: true
+      });
+      input.dispatchEvent(downEvent);
+    }
+
+    if (holder) {
+      const scrollEl = holder.querySelector('.rc-virtual-list-holder-inner')?.parentElement || holder;
+      scrollEl.scrollTop += 200;
+      scrollEl.dispatchEvent(new Event('scroll', { bubbles: true }));
+    }
+
+    await delay(80);
+    scrollAttempts++;
+  }
+
+  simulateClick(document.body);
+  await delay(CONFIG.delays.short);
+
+  log(`Total lotes extraídos del dropdown: ${lotes.length}`, 'info');
+  return lotes;
+}
+
+// ==================== captureUbicacionData ====================
+
 async function captureUbicacionData(section) {
   const data = AppState.storedData;
-  
+
   let tipoVia = '';
   let nombreVia = '';
-  
+
   const tipoViaSpan = section.querySelector('.ant-select-selection-item[title]');
   if (tipoViaSpan) {
     tipoVia = tipoViaSpan.getAttribute('title') || tipoViaSpan.textContent.trim();
   }
-  
-  const nombreViaInput = findInputByLegend(section, 'NOMBRE DE V') || 
+
+  const nombreViaInput = findInputByLegend(section, 'NOMBRE DE V') ||
                           findInputByLegend(section, 'NOMBRE V');
   if (nombreViaInput) {
     nombreVia = nombreViaInput.value.trim();
   }
-  
+
   const colindancia = (tipoVia + ' ' + nombreVia).trim();
-  
+
   if (colindancia && colindancia !== ' ') {
     await updateStoredValue('descripcion', 'lindero-frente-colindancia', colindancia);
     log('Colindancia guardada: ' + colindancia, 'success');
@@ -1103,7 +1651,7 @@ async function handleSeccion03Titular() {
 
   await waitForButtonClick('button', 'Guardar identificaci');
   log('Usuario guardo TITULAR', 'success');
-  
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(3);
 }
@@ -1113,13 +1661,17 @@ async function handleSeccion04Domicilio() {
 
   const data = AppState.storedData;
   const ubicacion = data.ubicacion || {};
+  // Obtener valores de la vía principal (puerta P)
+  const viaPrincipal = getViaPrincipalFromStorage();
+  const codigoVia = viaPrincipal ? viaPrincipal.codigo : (ubicacion['ubicacion-codigo-via'] || '');
+  const nMunicipal = viaPrincipal ? viaPrincipal.nro_municipal : (ubicacion['ubicacion-n-municipal'] || '');
 
   await delay(CONFIG.delays.medium);
   const section = document.querySelectorAll('.ant-collapse-item')[3];
   if (!section) return;
 
   log('Esperando que el usuario seleccione la ubicacion...', 'info');
-  
+
   let userSelection = null;
   await new Promise((resolve) => {
     const checkSelection = setInterval(() => {
@@ -1139,7 +1691,7 @@ async function handleSeccion04Domicilio() {
         }
       }
     }, 500);
-    
+
     setTimeout(() => {
       clearInterval(checkSelection);
       resolve();
@@ -1168,14 +1720,14 @@ async function handleSeccion04Domicilio() {
 
     await delay(CONFIG.delays.medium);
 
-    if (ubicacion['ubicacion-n-municipal']) {
+    if (nMunicipal) {
       let nroMunicipalInput = section.querySelector('#form_item_numeromunicipal');
-      
+
       if (!nroMunicipalInput) {
         const formItems = section.querySelectorAll('.ant-form-item');
         for (const formItem of formItems) {
           const label = formItem.querySelector('label, legend, p');
-          if (label && (label.textContent.includes('N° MUNICIPAL') || 
+          if (label && (label.textContent.includes('N° MUNICIPAL') ||
                         label.textContent.includes('NRO MUNICIPAL') ||
                         label.textContent.includes('MUNICIPAL'))) {
             nroMunicipalInput = formItem.querySelector('input:not([role="combobox"])');
@@ -1183,14 +1735,14 @@ async function handleSeccion04Domicilio() {
           }
         }
       }
-      
+
       if (!nroMunicipalInput) {
         nroMunicipalInput = findInputByLegend(section, 'MUNICIPAL');
       }
-      
+
       if (nroMunicipalInput) {
-        simulateInput(nroMunicipalInput, ubicacion['ubicacion-n-municipal']);
-        log('N Municipal seteado: ' + ubicacion['ubicacion-n-municipal'], 'success');
+        simulateInput(nroMunicipalInput, nMunicipal);
+        log('N Municipal seteado: ' + nMunicipal, 'success');
       } else {
         log('No se encontro input de N Municipal', 'warning');
       }
@@ -1207,7 +1759,7 @@ async function handleSeccion04Domicilio() {
     }
 
     if (ubicacion['ubicacion-sub-lote']) {
-      const subLoteInput = findInputByLegend(section, 'SUB-LOTE') || 
+      const subLoteInput = findInputByLegend(section, 'SUB-LOTE') ||
                             findInputByLegend(section, 'SUBLOTE');
       if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
     }
@@ -1215,7 +1767,7 @@ async function handleSeccion04Domicilio() {
     await delay(CONFIG.delays.medium);
 
     if (ubicacion['ubicacion-codigo-hu']) {
-      const searchButton = findSearchButtonByLegend(section, 'DIGO HAB') || 
+      const searchButton = findSearchButtonByLegend(section, 'DIGO HAB') ||
                            findSearchButtonByLegend(section, 'COD. HAB');
       if (searchButton) {
         simulateClick(searchButton);
@@ -1225,12 +1777,12 @@ async function handleSeccion04Domicilio() {
 
     await delay(CONFIG.delays.medium);
 
-    if (ubicacion['ubicacion-codigo-via']) {
-      const searchButton = findSearchButtonByLegend(section, 'DIGO V') || 
+    if (codigoVia) {
+      const searchButton = findSearchButtonByLegend(section, 'DIGO V') ||
                            findSearchButtonByLegend(section, 'COD. V');
       if (searchButton) {
         simulateClick(searchButton);
-        await handleModalSearch('LISTADO DE V', ubicacion['ubicacion-codigo-via']);
+        await handleModalSearch('LISTADO DE V', codigoVia);
       }
     }
   } else {
@@ -1241,7 +1793,7 @@ async function handleSeccion04Domicilio() {
 
   await waitForButtonClick('button', 'Guardar domicio fiscal');
   log('Usuario guardo DOMICILIO FISCAL', 'success');
-  
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(4);
 }
@@ -1288,7 +1840,7 @@ async function handleSeccion05Caracteristicas() {
 
   await waitForButtonClick('button', 'Guardar caracter');
   log('Usuario guardo CARACTERISTICAS', 'success');
-  
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(5);
 }
@@ -1332,21 +1884,21 @@ async function handleSeccion06Descripcion() {
   const linderoKeys = ['frente', 'derecha', 'izquierda', 'fondo'];
 
   const gridContainers = section.querySelectorAll('.grid.grid-cols-3, div[class*="grid-cols-3"]');
-  
+
   for (let i = 0; i < linderoLabels.length; i++) {
     const label = linderoLabels[i];
     const key = linderoKeys[i];
-    
+
     for (const grid of gridContainers) {
       const legendText = grid.querySelector('legend, p');
       if (legendText && legendText.textContent.trim().toUpperCase().includes(label)) {
         const inputs = grid.querySelectorAll('input');
-        
+
         if (inputs[0] && descripcion['lindero-' + key + '-medida']) {
           simulateInput(inputs[0], descripcion['lindero-' + key + '-medida']);
           log('Lindero ' + label + ' medida seteado', 'success');
         }
-        
+
         if (inputs[1] && descripcion['lindero-' + key + '-colindancia']) {
           simulateInput(inputs[1], descripcion['lindero-' + key + '-colindancia']);
           log('Lindero ' + label + ' colindancia seteado', 'success');
@@ -1355,12 +1907,12 @@ async function handleSeccion06Descripcion() {
       }
     }
   }
-  
+
   if (gridContainers.length === 0) {
     for (let i = 0; i < linderoLabels.length; i++) {
       const label = linderoLabels[i];
       const key = linderoKeys[i];
-      
+
       const allElements = section.querySelectorAll('*');
       for (const el of allElements) {
         if (el.children.length === 0 && el.textContent.trim().toUpperCase() === label) {
@@ -1390,7 +1942,7 @@ async function handleSeccion06Descripcion() {
 
   await waitForButtonClick('button', 'Guardar descripci');
   log('Usuario guardo DESCRIPCION', 'success');
-  
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(6);
 }
@@ -1398,10 +1950,14 @@ async function handleSeccion06Descripcion() {
 async function handleSeccion07Servicios() {
   log('Procesando Seccion 07: SERVICIOS BASICOS', 'info');
 
+  const data = AppState.storedData;
+  const servicios = data.servicios || {};
+
   await delay(CONFIG.delays.medium);
   const section = document.querySelectorAll('.ant-collapse-item')[6];
   if (!section) return;
 
+  // Remover readonly de todos los selectores
   const allSelects = section.querySelectorAll('.ant-select');
   allSelects.forEach(select => {
     removeReadonly(select);
@@ -1412,11 +1968,65 @@ async function handleSeccion07Servicios() {
     input.removeAttribute('readonly');
   });
 
-  log('Seccion 07 - Readonly removido de selectores. Esperando click en "Guardar servicios basicos"...', 'success');
+  log('Seccion 07 - Readonly removido de selectores', 'success');
 
-  await waitForButtonClick('button', 'Guardar servicios b');
-  log('Usuario guardo SERVICIOS BASICOS', 'success');
-  
+  // Obtener todos los fieldsets de la sección (los 7 servicios en orden)
+  const fieldsets = section.querySelectorAll('fieldset');
+
+  for (let i = 0; i < SERVICIOS_FIELDS.length; i++) {
+    const serviceConfig = SERVICIOS_FIELDS[i];
+    const value = servicios[serviceConfig.key];
+
+    // Si el valor es vacío o undefined, omitir
+    if (value === undefined || value === null || value.toString().trim() === '') {
+      log(`Servicio ${serviceConfig.legend}: valor vacío, omitiendo`, 'info');
+      continue;
+    }
+
+    const mappedValue = SERVICIOS_MAPPINGS[value.toString().trim()];
+    if (!mappedValue) {
+      log(`Servicio ${serviceConfig.legend}: valor "${value}" no reconocido, omitiendo`, 'warning');
+      continue;
+    }
+
+    // Buscar el fieldset correspondiente por la leyenda del servicio
+    let targetFieldset = null;
+    for (const fs of fieldsets) {
+      const legend = fs.querySelector('legend');
+      if (legend && legend.textContent.toUpperCase().includes(serviceConfig.legend)) {
+        targetFieldset = fs;
+        break;
+      }
+    }
+
+    if (targetFieldset) {
+      const select = targetFieldset.querySelector('.ant-select');
+      if (select) {
+        await selectOptionByText(select, mappedValue);
+        log(`Servicio ${serviceConfig.legend} seteado a: ${mappedValue}`, 'success');
+        await delay(CONFIG.delays.short);
+      }
+    } else {
+      log(`No se encontró fieldset para servicio: ${serviceConfig.legend}`, 'warning');
+    }
+  }
+
+  // Click automático en Guardar servicios básicos
+  log('Haciendo click en "Guardar servicios básicos"...', 'info');
+  await delay(CONFIG.delays.medium);
+
+  const saveButtons = section.querySelectorAll('button');
+  for (const btn of saveButtons) {
+    if (btn.textContent.includes('Guardar servicios b') || btn.textContent.includes('Guardar servicios básicos')) {
+      simulateClick(btn);
+      log('Click realizado en Guardar servicios básicos', 'success');
+      break;
+    }
+  }
+
+  await delay(CONFIG.delays.long);
+  log('Seccion 07 SERVICIOS BASICOS completada', 'success');
+
   await delay(CONFIG.delays.medium);
   await expandAndProcessSection(10);
 }
@@ -1446,10 +2056,10 @@ async function handleSeccion11Inscripcion() {
   if (inscripcion['inscripcion-fecha']) {
     const fecha = inscripcion['inscripcion-fecha'];
     log('Buscando campo de fecha inscripcion...', 'info');
-    
+
     let pickerContainer = null;
     const datePickers = section.querySelectorAll('.ant-picker');
-    
+
     for (const picker of datePickers) {
       const formItem = picker.closest('.ant-form-item, fieldset');
       if (formItem) {
@@ -1460,40 +2070,40 @@ async function handleSeccion11Inscripcion() {
         }
       }
     }
-    
+
     if (!pickerContainer && datePickers.length > 0) {
       pickerContainer = datePickers[0];
     }
-    
+
     if (pickerContainer) {
       log('Picker de fecha encontrado, haciendo click para abrir...', 'info');
-      
+
       simulateClick(pickerContainer);
       await delay(CONFIG.delays.medium);
-      
+
       const fechaInput = pickerContainer.querySelector('input');
-      
+
       if (fechaInput) {
         fechaInput.focus();
         await delay(CONFIG.delays.short);
-        
+
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
         nativeInputValueSetter.call(fechaInput, '');
         fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
         await delay(100);
-        
+
         for (let i = 0; i < fecha.length; i++) {
           const currentValue = fechaInput.value + fecha[i];
           nativeInputValueSetter.call(fechaInput, currentValue);
           fechaInput.dispatchEvent(new Event('input', { bubbles: true }));
           await delay(50);
         }
-        
+
         await delay(CONFIG.delays.medium);
-        
+
         fechaInput.dispatchEvent(new Event('change', { bubbles: true }));
         await delay(CONFIG.delays.short);
-        
+
         const enterEvent = new KeyboardEvent('keydown', {
           key: 'Enter',
           code: 'Enter',
@@ -1503,9 +2113,9 @@ async function handleSeccion11Inscripcion() {
           cancelable: true
         });
         fechaInput.dispatchEvent(enterEvent);
-        
+
         await delay(CONFIG.delays.short);
-        
+
         log('Fecha de inscripcion seteada: ' + fecha, 'success');
       } else {
         log('No se encontro el input dentro del picker de fecha', 'warning');
@@ -1525,69 +2135,26 @@ async function handleSeccion11Inscripcion() {
   }
 
   log('Seccion 11 completada. Iniciando proceso de observaciones y firmas...', 'success');
-  
+
   await handleSeccionFinal();
 }
 
-const CONSTRUCCION_MAPPINGS = {
-  mep: {
-    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
-    '1': '01 - CONCRETO', '01': '01 - CONCRETO',
-    '2': '02 - LADRILLO', '02': '02 - LADRILLO',
-    '3': '03 - ADOBE', '03': '03 - ADOBE'
-  },
-  ecs: {
-    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
-    '1': '01 - MUY BUENO', '01': '01 - MUY BUENO',
-    '2': '02 - BUENO', '02': '02 - BUENO',
-    '3': '03 - REGULAR', '03': '03 - REGULAR',
-    '4': '04 - MALO', '04': '04 - MALO'
-  },
-  ecc: {
-    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
-    '1': '01 - TERMINADO', '01': '01 - TERMINADO',
-    '2': '02 - EN CONSTRUCCION', '02': '02 - EN CONSTRUCCION',
-    '3': '03 - INCONCLUSA', '03': '03 - INCONCLUSA',
-    '4': '04 - EN RUINAS', '04': '04 - EN RUINAS'
-  },
-  uca: {
-    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
-    '1': '01 - EN RETIRO', '01': '01 - EN RETIRO',
-    '2': '02 - EN JARDIN', '02': '02 - EN JARDIN',
-    '3': '03 - EN VIA', '03': '03 - EN VIA',
-    '4': '04 - EN LOTE', '04': '04 - EN LOTE',
-    '5': '05 - ALTURA', '05': '05 - ALTURA',
-    '6': '06 - EN PARQUE', '06': '06 - EN PARQUE',
-    '7': '07 - EN BIEN', '07': '07 - EN BIEN'
-  },
-  letras: {
-    '0': '00 - NINGUNO', '00': '00 - NINGUNO',
-    'a': 'A', 'A': 'A',
-    'b': 'B', 'B': 'B',
-    'c': 'C', 'C': 'C',
-    'd': 'D', 'D': 'D',
-    'e': 'E', 'E': 'E',
-    'f': 'F', 'F': 'F',
-    'g': 'G', 'G': 'G',
-    'h': 'H', 'H': 'H',
-    'i': 'I', 'I': 'I'
-  }
-};
+// ==================== FUNCIONES DE CONSTRUCCIONES ====================
 
 async function selectModalOption(modal, labelText, value) {
   if (!value || value.toString().trim() === '') return;
-  
+
   log(`Buscando selector para: ${labelText} con valor: ${value}`, 'info');
-  
+
   const formItems = modal.querySelectorAll('.ant-form-item');
   let targetSelector = null;
-  
+
   for (const item of formItems) {
     const label = item.querySelector('label');
     if (label) {
       const labelTitle = label.getAttribute('title') || '';
       const labelContent = label.textContent || '';
-      
+
       if (labelTitle.toUpperCase().includes(labelText.toUpperCase()) ||
           labelContent.toUpperCase().includes(labelText.toUpperCase())) {
         targetSelector = item.querySelector('.ant-select');
@@ -1598,7 +2165,7 @@ async function selectModalOption(modal, labelText, value) {
       }
     }
   }
-  
+
   if (!targetSelector) {
     const allSelects = modal.querySelectorAll('.ant-select');
     for (const select of allSelects) {
@@ -1613,7 +2180,7 @@ async function selectModalOption(modal, labelText, value) {
       }
     }
   }
-  
+
   if (!targetSelector) {
     log(`Selector no encontrado para: ${labelText}`, 'warning');
     return;
@@ -1629,10 +2196,10 @@ async function selectModalOption(modal, labelText, value) {
 
 async function selectMesModal(modal, mesValue) {
   if (!mesValue || mesValue.toString().trim() === '') return;
-  
+
   const formItems = modal.querySelectorAll('.ant-form-item');
   let mesSelector = null;
-  
+
   for (const item of formItems) {
     const label = item.querySelector('label');
     if (label && label.textContent.includes('FECHA DE CONSTRUCCI')) {
@@ -1643,7 +2210,7 @@ async function selectMesModal(modal, mesValue) {
       break;
     }
   }
-  
+
   if (!mesSelector) {
     const allSelectors = modal.querySelectorAll('.ant-select');
     for (const sel of allSelectors) {
@@ -1654,20 +2221,20 @@ async function selectMesModal(modal, mesValue) {
       }
     }
   }
-  
+
   if (!mesSelector) {
     log('Selector de mes no encontrado', 'warning');
     return;
   }
-  
+
   const mesNormalized = mesValue.toString().padStart(2, '0');
-  
+
   await selectOptionByText(mesSelector, mesNormalized, true);
 }
 
 async function setAnioModal(modal, anioValue) {
   if (!anioValue || anioValue.toString().trim() === '') return;
-  
+
   const anioInput = modal.querySelector('input[placeholder="Año"]');
   if (anioInput) {
     simulateInput(anioInput, anioValue.toString());
@@ -1677,24 +2244,24 @@ async function setAnioModal(modal, anioValue) {
 
 async function processConstruccionRow(rowData, rowIndex) {
   log(`Procesando construccion fila ${rowIndex + 1}`, 'info');
-  
+
   const section = document.querySelectorAll('.ant-collapse-item')[7];
   if (!section) {
     log('Sección 08 no encontrada', 'error');
     return;
   }
-  
+
   const nuevoBtn = section.querySelector('button.ant-btn-primary .anticon-plus')?.closest('button') ||
                    Array.from(section.querySelectorAll('button')).find(b => b.textContent.includes('NUEVO'));
-  
+
   if (!nuevoBtn) {
     log('Botón NUEVO no encontrado en sección 08', 'error');
     return;
   }
-  
+
   simulateClick(nuevoBtn);
   await delay(CONFIG.delays.long);
-  
+
   const modal = await waitForModal('NUEVA CONSTRUCCI');
   if (!modal) {
     log('Modal de nueva construcción no apareció', 'error');
@@ -1708,11 +2275,11 @@ async function processConstruccionRow(rowData, rowIndex) {
       log(`N° Piso: ${rowData.npiso}`, 'success');
     }
   }
-  
+
   await selectMesModal(modal, rowData.mes);
 
   await setAnioModal(modal, rowData.anio);
-  
+
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(modal, 'MATERIAL ESTRUC', mappedValue);
@@ -1727,27 +2294,27 @@ async function processConstruccionRow(rowData, rowIndex) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(modal, 'ESTADO CONSTRUCC', mappedValue);
   }
-  
+
   if (rowData.muro) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.muro] || rowData.muro.toUpperCase();
     await selectModalOption(modal, 'MUROS Y COLUMNAS', mappedValue);
   }
-  
+
   if (rowData.techo) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.techo] || rowData.techo.toUpperCase();
     await selectModalOption(modal, 'TECHOS', mappedValue);
   }
-  
+
   if (rowData.piso) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.piso] || rowData.piso.toUpperCase();
     await selectModalOption(modal, 'PISOS', mappedValue);
   }
-  
+
   if (rowData.puerta) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.puerta] || rowData.puerta.toUpperCase();
     await selectModalOption(modal, 'PUERTAS Y VENTANAS', mappedValue);
   }
-  
+
   if (rowData.revest) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.revest] || rowData.revest.toUpperCase();
     await selectModalOption(modal, 'REVESTIMIENTOS', mappedValue);
@@ -1762,7 +2329,7 @@ async function processConstruccionRow(rowData, rowIndex) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.inst] || rowData.inst.toUpperCase();
     await selectModalOption(modal, 'INST. EL', mappedValue);
   }
-  
+
   if (rowData.area) {
     const areaInput = modal.querySelector('input[type="number"][maxlength="11"]');
     if (areaInput) {
@@ -1770,68 +2337,70 @@ async function processConstruccionRow(rowData, rowIndex) {
       log(`Área: ${rowData.area}`, 'success');
     }
   }
-  
+
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(modal, 'UBI. CONSTRUC', mappedValue);
   }
-  
+
   await delay(CONFIG.delays.medium);
-  
+
   const guardarBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
     log(`Construcción fila ${rowIndex + 1} guardada`, 'success');
   }
-  
+
   await delay(CONFIG.delays.extraLong);
 }
 
 async function handleSeccion08Construcciones(construccionesData) {
   log('Procesando Seccion 08: CONSTRUCCIONES', 'info');
-  
+
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[7];
-  
+
   if (!section) {
     log('Sección 08 no encontrada', 'error');
     return;
   }
-  
+
   if (!section.classList.contains('ant-collapse-item-active')) {
     const header = section.querySelector('.ant-collapse-header');
     simulateClick(header);
     await delay(CONFIG.delays.long);
   }
-  
+
   for (let i = 0; i < construccionesData.length; i++) {
     await processConstruccionRow(construccionesData[i], i);
     await delay(CONFIG.delays.medium);
   }
-  
+
   log('Sección 08 completada', 'success');
 }
 
+// ==================== FUNCIONES DE OBRAS ====================
+
 async function processObraRow(rowData, rowIndex) {
   log(`Procesando obra fila ${rowIndex + 1}`, 'info');
-  
+
   const section = document.querySelectorAll('.ant-collapse-item')[8];
   if (!section) {
     log('Sección 09 no encontrada', 'error');
     return;
   }
-  
+
   const nuevoBtn = section.querySelector('button.ant-btn-primary .anticon-plus')?.closest('button') ||
                    Array.from(section.querySelectorAll('button')).find(b => b.textContent.includes('NUEVO'));
-  
+
   if (!nuevoBtn) {
     log('Botón NUEVO no encontrado en sección 09', 'error');
     return;
   }
-  
+
   simulateClick(nuevoBtn);
   await delay(CONFIG.delays.long);
-  
+
   const obraModal = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModal) {
     log('Modal de nueva obra no apareció', 'error');
@@ -1854,17 +2423,17 @@ async function processObraRow(rowData, rowIndex) {
   if (searchInput && rowData.codigo) {
     simulateInput(searchInput, rowData.codigo);
     await delay(CONFIG.delays.short);
-    
+
     const searchBtn = codigosModal.querySelector('button.ant-input-search-button');
     if (searchBtn) {
       simulateClick(searchBtn);
       await delay(CONFIG.delays.long);
     }
   }
-  
+
   const totalRegistros = codigosModal.querySelector('p.float-right span.text-black');
   const totalCount = totalRegistros ? parseInt(totalRegistros.textContent) : 0;
-  
+
   if (totalCount === 1) {
     const selectBtn = codigosModal.querySelector('button .anticon-select')?.closest('button');
     if (selectBtn) {
@@ -1875,31 +2444,31 @@ async function processObraRow(rowData, rowIndex) {
     log(`Se encontraron ${totalCount} registros. Esperando selección manual...`, 'warning');
     await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
   }
-  
+
   await delay(CONFIG.delays.long);
-  
+
   const obraModalUpdated = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModalUpdated) return;
-  
+
   await selectMesModal(obraModalUpdated, rowData.mes);
-  
+
   await setAnioModal(obraModalUpdated, rowData.anio);
-  
+
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(obraModalUpdated, 'MEP', mappedValue);
   }
-  
+
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(obraModalUpdated, 'ECS', mappedValue);
   }
-  
+
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(obraModalUpdated, 'ECC', mappedValue);
   }
-  
+
   if (rowData.total) {
     const totalInput = obraModalUpdated.querySelector('input[type="number"]:not([placeholder])');
     if (totalInput) {
@@ -1907,64 +2476,40 @@ async function processObraRow(rowData, rowIndex) {
       log(`Total: ${rowData.total}`, 'success');
     }
   }
-  
+
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(obraModalUpdated, 'UCA', mappedValue);
   }
-  
+
   await delay(CONFIG.delays.medium);
-  
+
   const guardarBtn = obraModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
     log(`Obra fila ${rowIndex + 1} guardada`, 'success');
   }
-  
-  await delay(CONFIG.delays.extraLong);
-}
 
-async function waitForModalToClose(titleContains, timeout = 60000) {
-  const startTime = Date.now();
-  
-  while (Date.now() - startTime < timeout) {
-    const modals = document.querySelectorAll('.ant-modal');
-    let found = false;
-    
-    for (const modal of modals) {
-      const title = modal.querySelector('.ant-modal-title');
-      if (title && title.textContent.toUpperCase().includes(titleContains.toUpperCase())) {
-        if (modal.offsetParent !== null) {
-          found = true;
-          break;
-        }
-      }
-    }
-    
-    if (!found) return true;
-    await delay(500);
-  }
-  
-  return false;
+  await delay(CONFIG.delays.extraLong);
 }
 
 async function handleSeccion09Obras(obrasData) {
   log('Procesando Sección 09: OBRAS COMPLEMENTARIAS', 'info');
-  
+
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[8];
-  
+
   if (!section) {
     log('Sección 09 no encontrada', 'error');
     return;
   }
-  
+
   if (!section.classList.contains('ant-collapse-item-active')) {
     const header = section.querySelector('.ant-collapse-header');
     simulateClick(header);
     await delay(CONFIG.delays.long);
   }
-  
+
   for (let i = 0; i < obrasData.length; i++) {
     await processObraRow(obrasData[i], i);
     await delay(CONFIG.delays.medium);
@@ -1973,30 +2518,32 @@ async function handleSeccion09Obras(obrasData) {
   log('Sección 09 completada', 'success');
 }
 
+// ==================== FUNCIONES DE FIRMAS ====================
+
 async function searchAndSelectPersonal(searchName) {
   const personalModal = await waitForModal('LISTADO DEL PERSONAL');
   if (!personalModal) {
     log('Modal de listado de personal no apareció', 'error');
     return false;
   }
-  
+
   await delay(CONFIG.delays.medium);
-  
-  const searchInput = personalModal.querySelector('input#form_item_search') || 
+
+  const searchInput = personalModal.querySelector('input#form_item_search') ||
                       personalModal.querySelector('input[placeholder="Buscar"]');
-  
+
   if (searchInput && searchName) {
     searchInput.focus();
     searchInput.value = '';
     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     await delay(CONFIG.delays.short);
-    
+
     simulateInput(searchInput, searchName);
     await delay(CONFIG.delays.short);
-    
+
     const searchButton = personalModal.querySelector('button[type="submit"]') ||
                          personalModal.querySelector('button .anticon-search')?.closest('button');
-    
+
     if (searchButton) {
       log('Click en boton de busqueda del modal', 'info');
       simulateClick(searchButton);
@@ -2010,17 +2557,16 @@ async function searchAndSelectPersonal(searchName) {
         }
       }
     }
-    
+
     await delay(CONFIG.delays.long);
-    
     await delay(CONFIG.delays.long);
   }
-  
+
   const totalRegistros = personalModal.querySelector('p.float-right span.text-black');
   const totalCount = totalRegistros ? parseInt(totalRegistros.textContent) : 0;
-  
+
   log(`Total de registros encontrados: ${totalCount}`, 'info');
-  
+
   if (totalCount === 1) {
     const selectBtn = personalModal.querySelector('button .anticon-select')?.closest('button');
     if (selectBtn) {
@@ -2039,61 +2585,61 @@ async function searchAndSelectPersonal(searchName) {
     const closeBtn = personalModal.querySelector('.ant-modal-close');
     if (closeBtn) simulateClick(closeBtn);
   }
-  
+
   return false;
 }
 
 async function setFechaFirmaModal(modal, fecha) {
   if (!fecha) return;
-  
+
   const fechaFormateada = fecha;
-  
+
   log(`Estableciendo fecha: ${fechaFormateada}`, 'info');
-  
+
   const dateInput = modal.querySelector('input#form_item_fecharegistro') ||
                     modal.querySelector('input[placeholder*="DD"]') ||
                     modal.querySelector('.ant-picker input');
-  
+
   if (!dateInput) {
     log('Input de fecha no encontrado', 'warning');
     return;
   }
-  
+
   dateInput.focus();
   await delay(CONFIG.delays.short);
-  
+
   dateInput.value = '';
   dateInput.dispatchEvent(new Event('input', { bubbles: true }));
   await delay(100);
   simulateEnter(dateInput);
-  
+
   for (let i = 0; i < fechaFormateada.length; i++) {
     dateInput.value += fechaFormateada[i];
     dateInput.dispatchEvent(new Event('input', { bubbles: true }));
     await delay(30);
   }
-  
+
   dateInput.dispatchEvent(new Event('change', { bubbles: true }));
   dateInput.dispatchEvent(new Event('blur', { bubbles: true }));
-  
+
   simulateEnter(dateInput);
-  
+
   await delay(CONFIG.delays.short);
-  
+
   const modalBody = modal.querySelector('.ant-modal-body');
   if (modalBody) {
     simulateClick(modalBody);
   }
-  
+
   await delay(CONFIG.delays.short);
   log(`Fecha establecida: ${fechaFormateada}`, 'success');
 }
 
 async function processFirmaSupervisor(data) {
   log('Procesando firma del supervisor', 'info');
-  
+
   let editBtn = null;
-  
+
   const allSpans = document.querySelectorAll('span');
   for (const span of allSpans) {
     if (span.textContent.trim() === '[95] FIRMA DEL SUPERVISOR') {
@@ -2107,7 +2653,7 @@ async function processFirmaSupervisor(data) {
       }
     }
   }
-  
+
   if (!editBtn) {
     const containers = document.querySelectorAll('.flex.justify-between');
     for (const container of containers) {
@@ -2117,15 +2663,15 @@ async function processFirmaSupervisor(data) {
       }
     }
   }
-  
+
   if (!editBtn) {
     log('Botón de editar supervisor no encontrado', 'warning');
     return;
   }
-  
+
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
-  
+
   let firmaModal = await waitForModal('FIRMA DEL SUPERVISOR');
   if (!firmaModal) {
     firmaModal = await waitForModal('NUEVA FIRMA');
@@ -2134,42 +2680,42 @@ async function processFirmaSupervisor(data) {
     log('Modal de firma supervisor no apareció', 'error');
     return;
   }
-  
+
   const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
                     firmaModal.querySelector('button .anticon-search')?.closest('button');
   if (searchBtn) {
     simulateClick(searchBtn);
     await delay(CONFIG.delays.long);
-    
+
     await searchAndSelectPersonal(data['final-supervisor-nombre']);
   }
-  
+
   await delay(CONFIG.delays.long);
-  
+
   let firmaModalUpdated = await waitForModal('FIRMA DEL SUPERVISOR');
   if (!firmaModalUpdated) {
     firmaModalUpdated = await waitForModal('NUEVA FIRMA');
   }
   if (firmaModalUpdated) {
     await setFechaFirmaModal(firmaModalUpdated, data['final-supervisor-fecha']);
-    
+
     await delay(CONFIG.delays.medium);
-    
+
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
       log('Firma supervisor guardada', 'success');
     }
   }
-  
+
   await delay(CONFIG.delays.extraLong);
 }
 
 async function processFirmaTecnico(data) {
   log('Procesando firma del técnico catastral', 'info');
-  
+
   let editBtn = null;
-  
+
   const allSpans = document.querySelectorAll('span');
   for (const span of allSpans) {
     const spanText = span.textContent.trim();
@@ -2184,7 +2730,7 @@ async function processFirmaTecnico(data) {
       }
     }
   }
-  
+
   if (!editBtn) {
     const containers = document.querySelectorAll('.flex.justify-between');
     for (const container of containers) {
@@ -2194,15 +2740,15 @@ async function processFirmaTecnico(data) {
       }
     }
   }
-  
+
   if (!editBtn) {
     log('Botón de editar técnico no encontrado', 'warning');
     return;
   }
-  
+
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
-  
+
   let firmaModal = await waitForModal('CNICO CATASTRAL');
   if (!firmaModal) {
     firmaModal = await waitForModal('NUEVA FIRMA');
@@ -2217,65 +2763,68 @@ async function processFirmaTecnico(data) {
   if (searchBtn) {
     simulateClick(searchBtn);
     await delay(CONFIG.delays.long);
-    
+
     await searchAndSelectPersonal(data['final-tecnico-nombre']);
   }
-  
+
   await delay(CONFIG.delays.long);
-  
+
   let firmaModalUpdated = await waitForModal('CNICO CATASTRAL');
   if (!firmaModalUpdated) {
     firmaModalUpdated = await waitForModal('NUEVA FIRMA');
   }
   if (firmaModalUpdated) {
     await setFechaFirmaModal(firmaModalUpdated, data['final-tecnico-fecha']);
-    
+
     await delay(CONFIG.delays.medium);
-    
+
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
       log('Firma técnico guardada', 'success');
     }
   }
-  
+
   await delay(CONFIG.delays.extraLong);
 }
 
+// ==================== SECCIÓN FINAL ====================
+
 async function handleSeccionFinal() {
   log('Procesando seccion final: FIRMAS', 'info');
-  
+
   const data = AppState.storedData;
   const finalData = data.final || {};
-  
+
   log('Esperando click en boton "Guardar observaciones"...', 'info');
-  
+
   await waitForObservacionesButtonClick();
   log('Usuario guardo observaciones', 'success');
-  
+  await incrementFichasCounter();
+
   await delay(CONFIG.delays.long);
-  
+
   if (finalData['final-supervisor-nombre']) {
     await processFirmaSupervisor(finalData);
   }
-  
+
   await delay(CONFIG.delays.long);
-  
+
   if (finalData['final-tecnico-nombre']) {
     await processFirmaTecnico(finalData);
   }
-  
+
   log('Seccion final completada', 'success');
 }
 
 function waitForObservacionesButtonClick() {
   return new Promise((resolve) => {
     log('Configurando listener para boton Guardar observaciones...', 'info');
-    
+
     const handler = (e) => {
       const button = e.target.closest('button');
       if (!button) return;
-      
+
       const buttonText = button.textContent || '';
       if (buttonText.includes('Guardar observaciones')) {
         log('Click detectado en Guardar observaciones!', 'success');
@@ -2283,13 +2832,13 @@ function waitForObservacionesButtonClick() {
         resolve(button);
       }
     };
-    
+
     document.addEventListener('click', handler, true);
-    
+
     const mouseDownHandler = (e) => {
       const button = e.target.closest('button');
       if (!button) return;
-      
+
       const buttonText = button.textContent || '';
       if (buttonText.includes('Guardar observaciones')) {
         log('MouseDown detectado en Guardar observaciones!', 'success');
@@ -2299,9 +2848,11 @@ function waitForObservacionesButtonClick() {
   });
 }
 
+// ==================== NAVEGACIÓN DE SECCIONES ====================
+
 async function expandAndProcessSection(sectionIndex) {
   const sections = document.querySelectorAll('.ant-collapse-item');
-  
+
   if (sectionIndex >= sections.length) {
     log('Todas las secciones procesadas', 'success');
     return;
@@ -2309,7 +2860,7 @@ async function expandAndProcessSection(sectionIndex) {
 
   const section = sections[sectionIndex];
   const header = section.querySelector('.ant-collapse-header');
-  
+
   if (!section.classList.contains('ant-collapse-item-active')) {
     simulateClick(header);
     await waitForSectionToExpand(sectionIndex);
@@ -2334,11 +2885,18 @@ async function expandAndProcessSection(sectionIndex) {
 
 // ==================== MENSAJE HANDLER ====================
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {  
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'executeSection') {
     log(`Recibida solicitud de ejecución: ${message.section}`, 'info');
-    
-    if (message.section === 'construcciones') {
+
+    if (message.section === 'vias') {
+      handleSeccion02Vias(message.data).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        log(`Error en vías: ${err.message}`, 'error');
+        sendResponse({ success: false, error: err.message });
+      });
+    } else if (message.section === 'construcciones') {
       handleSeccion08Construcciones(message.data).then(() => {
         sendResponse({ success: true });
       }).catch(err => {
@@ -2356,13 +2914,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
+
+  if (message.action === 'createLotes') {
+    handleCreateLotes(message.targetLote).then(() => {
+      sendResponse({ success: true });
+    }).catch(err => {
+      log(`Error creando lotes: ${err.message}`, 'error');
+      sendResponse({ success: false, error: err.message });
+    });
+    return true;
+  }
 });
 
 // ==================== INICIALIZACIÓN ====================
 
-async function init() {  
+async function init() {
   log('Iniciando automatizacion de Ficha Catastral Individual', 'info');
-  
+
   AppState.storedData = await getStoredData();
   log('Datos cargados del storage', 'success');
 
