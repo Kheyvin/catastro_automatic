@@ -52,7 +52,7 @@ body.dark-mode {
 
 html, body {
   width: 700px;
-  height: 580px;
+  height: 600px;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -71,30 +71,145 @@ body {
   gap: 8px;
 }
 
+/* ==================== HEADER COMPACTO ==================== */
+
 .main-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--card-bg);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
+  gap: 10px;
 }
 
 .main-title {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--primary-color);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Contador de fichas minimalista */
+.fichas-mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.fichas-meta-input {
+  width: 50px;
+  padding: 3px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  text-align: center;
+}
+
+.fichas-meta-input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+}
+
+.fichas-mini-display {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-weight: 700;
+  min-width: 60px;
+}
+
+.fichas-num {
+  font-size: 15px;
+  color: var(--success-color);
+}
+
+.fichas-separator {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fichas-num-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fichas-mini-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.fichas-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.btn-mini {
+  padding: 3px 6px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-fichas {
+  background: var(--header-bg);
+}
+
+.btn-reset-fichas:hover {
+  background: var(--danger-color);
+  color: white;
+  transform: rotate(180deg);
+}
+
+.header-actions {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.btn-header {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-save-all {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-save-all:hover {
+  background: var(--success-hover);
+  transform: scale(1.05);
 }
 
 .btn-theme {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%;
   background: var(--header-bg);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -106,9 +221,46 @@ body {
   transform: rotate(20deg);
 }
 
+/* ==================== SECCIONES DUO Y TRIO ==================== */
+
+.seccion-trio {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 6px;
+}
+
+.seccion-compact .seccion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.seccion-compact .field-group {
+  min-width: 0;
+}
+
+.seccion-compact .field-group label {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+.seccion-compact .field-group input {
+  padding: 3px 4px;
+  font-size: 9px;
+}
+
+.descripcion-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+/* ==================== SECCIONES ==================== */
+
 .seccion {
   background: var(--card-bg);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
   overflow: hidden;
 }
@@ -117,7 +269,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: 5px 8px;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
 }
@@ -130,18 +282,69 @@ body {
 
 .seccion-buttons {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .seccion-content {
-  padding: 10px;
+  padding: 6px 8px;
 }
 
-.seccion-content.grid-3 {
+.grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 4px;
 }
+
+.grid-3 .field-group {
+  min-width: 0;
+}
+
+/* ==================== SERVICIOS E INSCRIPCIÓN EN FILA 70/30 ==================== */
+
+/* Contenedor para Servicios e Inscripción en la misma fila */
+.seccion-servicios-inscripcion {
+  display: grid;
+  grid-template-columns: 60fr 40fr;
+  gap: 6px;
+}
+
+/* Grid de servicios compacto */
+.grid-servicios {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.grid-servicios .field-group {
+  min-width: 0;
+}
+
+.grid-servicios .field-group label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+}
+
+.grid-servicios .field-group input {
+  padding: 3px 4px;
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 9px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.grid-servicios .field-group input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+/* ==================== FIELD GROUPS ==================== */
 
 .field-group {
   display: flex;
@@ -154,14 +357,16 @@ body {
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 
 .field-group input,
 .field-group textarea {
-  padding: 5px 8px;
+  padding: 3px 4px;
   border: 1px solid var(--input-border);
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: 3px;
+  font-size: 9px;
   background: var(--input-bg);
   color: var(--text-color);
   transition: all 0.2s ease;
@@ -171,54 +376,57 @@ body {
 .field-group textarea:focus {
   outline: none;
   border-color: var(--input-focus);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
 .field-group textarea {
   resize: vertical;
-  min-height: 40px;
+  min-height: 30px;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 3px 4px;
 }
 
 .field-full {
   grid-column: 1 / -1;
 }
 
-.field-row-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
 .subseccion-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .subseccion {
-  padding: 8px;
+  padding: 5px;
   background: var(--bg-color);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px dashed var(--border-color);
 }
 
 .subseccion h4 {
-  font-size: 10px;
-  margin-bottom: 6px;
+  font-size: 9px;
+  margin-bottom: 4px;
   color: var(--text-color);
 }
 
 .subseccion .field-group {
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
+.subseccion .field-group input {
+  font-size: 9px;
+  padding: 3px 4px;
+}
+
+/* ==================== BOTONES ==================== */
+
 .btn {
-  padding: 4px 8px;
+  padding: 3px 7px;
   border: none;
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: 3px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -231,6 +439,7 @@ body {
 
 .btn-save:hover {
   background: var(--success-hover);
+  transform: scale(1.05);
 }
 
 .btn-clear {
@@ -251,11 +460,30 @@ body {
   background: var(--primary-hover);
 }
 
+.btn-execute {
+  background: #8b5cf6;
+  color: white;
+}
+
+.btn-execute:hover {
+  background: #7c3aed;
+  transform: scale(1.05);
+}
+
+.btn-full {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .btn-row {
-  padding: 2px 5px;
+  padding: 2px 4px;
   border: none;
-  border-radius: 3px;
-  font-size: 10px;
+  border-radius: 2px;
+  font-size: 9px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -276,19 +504,22 @@ body {
   background: var(--danger-hover);
 }
 
+/* ==================== TABLAS ==================== */
+
 .tabla-linderos {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .tabla-simple {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10px;
+  font-size: 9px;
+  table-layout: fixed;
 }
 
 .tabla-simple th,
 .tabla-simple td {
-  padding: 4px 6px;
+  padding: 3px 5px;
   border: 1px solid var(--border-color);
   text-align: left;
 }
@@ -296,7 +527,7 @@ body {
 .tabla-simple th {
   background: var(--header-bg);
   font-weight: 600;
-  font-size: 9px;
+  font-size: 8px;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -304,16 +535,30 @@ body {
 .tabla-simple .lindero-label {
   background: var(--bg-color);
   font-weight: 600;
-  width: 80px;
   font-size: 9px;
+}
+
+.tabla-simple th:nth-child(1),
+.tabla-simple td:nth-child(1) {
+  width: 60px;
+}
+
+.tabla-simple th:nth-child(2),
+.tabla-simple td:nth-child(2) {
+  width: 60px;
+}
+
+.tabla-simple th:nth-child(3),
+.tabla-simple td:nth-child(3) {
+  width: auto;
 }
 
 .tabla-simple input {
   width: 100%;
-  padding: 3px 5px;
+  padding: 3px 4px;
   border: 1px solid var(--input-border);
-  border-radius: 3px;
-  font-size: 10px;
+  border-radius: 2px;
+  font-size: 9px;
   background: var(--input-bg);
   color: var(--text-color);
 }
@@ -329,6 +574,30 @@ body {
   margin: 0;
 }
 
+.tabla-instrucciones {
+  display: flex;
+  gap: 12px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #bae6fd;
+  border-bottom: none;
+  font-size: 9px;
+  color: #0369a1;
+}
+
+.dark-mode .tabla-instrucciones {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-color: #334155;
+  color: #7dd3fc;
+}
+
+.instruccion-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 .tabla-excel {
   width: 100%;
   border-collapse: collapse;
@@ -337,7 +606,7 @@ body {
 
 .tabla-excel th,
 .tabla-excel td {
-  padding: 3px 2px;
+  padding: 2px;
   border: 1px solid var(--border-color);
   text-align: center;
 }
@@ -349,6 +618,7 @@ body {
   font-size: 8px;
   text-transform: uppercase;
   white-space: nowrap;
+  cursor: help;
 }
 
 .tabla-excel tbody tr:nth-child(even) {
@@ -359,9 +629,17 @@ body {
   background: var(--table-row-hover);
 }
 
+.tabla-excel tbody tr.row-active {
+  background: #f0f9ff !important;
+}
+
+.dark-mode .tabla-excel tbody tr.row-active {
+  background: #1e293b !important;
+}
+
 .tabla-excel input {
   width: 100%;
-  min-width: 28px;
+  min-width: 25px;
   padding: 2px 3px;
   border: 1px solid transparent;
   border-radius: 2px;
@@ -369,12 +647,47 @@ body {
   text-align: center;
   background: transparent;
   color: var(--text-color);
+  transition: all 0.15s ease;
 }
 
 .tabla-excel input:focus {
-  outline: none;
-  border-color: var(--input-focus);
-  background: var(--input-bg);
+  outline: none !important;
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+}
+
+.dark-mode .tabla-excel input:focus {
+  box-shadow: 0 0 0 2px #60a5fa !important;
+  border-color: #60a5fa !important;
+  background-color: #1e3a5f !important;
+}
+
+.tabla-excel input.valid {
+  background-color: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+.tabla-excel input.invalid {
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  animation: shake 0.3s ease-in-out;
+}
+
+.dark-mode .tabla-excel input.valid {
+  background-color: #14532d !important;
+  border-color: #22c55e !important;
+}
+
+.dark-mode .tabla-excel input.invalid {
+  background-color: #450a0a !important;
+  border-color: #ef4444 !important;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 .acciones-cell {
@@ -385,13 +698,15 @@ body {
   white-space: nowrap;
 }
 
+/* ==================== ACCIONES GLOBALES ==================== */
+
 .global-actions {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  padding: 10px;
+  gap: 6px;
+  padding: 8px;
   background: var(--card-bg);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
 }
 
@@ -399,9 +714,14 @@ body {
 .btn-global-clear,
 .btn-global-export,
 .btn-global-import {
-  padding: 6px 12px;
-  font-size: 11px;
+  padding: 5px 10px;
+  font-size: 10px;
   color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .btn-global-save {
@@ -410,6 +730,7 @@ body {
 
 .btn-global-save:hover {
   background: var(--success-hover);
+  transform: scale(1.05);
 }
 
 .btn-global-clear {
@@ -436,16 +757,18 @@ body {
   background: #0e7490;
 }
 
+/* ==================== TOAST ==================== */
+
 .toast {
   position: fixed;
   bottom: 10px;
   right: 10px;
-  padding: 8px 14px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 5px;
   color: white;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   z-index: 1000;
   animation: slideIn 0.3s ease;
 }
@@ -484,352 +807,23 @@ body {
   }
 }
 
+/* ==================== SCROLLBAR ==================== */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
-}
-
-.btn-execute {
-  background: #8b5cf6;
-  color: white;
-}
-
-.btn-execute:hover {
-  background: #7c3aed;
-  transform: scale(1.1);
-}
-
-/* Indicador de licencia */
-.license-indicator {
-  margin-right: 10px;
-}
-
-.license-indicator:hover {
-  transform: scale(1.05);
-}
-
-.tabla-instrucciones {
-  display: flex;
-  gap: 15px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
-  border-radius: 8px 8px 0 0;
-  border: 1px solid #bae6fd;
-  border-bottom: none;
-  font-size: 11px;
-  color: #0369a1;
-}
-
-.dark-mode .tabla-instrucciones {
-  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
-  border-color: #334155;
-  color: #7dd3fc;
-}
-
-.instruccion-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Estilos de validación */
-.tabla-excel input.valid {
-  background-color: #f0fdf4 !important;
-  border-color: #86efac !important;
-}
-
-.tabla-excel input.invalid {
-  background-color: #fef2f2 !important;
-  border-color: #fca5a5 !important;
-  animation: shake 0.3s ease-in-out;
-}
-
-.dark-mode .tabla-excel input.valid {
-  background-color: #14532d !important;
-  border-color: #22c55e !important;
-}
-
-.dark-mode .tabla-excel input.invalid {
-  background-color: #450a0a !important;
-  border-color: #ef4444 !important;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
-}
-
-/* Celda activa/seleccionada */
-.tabla-excel input:focus {
-  outline: none !important;
-  box-shadow: 0 0 0 2px #3b82f6 !important;
-  border-color: #3b82f6 !important;
-  background-color: #eff6ff !important;
-}
-
-.dark-mode .tabla-excel input:focus {
-  box-shadow: 0 0 0 2px #60a5fa !important;
-  border-color: #60a5fa !important;
-  background-color: #1e3a5f !important;
-}
-
-/* Indicador de celda seleccionada en fila */
-.tabla-excel tr.row-active {
-  background-color: #f0f9ff !important;
-}
-
-.dark-mode .tabla-excel tr.row-active {
-  background-color: #1e293b !important;
-}
-
-/* Tooltip de validación */
-.tabla-excel th {
-  cursor: help;
-  position: relative;
-}
-
-.tabla-excel th:hover::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  white-space: nowrap;
-  z-index: 100;
-  opacity: 0;
-  animation: fadeIn 0.2s ease forwards;
-  animation-delay: 0.3s;
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-/* Indicador de errores en sección */
-.validation-summary {
-  margin-top: 10px;
-  padding: 10px 15px;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #dc2626;
-}
-
-.dark-mode .validation-summary {
-  background: #450a0a;
-  border-color: #ef4444;
-  color: #fca5a5;
-}
-
-.validation-summary ul {
-  margin: 5px 0 0 20px;
-  padding: 0;
-}
-
-.validation-summary li {
-  margin: 3px 0;
-}
-
-/* Mejoras en tabla excel para navegación */
-.tabla-excel tbody tr {
-  transition: background-color 0.15s ease;
-}
-
-.tabla-excel input {
-  transition: all 0.15s ease;
-}
-
-/* Contador de filas (opcional - si lo quieres mantener) */
-.tabla-excel tbody tr {
-  position: relative;
-}
-
-.tabla-excel tbody tr::before {
-  content: attr(data-row-index);
-  position: absolute;
-  left: -25px;
-  color: #94a3b8;
-  font-size: 10px;
-  width: 20px;
-  text-align: right;
-}
-
-/* ============================================================
-   ARCHIVO: popup-additions.css
-   INSTRUCCIONES: Agregar estos estilos al final de popup.css
-   ============================================================ */
-
-/* ==================== SERVICIOS GRID ==================== */
-
-.servicios-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px !important;
-}
-
-.servicios-grid .field-group input {
-  text-align: center;
-  font-weight: 600;
-}
-
-/* ==================== FICHAS COUNTER ==================== */
-
-.fichas-counter-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.fichas-counter-row .field-group {
-  flex: 1;
-}
-
-.fichas-display {
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  color: var(--primary-color);
-}
-
-.fichas-faltantes {
-  color: #ef4444;
-}
-
-.fichas-progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.fichas-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.fichas-info {
-  font-size: 11px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 6px;
-  margin-bottom: 0;
-}
-
-/* ==================== CREAR LOTES ==================== */
-
-.lote-creation-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border-color);
-}
-
-.btn-lote-create {
-  padding: 5px 12px !important;
-  font-size: 11px !important;
-  white-space: nowrap;
-}
-
-.lote-info {
-  font-size: 10px;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-/* ==================== SUB-HEADER PARA VÍAS ==================== */
-
-.seccion-sub-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  padding: 6px 0;
-  border-top: 1px solid var(--border-color);
-}
-
-.seccion-sub-header h3 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.seccion-sub-header .seccion-buttons {
-  display: flex;
-  gap: 4px;
-}
-
-/* ==================== NOTIFICACIÓN DE FICHAS ==================== */
-
-.fichas-notification {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  padding: 12px 16px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
-  z-index: 10000;
-  font-size: 13px;
-  font-weight: 500;
-  animation: slideInNotif 0.4s ease, slideOutNotif 0.4s ease 4s forwards;
-}
-
-.fichas-notification.complete {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
-}
-
-@keyframes slideInNotif {
-  from {
-    transform: translateX(120%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutNotif {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(120%);
-    opacity: 0;
-  }
 }

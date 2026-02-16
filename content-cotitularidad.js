@@ -381,6 +381,29 @@ function findSearchButtonByLegend(section, legendText) {
   return null;
 }
 
+// ==================== HELPER: Obtener vía principal del storage ====================
+
+function getViaPrincipalFromStorage() {
+  const data = CotitularidadState.storedData;
+  const vias = data.vias;
+  
+  if (!vias || !Array.isArray(vias) || vias.length === 0) return null;
+  const filaPrincipal = vias.find(row =>
+    row.puerta && row.puerta.toUpperCase() === 'P'
+  );
+
+  if (filaPrincipal) {
+    return {
+      codigo: filaPrincipal.codigo || '',
+      puerta: filaPrincipal.puerta || 'P',
+      nro_municipal: filaPrincipal.nro_municipal || '',
+      cond_num: filaPrincipal.cond_num || ''
+    };
+  }
+
+  return null;
+}
+
 // ==================== FUNCIONES DE MODAL ====================
 
 async function waitForModal(titleText, timeout = 10000) {
@@ -727,6 +750,9 @@ async function processFirmaTecnico(data) {
 async function handleNuevoCotitularModal(ubicacion) {
   try {
     log('Procesando modal de Nuevo Cotitular', 'info');
+    const viaPrincipal = getViaPrincipalFromStorage();
+    const codigoVia = viaPrincipal ? viaPrincipal.codigo : ubicacion['ubicacion-codigo-via'];
+    const nMunicipal = viaPrincipal ? viaPrincipal.nro_municipal : ubicacion['ubicacion-n-municipal'];
     const modal = await waitForModal('NUEVO COTITULAR CATASTRAL');
     if (!modal) {
       log('Modal de nuevo cotitular no encontrado', 'error');
@@ -758,12 +784,12 @@ async function handleNuevoCotitularModal(ubicacion) {
         log('Sub-Lote seteado: ' + ubicacion['ubicacion-sub-lote'], 'success');
       }
     }
-    if (ubicacion['ubicacion-n-municipal']) {
+    if (nMunicipal) {
       const nMunicipalInput = findInputByLegend(modal, 'MUNICIPAL') ||
                               findInputByLegend(modal, '[11]');
       if (nMunicipalInput) {
-        simulateInput(nMunicipalInput, ubicacion['ubicacion-n-municipal']);
-        log('N° Municipal seteado: ' + ubicacion['ubicacion-n-municipal'], 'success');
+        simulateInput(nMunicipalInput, nMunicipal);
+        log('N° Municipal seteado: ' + nMunicipal, 'success');
       }
     }
     await delay(CONFIG.delays.short);
@@ -779,13 +805,13 @@ async function handleNuevoCotitularModal(ubicacion) {
       log('Distrito seleccionado', 'success');
     }
     await delay(CONFIG.delays.short);
-    if (ubicacion['ubicacion-codigo-via']) {
+    if (codigoVia) {
       const codigoViaInput = findInputByLegend(modal, 'DIGO V') ||
                              findInputByLegend(modal, 'CODIGO VIA') ||
                              findInputByLegend(modal, '[07]');
       if (codigoViaInput) {
-        simulateInput(codigoViaInput, ubicacion['ubicacion-codigo-via']);
-        log('Código Vía seteado: ' + ubicacion['ubicacion-codigo-via'], 'success');
+        simulateInput(codigoViaInput, codigoVia);
+        log('Código Vía seteado: ' + codigoVia, 'success');
         await delay(CONFIG.delays.short);
         const searchBtn = findSearchButtonByLegend(modal, 'DIGO V') ||
                           findSearchButtonByLegend(modal, 'CODIGO VIA') ||
@@ -794,7 +820,7 @@ async function handleNuevoCotitularModal(ubicacion) {
           simulateClick(searchBtn);
           log('Click en botón de búsqueda de Código Vía', 'info');
           await delay(CONFIG.delays.long);
-          await handleModalSearch('LISTADO DE V', ubicacion['ubicacion-codigo-via']);
+          await handleModalSearch('LISTADO DE V', codigoVia);
         }
       }
     }

@@ -176,6 +176,30 @@ async function waitForModalToClose(titleContains) {
   });
 }
 
+// ==================== HELPER: Obtener vía principal del storage ====================
+
+function getViaPrincipalFromStorage() {
+  const data = AppState.storedData;
+  const vias = data.vias;
+  
+  if (!vias || !Array.isArray(vias) || vias.length === 0) return null;
+  
+  const filaPrincipal = vias.find(row =>
+    row.puerta && row.puerta.toUpperCase() === 'P'
+  );
+
+  if (filaPrincipal) {
+    return {
+      codigo: filaPrincipal.codigo || '',
+      puerta: filaPrincipal.puerta || 'P',
+      nro_municipal: filaPrincipal.nro_municipal || '',
+      cond_num: filaPrincipal.cond_num || ''
+    };
+  }
+
+  return null;
+}
+
 // ==================== BÚSQUEDA Y SELECCIÓN DE PERSONAL ====================
 
 async function searchAndSelectPersonal(nombre) {
@@ -347,6 +371,9 @@ async function setDomicilioFiscalFromStorage() {
   }
   EconomicaState.domicilioFiscalProcesado = true;
   const ubicacionData = EconomicaState.storedData?.ubicacion || {};
+  const viaPrincipal = getViaPrincipalFromStorage();
+  const codigoVia = viaPrincipal ? viaPrincipal.codigo : ubicacion['ubicacion-codigo-via'];
+  const nMunicipal = viaPrincipal ? viaPrincipal.nro_municipal : ubicacion['ubicacion-n-municipal'];
   const sections = document.querySelectorAll('.ant-collapse-item');
   let domicilioSection = null;
   for (const section of sections) {
@@ -362,12 +389,12 @@ async function setDomicilioFiscalFromStorage() {
     return;
   }
   await delay(CONFIG.delays.medium);
-  if (ubicacionData['ubicacion-n-municipal']) {
+  if (nMunicipal) {
     const input = findInputByLegend(domicilioSection, 'N° MUNICIPAL') ||
                   findInputByLegend(domicilioSection, 'MUNICIPAL');
     if (input) {
-      simulateInput(input, ubicacionData['ubicacion-n-municipal']);
-      log(`N° Municipal seteado: ${ubicacionData['ubicacion-n-municipal']}`, 'success');
+      simulateInput(input, nMunicipal);
+      log(`N° Municipal seteado: ${nMunicipal}`, 'success');
     }
   }
   if (ubicacionData['ubicacion-manzana']) {
@@ -392,8 +419,8 @@ async function setDomicilioFiscalFromStorage() {
       log(`Sub-Lote seteado: ${ubicacionData['ubicacion-sub-lote']}`, 'success');
     }
   }
-  if (ubicacionData['ubicacion-codigo-via']) {
-    await handleCodigoViaModal(domicilioSection, ubicacionData['ubicacion-codigo-via']);
+  if (codigoVia) {
+    await handleCodigoViaModal(domicilioSection, codigoVia);
   }
   if (ubicacionData['ubicacion-codigo-hu']) {
     await handleCodigoHuModal(domicilioSection, ubicacionData['ubicacion-codigo-hu']);

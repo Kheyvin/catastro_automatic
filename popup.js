@@ -145,7 +145,6 @@ function validarCampo(valor, tipo) {
       }
       return { valid: false };
     case 'puerta':
-      // FIX: usar 'v' en vez de 'value' (variable no definida)
       if (v === '' || v === '0') return { valid: true, normalized: v };
       const upperPuerta = v.toUpperCase();
       if (['P', 'S', 'G', 'E'].includes(upperPuerta)) {
@@ -153,7 +152,6 @@ function validarCampo(valor, tipo) {
       }
       return { valid: false };
     case 'cond_num':
-      // FIX: usar 'v' en vez de 'value' (variable no definida)
       if (v === '' || v === '0' || v === '00') return { valid: true, normalized: v };
       const numCond = parseInt(v, 10);
       if (!isNaN(numCond) && numCond >= 0 && numCond <= 4) {
@@ -219,10 +217,7 @@ function mostrarErroresValidacion(tableType, allErrors) {
   if (existingSummary) existingSummary.remove();
   if (allErrors.length === 0) return;
   const container = document.querySelector(`#seccion-${tableType} .tabla-excel-container`);
-  // Para vías, el contenedor está dentro de seccion-ubicacion
-  const altContainer = document.querySelector(`#seccion-ubicacion .tabla-excel-container`);
-  const targetContainer = container || altContainer;
-  if (!targetContainer) return;
+  if (!container) return;
   const summary = document.createElement('div');
   summary.className = 'validation-summary';
   const errorList = allErrors.map(err =>
@@ -232,17 +227,12 @@ function mostrarErroresValidacion(tableType, allErrors) {
     <strong>⚠️ Errores de validación (${allErrors.length}):</strong>
     <ul>${errorList}</ul>
   `;
-  targetContainer.appendChild(summary);
+  container.appendChild(summary);
 }
 
 function limpiarErroresValidacion(tableType) {
   const existingSummary = document.querySelector(`#seccion-${tableType} .validation-summary`);
   if (existingSummary) existingSummary.remove();
-  // También limpiar en ubicacion (para vías)
-  if (tableType === 'vias') {
-    const altSummary = document.querySelector(`#seccion-ubicacion .validation-summary`);
-    if (altSummary) altSummary.remove();
-  }
   const config = TABLAS_CONFIG[tableType];
   if (!config) return;
   const tbody = document.getElementById(config.tbodyId);
@@ -274,9 +264,8 @@ async function updateFichasUI() {
   const data = await loadFichasCounter();
   const metaInput = document.getElementById('fichas-meta');
   const avanceEl = document.getElementById('fichas-avance');
-  const faltantesEl = document.getElementById('fichas-faltantes');
+  const metaDisplayEl = document.getElementById('fichas-meta-display');
   const progressEl = document.getElementById('fichas-progress');
-  const infoEl = document.getElementById('fichas-info-text');
 
   if (metaInput && !metaInput.dataset.loaded) {
     metaInput.value = data.meta || '';
@@ -284,23 +273,28 @@ async function updateFichasUI() {
   }
 
   if (avanceEl) avanceEl.textContent = data.avance || 0;
-
-  const faltantes = Math.max(0, (data.meta || 0) - (data.avance || 0));
-  if (faltantesEl) faltantesEl.textContent = faltantes;
+  if (metaDisplayEl) metaDisplayEl.textContent = data.meta || 0;
 
   const percent = data.meta > 0 ? Math.min(100, ((data.avance || 0) / data.meta) * 100) : 0;
   if (progressEl) progressEl.style.width = percent.toFixed(1) + '%';
 
-  if (infoEl) {
-    if (!data.meta || data.meta === 0) {
-      infoEl.textContent = 'Configura tu meta para iniciar el seguimiento';
-    } else if (faltantes === 0) {
-      infoEl.textContent = '🎉 ¡Meta alcanzada! Completaste todas las fichas';
-      infoEl.style.color = '#22c55e';
+  // Cambiar color de la barra según progreso
+  if (progressEl) {
+    if (percent >= 100) {
+      progressEl.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)';
+    } else if (percent >= 75) {
+      progressEl.style.background = 'linear-gradient(90deg, #3b82f6, #2563eb)';
     } else {
-      infoEl.textContent = `📋 ${data.avance}/${data.meta} fichas completadas (${percent.toFixed(0)}%)`;
-      infoEl.style.color = '';
+      progressEl.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
     }
+  }
+
+  // Mostrar notificación si se completa la meta
+  if (data.meta > 0 && data.avance >= data.meta && !sessionStorage.getItem('metaCompletada')) {
+    sessionStorage.setItem('metaCompletada', 'true');
+    showToast('🎉 ¡Meta completada!', 'success');
+  } else if (data.avance < data.meta) {
+    sessionStorage.removeItem('metaCompletada');
   }
 }
 
@@ -341,7 +335,6 @@ function getViaPrincipalFromStorage() {
   const viasData = getTableDataFromDOM('vias');
   if (!viasData || viasData.length === 0) return null;
 
-  // Buscar fila con PUERTA = P
   const filaPrincipal = viasData.find(row =>
     row.puerta && row.puerta.toUpperCase() === 'P'
   );
@@ -364,7 +357,6 @@ function setupCrearLotes() {
 
     const targetLote = loteInput.value.trim();
 
-    // Guardar datos primero
     const principales = getSectionValuesFromDOM('principales');
     await saveSectionData('principales', principales);
 
@@ -524,17 +516,6 @@ function validarCampoEnTiempoReal(input, tableType) {
   } else {
     input.classList.add('invalid');
   }
-}
-
-async function loadMainContent() {
-  const response = await fetch('popup-content.html');
-  const html = await response.text();
-  const mainContainer = document.querySelector('.container');
-  mainContainer.innerHTML = html;
-  initTheme();
-  loadStoredData();
-  setupEventListeners();
-  setupExcelNavigation();
 }
 
 function showToast(message, type = 'info') {
@@ -813,8 +794,6 @@ async function executeAutomation(tableType) {
   });
   await saveSectionData(tableType, filasNormalizadas);
 
-  // ==================== CASO ESPECIAL: VÍAS ====================
-  // Para vías, enviar también los datos de ubicación junto con las filas de vías
   if (tableType === 'vias') {
     const ubicacionData = getSectionValuesFromDOM('ubicacion');
     showToast(`Ejecutando vías (${filasNormalizadas.length} filas)...`, 'info');
@@ -837,10 +816,9 @@ async function executeAutomation(tableType) {
         });
       }
     });
-    return; // Salir, ya se manejó el caso de vías
+    return;
   }
 
-  // ==================== CASO GENÉRICO: construcciones, obras, etc. ====================
   showToast(`Ejecutando ${tableType} (${filasNormalizadas.length} filas)...`, 'info');
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
@@ -953,6 +931,13 @@ function setupEventListeners() {
   if (themeBtn) {
     themeBtn.addEventListener('click', toggleTheme);
   }
+
+  // Botón de guardar en header
+  const btnGuardarHeader = document.getElementById('btn-guardar-todo-header');
+  if (btnGuardarHeader) {
+    btnGuardarHeader.addEventListener('click', saveAll);
+  }
+
   document.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -1008,7 +993,10 @@ function setupEventListeners() {
 // ==================== INICIALIZACIÓN ====================
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadMainContent();
+  initTheme();
+  loadStoredData();
+  setupEventListeners();
+  setupExcelNavigation();
 });
 
 window.FichaCatastralAPI = {
