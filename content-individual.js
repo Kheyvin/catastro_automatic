@@ -2440,7 +2440,7 @@ async function processConstruccionRow(rowData, rowIndex) {
 
   if (rowData.banio) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.banio] || rowData.banio.toUpperCase();
-    await selectModalOption(modal, 'BANOS', mappedValue);
+    await selectModalOption(modal, 'BAÑOS', mappedValue);
   }
 
   if (rowData.inst) {
@@ -2531,7 +2531,7 @@ async function processObraRow(rowData, rowIndex) {
     await delay(CONFIG.delays.long);
   }
 
-  const codigosModal = await waitForModal('CODIGOS DE INSTALACION') || await waitForModal('CÓDIGOS DE INSTALACIÓN');
+  const codigosModal = await waitForModal('CÓDIGOS DE INSTALACIÓN');
   if (!codigosModal) {
     log('Modal de codigos no aparecio', 'error');
     return;
