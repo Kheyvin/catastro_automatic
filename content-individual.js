@@ -841,7 +841,7 @@ async function waitForSelectorToBeReady(selectId, maxWaitTime = 10000) {
   const startTime = Date.now();
 
   while (Date.now() - startTime < maxWaitTime) {
-    const selectInput = document.querySelector(`#${selectId}`);
+    const selectInput = document.querySelector('#' + selectId);
     if (!selectInput) {
       await delay(200);
       continue;
@@ -855,29 +855,29 @@ async function waitForSelectorToBeReady(selectId, maxWaitTime = 10000) {
 
     const isDisabled = selectContainer.classList.contains('ant-select-disabled');
     if (!isDisabled) {
-      log(`Selector ${selectId} esta listo`, 'success');
+      log('Selector ' + selectId + ' esta listo', 'success');
       return true;
     }
 
     await delay(200);
   }
 
-  log(`Timeout esperando que ${selectId} este listo`, 'warning');
+  log('Timeout esperando que ' + selectId + ' este listo', 'warning');
   return false;
 }
 
 async function selectCascadeOption(selectId, targetValue) {
   if (!targetValue) return false;
 
-  const selectInput = document.querySelector(`#${selectId}`);
+  const selectInput = document.querySelector('#' + selectId);
   if (!selectInput) {
-    log(`Selector ${selectId} no encontrado`, 'error');
+    log('Selector ' + selectId + ' no encontrado', 'error');
     return false;
   }
 
   const selectContainer = selectInput.closest('.ant-select');
   if (!selectContainer) {
-    log(`Contenedor del selector ${selectId} no encontrado`, 'error');
+    log('Contenedor del selector ' + selectId + ' no encontrado', 'error');
     return false;
   }
 
@@ -885,12 +885,12 @@ async function selectCascadeOption(selectId, targetValue) {
   if (selectionItem) {
     const currentValue = selectionItem.getAttribute('title') || selectionItem.textContent.trim();
     if (currentValue === targetValue || currentValue.includes(targetValue)) {
-      log(`${selectId} ya tiene el valor: ${currentValue}`, 'info');
+      log(selectId + ' ya tiene el valor: ' + currentValue, 'info');
       return true;
     }
   }
 
-  log(`Seleccionando ${selectId}: ${targetValue}`, 'info');
+  log('Seleccionando ' + selectId + ': ' + targetValue, 'info');
 
   const selectorDiv = selectContainer.querySelector('.ant-select-selector');
   if (selectorDiv) {
@@ -921,7 +921,7 @@ async function selectCascadeOption(selectId, targetValue) {
   }
 
   if (!dropdown) {
-    log(`No se pudo abrir el dropdown de ${selectId}`, 'error');
+    log('No se pudo abrir el dropdown de ' + selectId, 'error');
     return false;
   }
 
@@ -952,7 +952,7 @@ async function selectCascadeOption(selectId, targetValue) {
   for (let attempt = 0; attempt < maxScrollAttempts; attempt++) {
     if (findAndClickOption()) {
       await delay(CONFIG.delays.short);
-      log(`Opcion seleccionada en ${selectId}: ${targetValue}`, 'success');
+      log('Opcion seleccionada en ' + selectId + ': ' + targetValue, 'success');
       return true;
     }
 
@@ -982,7 +982,7 @@ async function selectCascadeOption(selectId, targetValue) {
 
   simulateClick(document.body);
   await delay(CONFIG.delays.short);
-  log(`No se encontro la opcion ${targetValue} en ${selectId}`, 'warning');
+  log('No se encontro la opcion ' + targetValue + ' en ' + selectId, 'warning');
   return false;
 }
 
@@ -994,7 +994,6 @@ function getViaPrincipalFromStorage() {
 
   if (!vias || !Array.isArray(vias) || vias.length === 0) return null;
 
-  // Buscar fila con puerta = P
   const filaPrincipal = vias.find(row =>
     row.puerta && row.puerta.toUpperCase() === 'P'
   );
@@ -1022,7 +1021,7 @@ async function incrementFichasCounter() {
       data.avance = (data.avance || 0) + 1;
       chrome.storage.local.set({ [FICHAS_COUNTER_KEY]: data }, () => {
         const faltantes = Math.max(0, data.meta - data.avance);
-        log(`📊 FICHAS: ${data.avance}/${data.meta} completadas. Faltan: ${faltantes}`, 'success');
+        log('📊 FICHAS: ' + data.avance + '/' + data.meta + ' completadas. Faltan: ' + faltantes, 'success');
         resolve(data);
       });
     });
@@ -1125,7 +1124,6 @@ async function handleSeccion02Ubicacion() {
   const section = document.querySelectorAll('.ant-collapse-item')[1];
   if (!section) return;
 
-  // Setear campos básicos
   if (ubicacion['ubicacion-manzana']) {
     const manzanaInput = findInputByLegend(section, 'MANZANA');
     if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
@@ -1158,24 +1156,6 @@ async function handleSeccion02Ubicacion() {
 
   await delay(CONFIG.delays.medium);
 
-  // Obtener la fila principal (puerta P) de vías para crear la ubicación principal
-  // const viaPrincipal = getViaPrincipalFromStorage();
-
-  // if (viaPrincipal) {
-  //   // Crear UNA ubicación con la vía principal
-  //   const buttons = section.querySelectorAll('button');
-  //   for (const btn of buttons) {
-  //     if (btn.textContent.includes('NUEVO') || btn.querySelector('.anticon-plus')) {
-  //       simulateClick(btn);
-  //       await delay(CONFIG.delays.long);
-  //       await handleNuevaUbicacionModalFromVia(viaPrincipal);
-  //       break;
-  //     }
-  //   }
-  // } else {
-  //   log('No hay vía principal (P) configurada, omitiendo creación de ubicación', 'warning');
-  // }
-
   log('Seccion 02 completada. Esperando click en "Guardar ubicacion de predio"...', 'success');
 
   await waitForButtonClick('button', 'Guardar ubicaci');
@@ -1183,7 +1163,112 @@ async function handleSeccion02Ubicacion() {
 
   log('Usuario guardo UBICACION', 'success');
   await delay(CONFIG.delays.medium);
-  await expandAndProcessSection(2);
+
+  const allSections = document.querySelectorAll('.ant-collapse-item');
+  const section05 = allSections[4];
+  if (section05 && !section05.classList.contains('ant-collapse-item-active')) {
+    const header5 = section05.querySelector('.ant-collapse-header');
+    simulateClick(header5);
+    log('Seccion 05 (CARACTERISTICAS) expandida para permitir salto', 'info');
+    await delay(CONFIG.delays.medium);
+  }
+
+  if (section05) {
+    const fieldsets05 = section05.querySelectorAll('fieldset');
+    for (const fieldset of fieldsets05) {
+      const legend = fieldset.querySelector('legend');
+      if (legend && (legend.textContent.includes('FECHA DE ADQUISI') || legend.textContent.includes('[39]'))) {
+        const selects = fieldset.querySelectorAll('.ant-select');
+        selects.forEach(select => {
+          const inputs = select.querySelectorAll('input');
+          inputs.forEach(input => {
+            input.removeAttribute('readonly');
+          });
+        });
+        break;
+      }
+    }
+
+    const flexContainers05 = section05.querySelectorAll('.flex.gap-3');
+    for (const container of flexContainers05) {
+      const selects = container.querySelectorAll('.ant-select');
+      selects.forEach(select => {
+        const selectionItem = select.querySelector('.ant-select-selection-item');
+        if (selectionItem && selectionItem.textContent.trim() === 'Mes') {
+          const inputs = select.querySelectorAll('input');
+          inputs.forEach(input => {
+            input.removeAttribute('readonly');
+          });
+        }
+      });
+    }
+    log('Seccion 05 - Readonly removido de selectores MES (preparacion para salto)', 'success');
+  }
+
+  await delay(CONFIG.delays.short);
+
+  const section03 = allSections[2];
+  if (section03 && !section03.classList.contains('ant-collapse-item-active')) {
+    const header3 = section03.querySelector('.ant-collapse-header');
+    simulateClick(header3);
+    await waitForSectionToExpand(2);
+  }
+
+  log('Secciones 03 y 05 abiertas. Esperando interaccion del usuario en cualquiera...', 'info');
+
+  const userChoice = await new Promise((resolve) => {
+    let resolved = false;
+
+    const checkSection3 = setInterval(() => {
+      if (resolved) { clearInterval(checkSection3); return; }
+      const sec3 = document.querySelectorAll('.ant-collapse-item')[2];
+      if (!sec3) return;
+      const selectionItems = sec3.querySelectorAll('.ant-select-selection-item');
+      for (const item of selectionItems) {
+        const text = item.textContent || '';
+        if (text.includes('01 - PERSONA NATURAL') || text.includes('02 - PERSONA JUR')) {
+          resolved = true;
+          clearInterval(checkSection3);
+          resolve('SECCION_03');
+          return;
+        }
+      }
+    }, 500);
+
+    const handleSection5Click = (e) => {
+      if (resolved) return;
+      const button = e.target.closest('button');
+      if (!button) return;
+      if (button.textContent.includes('Guardar caracter')) {
+        resolved = true;
+        clearInterval(checkSection3);
+        document.removeEventListener('click', handleSection5Click, true);
+        resolve('SECCION_05');
+      }
+    };
+    document.addEventListener('click', handleSection5Click, true);
+
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        clearInterval(checkSection3);
+        document.removeEventListener('click', handleSection5Click, true);
+        resolve(null);
+      }
+    }, 120000);
+  });
+
+  if (userChoice === 'SECCION_03') {
+    log('Usuario eligio trabajar en Seccion 03 (TITULAR)', 'info');
+    await handleSeccion03Titular();
+  } else if (userChoice === 'SECCION_05') {
+    log('Usuario salto a Seccion 05 (CARACTERISTICAS)', 'info');
+    log('Usuario guardo CARACTERISTICAS (desde salto)', 'success');
+    await delay(CONFIG.delays.medium);
+    await expandAndProcessSection(5);
+  } else {
+    log('Timeout esperando interaccion del usuario', 'warning');
+  }
 }
 
 // ==================== handleNuevaUbicacionModalFromVia ====================
@@ -1192,11 +1277,10 @@ async function handleNuevaUbicacionModalFromVia(viaData) {
   try {
     const modal = await waitForModal('NUEVA UBICACI');
     if (!modal) {
-      log('Modal NUEVA UBICACION no apareció', 'error');
+      log('Modal NUEVA UBICACION no aparecio', 'error');
       return;
     }
 
-    // 1. Buscar código de vía
     if (viaData.codigo) {
       const searchButton = modal.querySelector('button .anticon-search');
       if (searchButton) {
@@ -1207,19 +1291,16 @@ async function handleNuevaUbicacionModalFromVia(viaData) {
 
     await delay(CONFIG.delays.medium);
 
-    // 2. Setear TIPO DE PUERTA según el valor
     const puertaValue = (viaData.puerta || '').toUpperCase();
     const puertaMapped = VIAS_PUERTA_MAPPING[puertaValue] || VIAS_PUERTA_MAPPING['0'];
     await selectByLegend(modal, 'TIPO DE PUERTA', puertaMapped);
 
     await delay(CONFIG.delays.short);
 
-    // 3. Setear COND. NUMER según el valor
     const condValue = (viaData.cond_num || '').toString().trim();
     const condMapped = VIAS_COND_NUM_MAPPING[condValue] || VIAS_COND_NUM_MAPPING['0'];
     await selectByLegend(modal, 'COND. NUMER', condMapped);
 
-    // 4. Setear NRO MUNICIPAL
     if (viaData.nro_municipal) {
       const nroInput = modal.querySelector('#form_item_numeromunicipal');
       if (nroInput) {
@@ -1237,15 +1318,14 @@ async function handleNuevaUbicacionModalFromVia(viaData) {
 // ==================== Ejecutar automatización de VÍAS ====================
 
 async function handleSeccion02Vias(viasData) {
-  log('Procesando automatización de VÍAS (' + viasData.length + ' filas)', 'info');
+  log('Procesando automatizacion de VIAS (' + viasData.length + ' filas)', 'info');
 
   await delay(CONFIG.delays.medium);
 
-  // Expandir sección 02 si no está abierta
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[1];
   if (!section) {
-    log('Sección 02 no encontrada', 'error');
+    log('Seccion 02 no encontrada', 'error');
     return;
   }
 
@@ -1257,12 +1337,10 @@ async function handleSeccion02Vias(viasData) {
 
   await delay(CONFIG.delays.medium);
 
-  // Iterar por cada fila de vías
   for (let i = 0; i < viasData.length; i++) {
     const viaRow = viasData[i];
-    log(`Procesando vía ${i + 1}/${viasData.length}: código=${viaRow.codigo}, puerta=${viaRow.puerta}`, 'info');
+    log('Procesando via ' + (i + 1) + '/' + viasData.length + ': codigo=' + viaRow.codigo + ', puerta=' + viaRow.puerta, 'info');
 
-    // Hacer click en botón NUEVO
     const buttons = section.querySelectorAll('button');
     let nuevoBtn = null;
     for (const btn of buttons) {
@@ -1273,21 +1351,19 @@ async function handleSeccion02Vias(viasData) {
     }
 
     if (!nuevoBtn) {
-      log('Botón NUEVO no encontrado', 'error');
+      log('Boton NUEVO no encontrado', 'error');
       break;
     }
 
     simulateClick(nuevoBtn);
     await delay(CONFIG.delays.long);
 
-    // Esperar modal NUEVA UBICACIÓN DEL PREDIO
     const modal = await waitForModal('NUEVA UBICACI');
     if (!modal) {
-      log('Modal NUEVA UBICACIÓN no apareció para vía ' + (i + 1), 'error');
+      log('Modal NUEVA UBICACION no aparecio para via ' + (i + 1), 'error');
       continue;
     }
 
-    // 1. Click en botón buscar de 05 CÓD. VIA
     if (viaRow.codigo) {
       const searchButtons = modal.querySelectorAll('button .anticon-search');
       let codViaSearchBtn = null;
@@ -1297,14 +1373,13 @@ async function handleSeccion02Vias(viasData) {
         const parent = btn.closest('.ant-form-item, fieldset, div');
         if (parent) {
           const label = parent.querySelector('label, h1, legend');
-          if (label && (label.textContent.includes('CÓD') || label.textContent.includes('COD') || label.textContent.includes('05'))) {
+          if (label && (label.textContent.includes('COD') || label.textContent.includes('05'))) {
             codViaSearchBtn = btn;
             break;
           }
         }
       }
 
-      // Si no se encontró por label, usar el primer botón de búsqueda
       if (!codViaSearchBtn && searchButtons.length > 0) {
         codViaSearchBtn = searchButtons[0].closest('button');
       }
@@ -1313,10 +1388,8 @@ async function handleSeccion02Vias(viasData) {
         simulateClick(codViaSearchBtn);
         await delay(CONFIG.delays.long);
 
-        // Buscar modal LISTADO DE VÍAS
-        const viasModal = await waitForModal('LISTADO DE V') || await waitForModal('VÍA') || await waitForModal('VIA');
+        const viasModal = await waitForModal('LISTADO DE V') || await waitForModal('VIA');
         if (viasModal) {
-          // Pegar código y buscar
           const searchInput = viasModal.querySelector('input#form_item_search') ||
                               viasModal.querySelector('input[type="text"]');
           if (searchInput) {
@@ -1331,18 +1404,17 @@ async function handleSeccion02Vias(viasData) {
             }
           }
 
-          // Seleccionar resultado
           const countSpan = viasModal.querySelector('p.float-right span.text-black');
           const count = countSpan ? parseInt(countSpan.textContent) : 0;
           if (count >= 1) {
             const selectBtn = viasModal.querySelector('button .anticon-select')?.closest('button');
             if (selectBtn) {
               simulateClick(selectBtn);
-              log('Código vía seleccionado: ' + viaRow.codigo, 'success');
+              log('Codigo via seleccionado: ' + viaRow.codigo, 'success');
               await delay(CONFIG.delays.medium);
             }
           } else {
-            log('No se encontró resultado para código vía: ' + viaRow.codigo, 'warning');
+            log('No se encontro resultado para codigo via: ' + viaRow.codigo, 'warning');
             const closeBtn = viasModal.querySelector('.ant-modal-close');
             if (closeBtn) simulateClick(closeBtn);
             await delay(CONFIG.delays.short);
@@ -1353,20 +1425,17 @@ async function handleSeccion02Vias(viasData) {
 
     await delay(CONFIG.delays.medium);
 
-    // Volver a buscar el modal principal (puede haberse cerrado/abierto)
     let ubicacionModal = document.querySelector('.ant-modal:not([style*="display: none"])');
     if (!ubicacionModal) {
       ubicacionModal = await waitForModal('NUEVA UBICACI', 3000);
     }
 
     if (ubicacionModal) {
-      // 2. Setear TIPO DE PUERTA
       const puertaValue = (viaRow.puerta || '').toUpperCase();
       const puertaMapped = VIAS_PUERTA_MAPPING[puertaValue] || VIAS_PUERTA_MAPPING['0'];
       await selectByLegend(ubicacionModal, 'TIPO DE PUERTA', puertaMapped);
       await delay(CONFIG.delays.short);
 
-      // 3. Setear NRO MUNICIPAL
       if (viaRow.nro_municipal) {
         const nroInput = ubicacionModal.querySelector('#form_item_numeromunicipal') ||
                          findInputByLegend(ubicacionModal, 'NRO MUNICIPAL') ||
@@ -1376,51 +1445,47 @@ async function handleSeccion02Vias(viasData) {
         }
       }
 
-      // 4. Setear COND. NUMER.
       const condValue = (viaRow.cond_num || '').toString().trim();
       const condMapped = VIAS_COND_NUM_MAPPING[condValue] || VIAS_COND_NUM_MAPPING['0'];
       await selectByLegend(ubicacionModal, 'COND. NUMER', condMapped);
 
       await delay(CONFIG.delays.short);
 
-      // 5. Click en Guardar del modal
       const saveBtn = ubicacionModal.querySelector('.ant-modal-footer button.ant-btn-primary');
       if (saveBtn) {
         simulateClick(saveBtn);
-        log(`Vía ${i + 1} guardada correctamente`, 'success');
+        log('Via ' + (i + 1) + ' guardada correctamente', 'success');
       }
     }
 
     await delay(CONFIG.delays.long);
   }
 
-  log('Automatización de vías completada', 'success');
+  log('Automatizacion de vias completada', 'success');
 }
 
 // ==================== Crear Lotes ====================
 
 async function handleCreateLotes(targetLote) {
-  log('Iniciando creación de lotes hasta: ' + targetLote, 'info');
+  log('Iniciando creacion de lotes hasta: ' + targetLote, 'info');
 
   const targetNum = parseInt(targetLote, 10);
   if (isNaN(targetNum) || targetNum <= 0) {
-    log('Valor de lote inválido: ' + targetLote, 'error');
+    log('Valor de lote invalido: ' + targetLote, 'error');
     return;
   }
 
   const section = document.querySelectorAll('.ant-collapse-item')[0];
   if (!section) {
-    log('Sección 01 no encontrada', 'error');
+    log('Seccion 01 no encontrada', 'error');
     return;
   }
 
-  // Extraer todos los lotes existentes del desplegable
   const existingLotes = await extractAllLotesFromDropdown(section);
-  log(`Lotes existentes encontrados: ${existingLotes.join(', ')}`, 'info');
+  log('Lotes existentes encontrados: ' + existingLotes.join(', '), 'info');
 
   const existingNums = new Set(existingLotes.map(l => parseInt(l, 10)).filter(n => !isNaN(n) && n > 0));
 
-  // Determinar qué lotes faltan crear
   const lotesToCreate = [];
   for (let i = 1; i <= targetNum; i++) {
     if (!existingNums.has(i)) {
@@ -1433,9 +1498,8 @@ async function handleCreateLotes(targetLote) {
     return;
   }
 
-  log(`Lotes a crear: ${lotesToCreate.join(', ')} (${lotesToCreate.length} lotes)`, 'info');
+  log('Lotes a crear: ' + lotesToCreate.join(', ') + ' (' + lotesToCreate.length + ' lotes)', 'info');
 
-  // Buscar el botón "+" al lado de LOTE
   const loteFieldsets = section.querySelectorAll('fieldset');
   let lotePlusBtn = null;
   for (const fs of loteFieldsets) {
@@ -1450,21 +1514,20 @@ async function handleCreateLotes(targetLote) {
   }
 
   if (!lotePlusBtn) {
-    log('Botón + de LOTE no encontrado', 'error');
+    log('Boton + de LOTE no encontrado', 'error');
     return;
   }
 
-  // Iterar creando lotes
   for (let i = 0; i < lotesToCreate.length; i++) {
     const loteCode = lotesToCreate[i];
-    log(`Creando lote ${i + 1}/${lotesToCreate.length}: ${loteCode}`, 'info');
+    log('Creando lote ' + (i + 1) + '/' + lotesToCreate.length + ': ' + loteCode, 'info');
 
     simulateClick(lotePlusBtn);
     await delay(CONFIG.delays.long);
 
     const modal = await waitForModal('Nuevo Lote') || await waitForModal('NUEVO LOTE');
     if (!modal) {
-      log('Modal Nuevo Lote no apareció', 'error');
+      log('Modal Nuevo Lote no aparecio', 'error');
       break;
     }
 
@@ -1475,9 +1538,9 @@ async function handleCreateLotes(targetLote) {
 
     if (codigoInput) {
       simulateInput(codigoInput, loteCode);
-      log(`Código ${loteCode} ingresado`, 'success');
+      log('Codigo ' + loteCode + ' ingresado', 'success');
     } else {
-      log('Input de código no encontrado en modal', 'error');
+      log('Input de codigo no encontrado en modal', 'error');
       const cancelBtn = modal.querySelector('.ant-modal-footer button:not(.ant-btn-primary)');
       if (cancelBtn) simulateClick(cancelBtn);
       await delay(CONFIG.delays.short);
@@ -1489,18 +1552,17 @@ async function handleCreateLotes(targetLote) {
     const saveBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (saveBtn) {
       simulateClick(saveBtn);
-      log(`Lote ${loteCode} guardado`, 'success');
+      log('Lote ' + loteCode + ' guardado', 'success');
     }
 
     await delay(CONFIG.delays.long);
 
-    // Verificar si el modal se cerró (éxito) o quedó abierto (error)
     await delay(CONFIG.delays.short);
     const stillOpen = document.querySelector('.ant-modal:not([style*="display: none"])');
     if (stillOpen) {
       const errorMsg = stillOpen.querySelector('.ant-form-item-explain-error');
       if (errorMsg) {
-        log(`Error al crear lote ${loteCode}: ${errorMsg.textContent}`, 'warning');
+        log('Error al crear lote ' + loteCode + ': ' + errorMsg.textContent, 'warning');
         const cancelBtn = stillOpen.querySelector('.ant-modal-footer button:not(.ant-btn-primary)') ||
                           stillOpen.querySelector('.ant-modal-close');
         if (cancelBtn) simulateClick(cancelBtn);
@@ -1509,7 +1571,7 @@ async function handleCreateLotes(targetLote) {
     }
   }
 
-  log('Creación de lotes completada', 'success');
+  log('Creacion de lotes completada', 'success');
 }
 
 async function extractAllLotesFromDropdown(section) {
@@ -1586,7 +1648,7 @@ async function extractAllLotesFromDropdown(section) {
   simulateClick(document.body);
   await delay(CONFIG.delays.short);
 
-  log(`Total lotes extraídos del dropdown: ${lotes.length}`, 'info');
+  log('Total lotes extraidos del dropdown: ' + lotes.length, 'info');
   return lotes;
 }
 
@@ -1631,6 +1693,8 @@ async function captureUbicacionData(section) {
   }
 }
 
+// ==================== SECCION 03: TITULAR (MODIFICADA) ====================
+
 async function handleSeccion03Titular() {
   log('Procesando Seccion 03: IDENTIFICACION DEL TITULAR', 'info');
 
@@ -1638,13 +1702,73 @@ async function handleSeccion03Titular() {
   const section = document.querySelectorAll('.ant-collapse-item')[2];
   if (!section) return;
 
-  await selectByLegend(section, 'TIPO DE TITULAR', CONFIG.defaultValues.tipoTitular);
+  log('Esperando que el usuario seleccione TIPO DE TITULAR...', 'info');
 
+  let tipoTitularSeleccion = null;
+  await new Promise((resolve) => {
+    const checkSelection = setInterval(() => {
+      const formItems = section.querySelectorAll('fieldset, .ant-form-item');
+      for (const item of formItems) {
+        const label = item.querySelector('legend, label, p, h1');
+        if (label && label.textContent.toUpperCase().includes('TIPO DE TITULAR')) {
+          const selectionItem = item.querySelector('.ant-select-selection-item');
+          if (selectionItem) {
+            const text = selectionItem.textContent || selectionItem.getAttribute('title') || '';
+            if (text.includes('01') && text.toUpperCase().includes('NATURAL')) {
+              tipoTitularSeleccion = 'PERSONA_NATURAL';
+              clearInterval(checkSelection);
+              resolve();
+              return;
+            } else if (text.includes('02') && text.toUpperCase().includes('JUR')) {
+              tipoTitularSeleccion = 'PERSONA_JURIDICA';
+              clearInterval(checkSelection);
+              resolve();
+              return;
+            }
+          }
+        }
+      }
+
+      const allSelectionItems = section.querySelectorAll('.ant-select-selection-item');
+      for (const item of allSelectionItems) {
+        const text = item.textContent || item.getAttribute('title') || '';
+        if (text.includes('01') && text.toUpperCase().includes('NATURAL')) {
+          tipoTitularSeleccion = 'PERSONA_NATURAL';
+          clearInterval(checkSelection);
+          resolve();
+          return;
+        } else if (text.includes('02') && text.toUpperCase().includes('JUR')) {
+          tipoTitularSeleccion = 'PERSONA_JURIDICA';
+          clearInterval(checkSelection);
+          resolve();
+          return;
+        }
+      }
+    }, 500);
+
+    setTimeout(() => {
+      clearInterval(checkSelection);
+      resolve();
+    }, 120000);
+  });
+
+  log('Usuario selecciono TIPO DE TITULAR: ' + tipoTitularSeleccion, 'info');
   await delay(CONFIG.delays.medium);
 
-  const searchButton = findSearchButtonByLegend(section, 'NRO DOC');
-  if (searchButton) {
-    simulateClick(searchButton);
+  if (tipoTitularSeleccion === 'PERSONA_NATURAL') {
+    const searchButton = findSearchButtonByLegend(section, 'NRO DOC');
+    if (searchButton) {
+      simulateClick(searchButton);
+      log('Modal NRO DOC desplegado para PERSONA NATURAL', 'success');
+    }
+  } else if (tipoTitularSeleccion === 'PERSONA_JURIDICA') {
+    const searchButton = findSearchButtonByLegend(section, 'NRO RUC');
+    if (searchButton) {
+      simulateClick(searchButton);
+      log('Modal NRO RUC desplegado para PERSONA JURIDICA', 'success');
+    }
+  } else {
+    log('No se detecto seleccion de TIPO DE TITULAR, continuando...', 'warning');
   }
 
   log('Seccion 03 completada. Esperando click en "Guardar identificacion titular catastral"...', 'success');
@@ -1661,7 +1785,6 @@ async function handleSeccion04Domicilio() {
 
   const data = AppState.storedData;
   const ubicacion = data.ubicacion || {};
-  // Obtener valores de la vía principal (puerta P)
   const viaPrincipal = getViaPrincipalFromStorage();
   const codigoVia = viaPrincipal ? viaPrincipal.codigo : (ubicacion['ubicacion-codigo-via'] || '');
   const nMunicipal = viaPrincipal ? viaPrincipal.nro_municipal : (ubicacion['ubicacion-n-municipal'] || '');
@@ -1698,7 +1821,7 @@ async function handleSeccion04Domicilio() {
     }, 60000);
   });
 
-  log(`Usuario selecciono ubicacion: ${userSelection}`, 'info');
+  log('Usuario selecciono ubicacion: ' + userSelection, 'info');
   await delay(CONFIG.delays.medium);
 
   if (userSelection === 'IGUAL_UNIDAD') {
@@ -1727,7 +1850,7 @@ async function handleSeccion04Domicilio() {
         const formItems = section.querySelectorAll('.ant-form-item');
         for (const formItem of formItems) {
           const label = formItem.querySelector('label, legend, p');
-          if (label && (label.textContent.includes('N° MUNICIPAL') ||
+          if (label && (label.textContent.includes('N\u00B0 MUNICIPAL') ||
                         label.textContent.includes('NRO MUNICIPAL') ||
                         label.textContent.includes('MUNICIPAL'))) {
             nroMunicipalInput = formItem.querySelector('input:not([role="combobox"])');
@@ -1786,7 +1909,7 @@ async function handleSeccion04Domicilio() {
       }
     }
   } else {
-    log('Usuario eligió opción diferente a "IGUAL A UNIDAD UU.CC.", no se auto-poblará', 'info');
+    log('Usuario eligio opcion diferente a "IGUAL A UNIDAD UU.CC.", no se auto-poblara', 'info');
   }
 
   log('Seccion 04 completada. Esperando click en "Guardar domicilio fiscal..."', 'success');
@@ -1957,7 +2080,6 @@ async function handleSeccion07Servicios() {
   const section = document.querySelectorAll('.ant-collapse-item')[6];
   if (!section) return;
 
-  // Remover readonly de todos los selectores
   const allSelects = section.querySelectorAll('.ant-select');
   allSelects.forEach(select => {
     removeReadonly(select);
@@ -1970,26 +2092,23 @@ async function handleSeccion07Servicios() {
 
   log('Seccion 07 - Readonly removido de selectores', 'success');
 
-  // Obtener todos los fieldsets de la sección (los 7 servicios en orden)
   const fieldsets = section.querySelectorAll('fieldset');
 
   for (let i = 0; i < SERVICIOS_FIELDS.length; i++) {
     const serviceConfig = SERVICIOS_FIELDS[i];
     const value = servicios[serviceConfig.key];
 
-    // Si el valor es vacío o undefined, omitir
     if (value === undefined || value === null || value.toString().trim() === '') {
-      log(`Servicio ${serviceConfig.legend}: valor vacío, omitiendo`, 'info');
+      log('Servicio ' + serviceConfig.legend + ': valor vacio, omitiendo', 'info');
       continue;
     }
 
     const mappedValue = SERVICIOS_MAPPINGS[value.toString().trim()];
     if (!mappedValue) {
-      log(`Servicio ${serviceConfig.legend}: valor "${value}" no reconocido, omitiendo`, 'warning');
+      log('Servicio ' + serviceConfig.legend + ': valor "' + value + '" no reconocido, omitiendo', 'warning');
       continue;
     }
 
-    // Buscar el fieldset correspondiente por la leyenda del servicio
     let targetFieldset = null;
     for (const fs of fieldsets) {
       const legend = fs.querySelector('legend');
@@ -2003,23 +2122,22 @@ async function handleSeccion07Servicios() {
       const select = targetFieldset.querySelector('.ant-select');
       if (select) {
         await selectOptionByText(select, mappedValue);
-        log(`Servicio ${serviceConfig.legend} seteado a: ${mappedValue}`, 'success');
+        log('Servicio ' + serviceConfig.legend + ' seteado a: ' + mappedValue, 'success');
         await delay(CONFIG.delays.short);
       }
     } else {
-      log(`No se encontró fieldset para servicio: ${serviceConfig.legend}`, 'warning');
+      log('No se encontro fieldset para servicio: ' + serviceConfig.legend, 'warning');
     }
   }
 
-  // Click automático en Guardar servicios básicos
-  log('Haciendo click en "Guardar servicios básicos"...', 'info');
+  log('Haciendo click en "Guardar servicios basicos"...', 'info');
   await delay(CONFIG.delays.medium);
 
   const saveButtons = section.querySelectorAll('button');
   for (const btn of saveButtons) {
-    if (btn.textContent.includes('Guardar servicios b') || btn.textContent.includes('Guardar servicios básicos')) {
+    if (btn.textContent.includes('Guardar servicios b')) {
       simulateClick(btn);
-      log('Click realizado en Guardar servicios básicos', 'success');
+      log('Click realizado en Guardar servicios basicos', 'success');
       break;
     }
   }
@@ -2144,7 +2262,7 @@ async function handleSeccion11Inscripcion() {
 async function selectModalOption(modal, labelText, value) {
   if (!value || value.toString().trim() === '') return;
 
-  log(`Buscando selector para: ${labelText} con valor: ${value}`, 'info');
+  log('Buscando selector para: ' + labelText + ' con valor: ' + value, 'info');
 
   const formItems = modal.querySelectorAll('.ant-form-item');
   let targetSelector = null;
@@ -2159,7 +2277,7 @@ async function selectModalOption(modal, labelText, value) {
           labelContent.toUpperCase().includes(labelText.toUpperCase())) {
         targetSelector = item.querySelector('.ant-select');
         if (targetSelector) {
-          log(`Encontrado selector para ${labelText} en form-item`, 'success');
+          log('Encontrado selector para ' + labelText + ' en form-item', 'success');
           break;
         }
       }
@@ -2174,7 +2292,7 @@ async function selectModalOption(modal, labelText, value) {
         const parentText = parent.textContent || '';
         if (parentText.toUpperCase().includes(labelText.toUpperCase())) {
           targetSelector = select;
-          log(`Encontrado selector para ${labelText} por fallback`, 'success');
+          log('Encontrado selector para ' + labelText + ' por fallback', 'success');
           break;
         }
       }
@@ -2182,15 +2300,15 @@ async function selectModalOption(modal, labelText, value) {
   }
 
   if (!targetSelector) {
-    log(`Selector no encontrado para: ${labelText}`, 'warning');
+    log('Selector no encontrado para: ' + labelText, 'warning');
     return;
   }
 
   const result = await selectOptionByText(targetSelector, value, false);
   if (result) {
-    log(`Seleccionado ${labelText}: ${value}`, 'success');
+    log('Seleccionado ' + labelText + ': ' + value, 'success');
   } else {
-    log(`No se pudo seleccionar ${labelText}: ${value}`, 'warning');
+    log('No se pudo seleccionar ' + labelText + ': ' + value, 'warning');
   }
 }
 
@@ -2235,19 +2353,19 @@ async function selectMesModal(modal, mesValue) {
 async function setAnioModal(modal, anioValue) {
   if (!anioValue || anioValue.toString().trim() === '') return;
 
-  const anioInput = modal.querySelector('input[placeholder="Año"]');
+  const anioInput = modal.querySelector('input[placeholder="Ano"]') || modal.querySelector('input[placeholder="A\u00F1o"]');
   if (anioInput) {
     simulateInput(anioInput, anioValue.toString());
-    log(`Año establecido: ${anioValue}`, 'success');
+    log('Ano establecido: ' + anioValue, 'success');
   }
 }
 
 async function processConstruccionRow(rowData, rowIndex) {
-  log(`Procesando construccion fila ${rowIndex + 1}`, 'info');
+  log('Procesando construccion fila ' + (rowIndex + 1), 'info');
 
   const section = document.querySelectorAll('.ant-collapse-item')[7];
   if (!section) {
-    log('Sección 08 no encontrada', 'error');
+    log('Seccion 08 no encontrada', 'error');
     return;
   }
 
@@ -2255,7 +2373,7 @@ async function processConstruccionRow(rowData, rowIndex) {
                    Array.from(section.querySelectorAll('button')).find(b => b.textContent.includes('NUEVO'));
 
   if (!nuevoBtn) {
-    log('Botón NUEVO no encontrado en sección 08', 'error');
+    log('Boton NUEVO no encontrado en seccion 08', 'error');
     return;
   }
 
@@ -2264,7 +2382,7 @@ async function processConstruccionRow(rowData, rowIndex) {
 
   const modal = await waitForModal('NUEVA CONSTRUCCI');
   if (!modal) {
-    log('Modal de nueva construcción no apareció', 'error');
+    log('Modal de nueva construccion no aparecio', 'error');
     return;
   }
 
@@ -2272,7 +2390,7 @@ async function processConstruccionRow(rowData, rowIndex) {
     const npisoInput = modal.querySelector('input.ant-input[type="text"]');
     if (npisoInput) {
       simulateInput(npisoInput, rowData.npiso);
-      log(`N° Piso: ${rowData.npiso}`, 'success');
+      log('N Piso: ' + rowData.npiso, 'success');
     }
   }
 
@@ -2322,7 +2440,7 @@ async function processConstruccionRow(rowData, rowIndex) {
 
   if (rowData.banio) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.banio] || rowData.banio.toUpperCase();
-    await selectModalOption(modal, 'BAÑOS', mappedValue);
+    await selectModalOption(modal, 'BANOS', mappedValue);
   }
 
   if (rowData.inst) {
@@ -2334,7 +2452,7 @@ async function processConstruccionRow(rowData, rowIndex) {
     const areaInput = modal.querySelector('input[type="number"][maxlength="11"]');
     if (areaInput) {
       simulateInput(areaInput, rowData.area);
-      log(`Área: ${rowData.area}`, 'success');
+      log('Area: ' + rowData.area, 'success');
     }
   }
 
@@ -2348,7 +2466,7 @@ async function processConstruccionRow(rowData, rowIndex) {
   const guardarBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
-    log(`Construcción fila ${rowIndex + 1} guardada`, 'success');
+    log('Construccion fila ' + (rowIndex + 1) + ' guardada', 'success');
   }
 
   await delay(CONFIG.delays.extraLong);
@@ -2361,7 +2479,7 @@ async function handleSeccion08Construcciones(construccionesData) {
   const section = sections[7];
 
   if (!section) {
-    log('Sección 08 no encontrada', 'error');
+    log('Seccion 08 no encontrada', 'error');
     return;
   }
 
@@ -2376,17 +2494,17 @@ async function handleSeccion08Construcciones(construccionesData) {
     await delay(CONFIG.delays.medium);
   }
 
-  log('Sección 08 completada', 'success');
+  log('Seccion 08 completada', 'success');
 }
 
 // ==================== FUNCIONES DE OBRAS ====================
 
 async function processObraRow(rowData, rowIndex) {
-  log(`Procesando obra fila ${rowIndex + 1}`, 'info');
+  log('Procesando obra fila ' + (rowIndex + 1), 'info');
 
   const section = document.querySelectorAll('.ant-collapse-item')[8];
   if (!section) {
-    log('Sección 09 no encontrada', 'error');
+    log('Seccion 09 no encontrada', 'error');
     return;
   }
 
@@ -2394,7 +2512,7 @@ async function processObraRow(rowData, rowIndex) {
                    Array.from(section.querySelectorAll('button')).find(b => b.textContent.includes('NUEVO'));
 
   if (!nuevoBtn) {
-    log('Botón NUEVO no encontrado en sección 09', 'error');
+    log('Boton NUEVO no encontrado en seccion 09', 'error');
     return;
   }
 
@@ -2403,7 +2521,7 @@ async function processObraRow(rowData, rowIndex) {
 
   const obraModal = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModal) {
-    log('Modal de nueva obra no apareció', 'error');
+    log('Modal de nueva obra no aparecio', 'error');
     return;
   }
 
@@ -2413,9 +2531,9 @@ async function processObraRow(rowData, rowIndex) {
     await delay(CONFIG.delays.long);
   }
 
-  const codigosModal = await waitForModal('CÓDIGOS DE INSTALACIÓN');
+  const codigosModal = await waitForModal('CODIGOS DE INSTALACION') || await waitForModal('CÓDIGOS DE INSTALACIÓN');
   if (!codigosModal) {
-    log('Modal de códigos no apareció', 'error');
+    log('Modal de codigos no aparecio', 'error');
     return;
   }
 
@@ -2438,11 +2556,11 @@ async function processObraRow(rowData, rowIndex) {
     const selectBtn = codigosModal.querySelector('button .anticon-select')?.closest('button');
     if (selectBtn) {
       simulateClick(selectBtn);
-      log('Código seleccionado automáticamente', 'success');
+      log('Codigo seleccionado automaticamente', 'success');
     }
   } else if (totalCount > 1) {
-    log(`Se encontraron ${totalCount} registros. Esperando selección manual...`, 'warning');
-    await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
+    log('Se encontraron ' + totalCount + ' registros. Esperando seleccion manual...', 'warning');
+    await waitForModalToClose('CODIGOS DE INSTALACION') || await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
   }
 
   await delay(CONFIG.delays.long);
@@ -2473,7 +2591,7 @@ async function processObraRow(rowData, rowIndex) {
     const totalInput = obraModalUpdated.querySelector('input[type="number"]:not([placeholder])');
     if (totalInput) {
       simulateInput(totalInput, rowData.total);
-      log(`Total: ${rowData.total}`, 'success');
+      log('Total: ' + rowData.total, 'success');
     }
   }
 
@@ -2487,20 +2605,20 @@ async function processObraRow(rowData, rowIndex) {
   const guardarBtn = obraModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
     simulateClick(guardarBtn);
-    log(`Obra fila ${rowIndex + 1} guardada`, 'success');
+    log('Obra fila ' + (rowIndex + 1) + ' guardada', 'success');
   }
 
   await delay(CONFIG.delays.extraLong);
 }
 
 async function handleSeccion09Obras(obrasData) {
-  log('Procesando Sección 09: OBRAS COMPLEMENTARIAS', 'info');
+  log('Procesando Seccion 09: OBRAS COMPLEMENTARIAS', 'info');
 
   const sections = document.querySelectorAll('.ant-collapse-item');
   const section = sections[8];
 
   if (!section) {
-    log('Sección 09 no encontrada', 'error');
+    log('Seccion 09 no encontrada', 'error');
     return;
   }
 
@@ -2515,7 +2633,7 @@ async function handleSeccion09Obras(obrasData) {
     await delay(CONFIG.delays.medium);
   }
 
-  log('Sección 09 completada', 'success');
+  log('Seccion 09 completada', 'success');
 }
 
 // ==================== FUNCIONES DE FIRMAS ====================
@@ -2523,7 +2641,7 @@ async function handleSeccion09Obras(obrasData) {
 async function searchAndSelectPersonal(searchName) {
   const personalModal = await waitForModal('LISTADO DEL PERSONAL');
   if (!personalModal) {
-    log('Modal de listado de personal no apareció', 'error');
+    log('Modal de listado de personal no aparecio', 'error');
     return false;
   }
 
@@ -2565,7 +2683,7 @@ async function searchAndSelectPersonal(searchName) {
   const totalRegistros = personalModal.querySelector('p.float-right span.text-black');
   const totalCount = totalRegistros ? parseInt(totalRegistros.textContent) : 0;
 
-  log(`Total de registros encontrados: ${totalCount}`, 'info');
+  log('Total de registros encontrados: ' + totalCount, 'info');
 
   if (totalCount === 1) {
     const selectBtn = personalModal.querySelector('button .anticon-select')?.closest('button');
@@ -2577,7 +2695,7 @@ async function searchAndSelectPersonal(searchName) {
       return true;
     }
   } else if (totalCount > 1) {
-    log(`Se encontraron ${totalCount} registros. Esperando seleccion manual...`, 'warning');
+    log('Se encontraron ' + totalCount + ' registros. Esperando seleccion manual...', 'warning');
     await waitForModalToClose('LISTADO DEL PERSONAL');
     return true;
   } else {
@@ -2594,7 +2712,7 @@ async function setFechaFirmaModal(modal, fecha) {
 
   const fechaFormateada = fecha;
 
-  log(`Estableciendo fecha: ${fechaFormateada}`, 'info');
+  log('Estableciendo fecha: ' + fechaFormateada, 'info');
 
   const dateInput = modal.querySelector('input#form_item_fecharegistro') ||
                     modal.querySelector('input[placeholder*="DD"]') ||
@@ -2632,7 +2750,7 @@ async function setFechaFirmaModal(modal, fecha) {
   }
 
   await delay(CONFIG.delays.short);
-  log(`Fecha establecida: ${fechaFormateada}`, 'success');
+  log('Fecha establecida: ' + fechaFormateada, 'success');
 }
 
 async function processFirmaSupervisor(data) {
@@ -2647,7 +2765,7 @@ async function processFirmaSupervisor(data) {
       if (flexContainer) {
         editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
         if (editBtn) {
-          log('Botón de editar supervisor encontrado', 'success');
+          log('Boton de editar supervisor encontrado', 'success');
           break;
         }
       }
@@ -2665,7 +2783,7 @@ async function processFirmaSupervisor(data) {
   }
 
   if (!editBtn) {
-    log('Botón de editar supervisor no encontrado', 'warning');
+    log('Boton de editar supervisor no encontrado', 'warning');
     return;
   }
 
@@ -2677,7 +2795,7 @@ async function processFirmaSupervisor(data) {
     firmaModal = await waitForModal('NUEVA FIRMA');
   }
   if (!firmaModal) {
-    log('Modal de firma supervisor no apareció', 'error');
+    log('Modal de firma supervisor no aparecio', 'error');
     return;
   }
 
@@ -2712,7 +2830,7 @@ async function processFirmaSupervisor(data) {
 }
 
 async function processFirmaTecnico(data) {
-  log('Procesando firma del técnico catastral', 'info');
+  log('Procesando firma del tecnico catastral', 'info');
 
   let editBtn = null;
 
@@ -2724,7 +2842,7 @@ async function processFirmaTecnico(data) {
       if (flexContainer) {
         editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
         if (editBtn) {
-          log('Botón de editar técnico encontrado', 'success');
+          log('Boton de editar tecnico encontrado', 'success');
           break;
         }
       }
@@ -2742,7 +2860,7 @@ async function processFirmaTecnico(data) {
   }
 
   if (!editBtn) {
-    log('Botón de editar técnico no encontrado', 'warning');
+    log('Boton de editar tecnico no encontrado', 'warning');
     return;
   }
 
@@ -2754,7 +2872,7 @@ async function processFirmaTecnico(data) {
     firmaModal = await waitForModal('NUEVA FIRMA');
   }
   if (!firmaModal) {
-    log('Modal de firma técnico no apareció', 'error');
+    log('Modal de firma tecnico no aparecio', 'error');
     return;
   }
 
@@ -2781,7 +2899,7 @@ async function processFirmaTecnico(data) {
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
-      log('Firma técnico guardada', 'success');
+      log('Firma tecnico guardada', 'success');
     }
   }
 
@@ -2887,27 +3005,27 @@ async function expandAndProcessSection(sectionIndex) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'executeSection') {
-    log(`Recibida solicitud de ejecución: ${message.section}`, 'info');
+    log('Recibida solicitud de ejecucion: ' + message.section, 'info');
 
     if (message.section === 'vias') {
       handleSeccion02Vias(message.data).then(() => {
         sendResponse({ success: true });
       }).catch(err => {
-        log(`Error en vías: ${err.message}`, 'error');
+        log('Error en vias: ' + err.message, 'error');
         sendResponse({ success: false, error: err.message });
       });
     } else if (message.section === 'construcciones') {
       handleSeccion08Construcciones(message.data).then(() => {
         sendResponse({ success: true });
       }).catch(err => {
-        log(`Error en construcciones: ${err.message}`, 'error');
+        log('Error en construcciones: ' + err.message, 'error');
         sendResponse({ success: false, error: err.message });
       });
     } else if (message.section === 'obras') {
       handleSeccion09Obras(message.data).then(() => {
         sendResponse({ success: true });
       }).catch(err => {
-        log(`Error en obras: ${err.message}`, 'error');
+        log('Error en obras: ' + err.message, 'error');
         sendResponse({ success: false, error: err.message });
       });
     }
@@ -2919,7 +3037,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleCreateLotes(message.targetLote).then(() => {
       sendResponse({ success: true });
     }).catch(err => {
-      log(`Error creando lotes: ${err.message}`, 'error');
+      log('Error creando lotes: ' + err.message, 'error');
       sendResponse({ success: false, error: err.message });
     });
     return true;
