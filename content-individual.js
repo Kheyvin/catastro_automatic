@@ -392,7 +392,7 @@ async function openSelector(selectorElement) {
     simulateClick(selectContainer);
   }
 
-  await delay(CONFIG.delays.medium);
+  //await delay(CONFIG.delays.medium);
 
   let dropdown = null;
   const maxAttempts = 10;
@@ -483,7 +483,7 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
     const option = findOption();
     if (option) {
       simulateClick(option);
-      await delay(CONFIG.delays.short);
+      //await delay(CONFIG.delays.short);
       log('Opcion seleccionada: ' + targetText, 'success');
       return true;
     }
@@ -500,11 +500,11 @@ async function selectOptionByText(selectorElement, targetText, exactMatch = fals
       input.dispatchEvent(keydownEvent);
     }
 
-    if (scrollContainer) {
-      const scrollElement = scrollContainer.querySelector('.rc-virtual-list-holder-inner')?.parentElement || scrollContainer;
-      scrollElement.scrollTop += 200;
-      scrollElement.dispatchEvent(new Event('scroll', { bubbles: true }));
-    }
+    // if (scrollContainer) {
+    //   const scrollElement = scrollContainer.querySelector('.rc-virtual-list-holder-inner')?.parentElement || scrollContainer;
+    //   scrollElement.scrollTop += 200;
+    //   scrollElement.dispatchEvent(new Event('scroll', { bubbles: true }));
+    // }
 
     await delay(80);
 
@@ -1124,6 +1124,10 @@ async function handleSeccion02Ubicacion() {
   const section = document.querySelectorAll('.ant-collapse-item')[1];
   if (!section) return;
 
+  await delay(CONFIG.delays.short);
+  await selectByLegend(section, 'TIPO DE EDIFICACI', CONFIG.defaultValues.tipoEdificacion);
+  await delay(CONFIG.delays.short);
+
   if (ubicacion['ubicacion-manzana']) {
     const manzanaInput = findInputByLegend(section, 'MANZANA');
     if (manzanaInput) simulateInput(manzanaInput, ubicacion['ubicacion-manzana']);
@@ -1140,10 +1144,6 @@ async function handleSeccion02Ubicacion() {
     if (subLoteInput) simulateInput(subLoteInput, ubicacion['ubicacion-sub-lote']);
   }
 
-  await selectByLegend(section, 'TIPO DE EDIFICACI', CONFIG.defaultValues.tipoEdificacion);
-
-  await delay(CONFIG.delays.medium);
-
   if (ubicacion['ubicacion-codigo-hu']) {
     const searchButton = findSearchButtonByLegend(section, 'CODIGO HU') ||
                          findSearchButtonByLegend(section, 'COD. HU') ||
@@ -1154,7 +1154,7 @@ async function handleSeccion02Ubicacion() {
     }
   }
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
 
   log('Seccion 02 completada. Esperando click en "Guardar ubicacion de predio"...', 'success');
 
@@ -1162,7 +1162,7 @@ async function handleSeccion02Ubicacion() {
   await captureUbicacionData(section);
 
   log('Usuario guardo UBICACION', 'success');
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
 
   const allSections = document.querySelectorAll('.ant-collapse-item');
   const section05 = allSections[4];
@@ -1170,7 +1170,7 @@ async function handleSeccion02Ubicacion() {
     const header5 = section05.querySelector('.ant-collapse-header');
     simulateClick(header5);
     log('Seccion 05 (CARACTERISTICAS) expandida para permitir salto', 'info');
-    await delay(CONFIG.delays.medium);
+    await delay(CONFIG.delays.short);
   }
 
   if (section05) {
@@ -2378,9 +2378,9 @@ async function processConstruccionRow(rowData, rowIndex) {
   }
 
   simulateClick(nuevoBtn);
-  await delay(CONFIG.delays.long);
-
+  
   const modal = await waitForModal('NUEVA CONSTRUCCI');
+  await delay(CONFIG.delays.long);
   if (!modal) {
     log('Modal de nueva construccion no aparecio', 'error');
     return;
