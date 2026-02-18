@@ -1401,7 +1401,7 @@ async function handleSeccion02Vias(viasData) {
                               viasModal.querySelector('button .anticon-search')?.closest('button');
             if (searchBtn) {
               simulateClick(searchBtn);
-              await delay(CONFIG.delays.long);
+              await delay(CONFIG.delays.extraLong);
             }
           }
 
@@ -1412,7 +1412,7 @@ async function handleSeccion02Vias(viasData) {
             if (selectBtn) {
               simulateClick(selectBtn);
               log('Codigo via seleccionado: ' + viaRow.codigo, 'success');
-              await delay(CONFIG.delays.medium);
+              await delay(CONFIG.delays.short);
             }
           } else {
             log('No se encontro resultado para codigo via: ' + viaRow.codigo, 'warning');
