@@ -507,7 +507,7 @@ body {
 /* ==================== TABLAS ==================== */
 
 .tabla-linderos {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .tabla-simple {
@@ -519,9 +519,8 @@ body {
 
 .tabla-simple th,
 .tabla-simple td {
-  padding: 3px 5px;
+  padding: 1px 5px;
   border: 1px solid var(--border-color);
-  text-align: left;
 }
 
 .tabla-simple th {

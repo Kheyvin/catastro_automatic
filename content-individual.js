@@ -143,7 +143,7 @@ const AppState = {
 async function getStoredData() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
-      resolve(result[STORAGE_KEY] || {});
+      resolve(result[STORAGE_KEY]);
     });
   });
 }
@@ -1036,7 +1036,6 @@ async function handleSeccion01Principales() {
   const data = AppState.storedData;
   const principales = data.principales || {};
   const final = data.final || {};
-
   await delay(CONFIG.delays.medium);
 
   const section = document.querySelector('.ant-collapse-item-active');
@@ -1051,11 +1050,12 @@ async function handleSeccion01Principales() {
       const sectorContainer = sectorSelect.closest('.ant-select');
       const selectionItem = sectorContainer ? sectorContainer.querySelector('.ant-select-selection-item') : null;
       const currentValue = selectionItem ? (selectionItem.getAttribute('title') || selectionItem.textContent.trim()) : '';
+      await delay(CONFIG.delays.long);
 
       if (!currentValue || currentValue === '') {
         log('Sector no tiene valor, seleccionando: ' + principales['principales-sector'], 'info');
         await selectCascadeOption('form_item_sector', principales['principales-sector']);
-        await delay(CONFIG.delays.medium);
+        //await delay(CONFIG.delays.medium);
       } else {
         log('Sector ya tiene valor: ' + currentValue, 'info');
       }
@@ -1064,11 +1064,11 @@ async function handleSeccion01Principales() {
 
   if (principales['principales-manzana']) {
     const manzanaReady = await waitForSelectorToBeReady('form_item_manzana', 15000);
+    await delay(CONFIG.delays.medium);
 
     if (manzanaReady) {
-      await delay(CONFIG.delays.medium);
       await selectCascadeOption('form_item_manzana', principales['principales-manzana']);
-      await delay(CONFIG.delays.medium);
+      //await delay(CONFIG.delays.medium);
     } else {
       log('El selector de manzana no se habilito a tiempo', 'error');
     }
@@ -1076,9 +1076,10 @@ async function handleSeccion01Principales() {
 
   if (principales['principales-lote']) {
     const loteReady = await waitForSelectorToBeReady('form_item_lote', 15000);
+    await delay(CONFIG.delays.medium);
 
     if (loteReady) {
-      await delay(CONFIG.delays.medium);
+      
       await selectCascadeOption('form_item_lote', principales['principales-lote']);
     } else {
       log('El selector de lote no se habilito a tiempo', 'error');
@@ -1110,7 +1111,7 @@ async function handleSeccion01Principales() {
   await waitForButtonClick('button', 'Guardar principales');
   log('Usuario guardo PRINCIPALES', 'success');
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
   await expandAndProcessSection(1);
 }
 
@@ -1120,11 +1121,11 @@ async function handleSeccion02Ubicacion() {
   const data = AppState.storedData;
   const ubicacion = data.ubicacion || {};
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
   const section = document.querySelectorAll('.ant-collapse-item')[1];
   if (!section) return;
 
-  await delay(CONFIG.delays.short);
+  await delay(CONFIG.delays.medium);
   await selectByLegend(section, 'TIPO DE EDIFICACI', CONFIG.defaultValues.tipoEdificacion);
   await delay(CONFIG.delays.short);
 
@@ -1753,7 +1754,7 @@ async function handleSeccion03Titular() {
   });
 
   log('Usuario selecciono TIPO DE TITULAR: ' + tipoTitularSeleccion, 'info');
-  await delay(CONFIG.delays.medium);
+  //await delay(CONFIG.delays.medium);
 
   if (tipoTitularSeleccion === 'PERSONA_NATURAL') {
     const searchButton = findSearchButtonByLegend(section, 'NRO DOC');
@@ -1776,7 +1777,7 @@ async function handleSeccion03Titular() {
   await waitForButtonClick('button', 'Guardar identificaci');
   log('Usuario guardo TITULAR', 'success');
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
   await expandAndProcessSection(3);
 }
 
@@ -1917,7 +1918,7 @@ async function handleSeccion04Domicilio() {
   await waitForButtonClick('button', 'Guardar domicio fiscal');
   log('Usuario guardo DOMICILIO FISCAL', 'success');
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
   await expandAndProcessSection(4);
 }
 
@@ -1964,7 +1965,7 @@ async function handleSeccion05Caracteristicas() {
   await waitForButtonClick('button', 'Guardar caracter');
   log('Usuario guardo CARACTERISTICAS', 'success');
 
-  await delay(CONFIG.delays.medium);
+  await delay(CONFIG.delays.short);
   await expandAndProcessSection(5);
 }
 
@@ -2395,57 +2396,68 @@ async function processConstruccionRow(rowData, rowIndex) {
   }
 
   await selectMesModal(modal, rowData.mes);
-
+  await delay(CONFIG.delays.short);
   await setAnioModal(modal, rowData.anio);
+  await delay(CONFIG.delays.short);
 
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(modal, 'MATERIAL ESTRUC', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(modal, 'ESTADO CONSERV', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(modal, 'ESTADO CONSTRUCC', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.muro) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.muro] || rowData.muro.toUpperCase();
     await selectModalOption(modal, 'MUROS Y COLUMNAS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.techo) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.techo] || rowData.techo.toUpperCase();
     await selectModalOption(modal, 'TECHOS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.piso) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.piso] || rowData.piso.toUpperCase();
     await selectModalOption(modal, 'PISOS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.puerta) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.puerta] || rowData.puerta.toUpperCase();
     await selectModalOption(modal, 'PUERTAS Y VENTANAS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.revest) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.revest] || rowData.revest.toUpperCase();
     await selectModalOption(modal, 'REVESTIMIENTOS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.banio) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.banio] || rowData.banio.toUpperCase();
     await selectModalOption(modal, 'BAÑOS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.inst) {
     const mappedValue = CONSTRUCCION_MAPPINGS.letras[rowData.inst] || rowData.inst.toUpperCase();
     await selectModalOption(modal, 'INST. EL', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.area) {
@@ -2459,9 +2471,10 @@ async function processConstruccionRow(rowData, rowIndex) {
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(modal, 'UBI. CONSTRUC', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
-  await delay(CONFIG.delays.medium);
+  //await delay(CONFIG.delays.medium);
 
   const guardarBtn = modal.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {
@@ -2516,10 +2529,11 @@ async function processObraRow(rowData, rowIndex) {
     return;
   }
 
-  simulateClick(nuevoBtn);
   await delay(CONFIG.delays.long);
+  simulateClick(nuevoBtn);
 
   const obraModal = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
+  await delay(CONFIG.delays.medium);
   if (!obraModal) {
     log('Modal de nueva obra no aparecio', 'error');
     return;
@@ -2532,6 +2546,7 @@ async function processObraRow(rowData, rowIndex) {
   }
 
   const codigosModal = await waitForModal('CÓDIGOS DE INSTALACIÓN');
+  await delay(CONFIG.delays.long);
   if (!codigosModal) {
     log('Modal de codigos no aparecio', 'error');
     return;
@@ -2560,31 +2575,36 @@ async function processObraRow(rowData, rowIndex) {
     }
   } else if (totalCount > 1) {
     log('Se encontraron ' + totalCount + ' registros. Esperando seleccion manual...', 'warning');
-    await waitForModalToClose('CODIGOS DE INSTALACION') || await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
+    await waitForModalToClose('CÓDIGOS DE INSTALACIÓN');
   }
 
-  await delay(CONFIG.delays.long);
+  await delay(CONFIG.delays.medium);
 
   const obraModalUpdated = await waitForModal('NUEVA OBRA COMPLEMENTARIA');
   if (!obraModalUpdated) return;
 
   await selectMesModal(obraModalUpdated, rowData.mes);
+  await delay(CONFIG.delays.short);
 
   await setAnioModal(obraModalUpdated, rowData.anio);
+  await delay(CONFIG.delays.short);
 
   if (rowData.mep) {
     const mappedValue = CONSTRUCCION_MAPPINGS.mep[rowData.mep] || rowData.mep;
     await selectModalOption(obraModalUpdated, 'MEP', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.ecs) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecs[rowData.ecs] || rowData.ecs;
     await selectModalOption(obraModalUpdated, 'ECS', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.ecc) {
     const mappedValue = CONSTRUCCION_MAPPINGS.ecc[rowData.ecc] || rowData.ecc;
     await selectModalOption(obraModalUpdated, 'ECC', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
   if (rowData.total) {
@@ -2598,9 +2618,10 @@ async function processObraRow(rowData, rowIndex) {
   if (rowData.uca) {
     const mappedValue = CONSTRUCCION_MAPPINGS.uca[rowData.uca] || rowData.uca;
     await selectModalOption(obraModalUpdated, 'UCA', mappedValue);
+    await delay(CONFIG.delays.short);
   }
 
-  await delay(CONFIG.delays.medium);
+  //await delay(CONFIG.delays.medium);
 
   const guardarBtn = obraModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
   if (guardarBtn) {

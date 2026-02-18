@@ -8,12 +8,11 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header compacto con título, contador y botones -->
     <header class="main-header">
       <h1 class="main-title">📋 Ficha Catastral</h1>
       
-      <!-- Contador de fichas minimalista -->
       <div class="fichas-mini">
+        <button class="btn btn-execute btn-full" id="btn-crear-lotes" title="Crear lotes faltantes">🏗️</button>
         <input type="number" id="fichas-meta" class="fichas-meta-input" placeholder="Meta" min="1" title="Meta de fichas">
         <div class="fichas-mini-display">
           <span id="fichas-avance" class="fichas-num">0</span>
@@ -56,8 +55,6 @@
             <label for="principales-lote">LOTE</label>
             <input type="text" id="principales-lote" name="lote">
           </div>
-
-          <button class="btn btn-execute btn-full" id="btn-crear-lotes" title="Crear lotes faltantes">🏗️ Crear Lotes</button>
         </div>
       </section>
 
@@ -153,7 +150,7 @@
       </section>
     </div>
 
-    <!-- VÍAS como sección independiente -->
+    <!-- VÍAS -->
     <section class="seccion" id="seccion-vias">
       <div class="seccion-header">
         <h2>🛣️ Vías</h2>
@@ -312,7 +309,7 @@
       </div>
     </section>
 
-    <!-- SERVICIOS E INSCRIPCIÓN EN LA MISMA FILA (70/30) -->
+    <!-- SERVICIOS E INSCRIPCIÓN -->
     <div class="seccion-servicios-inscripcion">
       <!-- SERVICIOS BÁSICOS -->
       <section class="seccion" id="seccion-servicios">
@@ -424,7 +421,7 @@
       </div>
     </section>
 
-    <!-- Botones globales compactos -->
+    <!-- Botones globales -->
     <div class="global-actions">
       <button class="btn btn-global-save" id="btn-guardar-todo">💾 Guardar Todo</button>
       <button class="btn btn-global-clear" id="btn-limpiar-todo">🗑️ Limpiar Todo</button>

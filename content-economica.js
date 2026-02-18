@@ -179,7 +179,7 @@ async function waitForModalToClose(titleContains) {
 // ==================== HELPER: Obtener vía principal del storage ====================
 
 function getViaPrincipalFromStorage() {
-  const data = AppState.storedData;
+  const data = EconomicaState.storedData;
   const vias = data.vias;
   
   if (!vias || !Array.isArray(vias) || vias.length === 0) return null;
