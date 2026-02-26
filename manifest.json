@@ -53,6 +53,15 @@
         "content-economica.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://161.132.42.244:9006/ficha-biencomun/*"
+      ],
+      "js": [
+        "content-biencomun.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [

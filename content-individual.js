@@ -1156,6 +1156,7 @@ async function handleSeccion02Ubicacion() {
   }
 
   await delay(CONFIG.delays.short);
+  await handleSeccion02Vias(data.vias);
 
   log('Seccion 02 completada. Esperando click en "Guardar ubicacion de predio"...', 'success');
 
