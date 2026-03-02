@@ -617,36 +617,87 @@ async function setFechaFirmaModal(modal, fecha) {
   log(`Fecha establecida: ${fechaFormateada}`, 'success');
 }
 
-async function processFirmaSupervisor(data) {
-  log('Procesando firma del supervisor [121]', 'info');
-  let editBtn = null;
-  const allSpans = document.querySelectorAll('span');
-  for (const span of allSpans) {
-    const spanText = span.textContent.trim();
-    if (spanText.includes('[121]') && spanText.includes('FIRMA') && spanText.includes('SUPERVISOR')) {
-      const flexContainer = span.closest('.flex');
-      if (flexContainer) {
-        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) {
-          log('Botón de editar supervisor encontrado', 'success');
-          break;
+async function findEditBtnWithRetry(labelIdentifiers, maxRetries) {
+  // labelIdentifiers: array de objetos {text: 'texto a buscar', includes: ['parte1', 'parte2']}
+  // maxRetries: cantidad de reintentos (total ~3 segundos con delay.short entre cada uno)
+  const retryDelay = CONFIG.delays.short; // ~300ms
+  const totalRetries = Math.ceil(3000 / retryDelay); // ~10 reintentos en 3 segundos
+  const attempts = maxRetries || totalRetries;
+  
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    let editBtn = null;
+    
+    // Búsqueda principal: por spans con texto específico
+    const allSpans = document.querySelectorAll('span');
+    for (const span of allSpans) {
+      const spanText = span.textContent.trim();
+      let found = false;
+      
+      for (const identifier of labelIdentifiers) {
+        if (identifier.includes) {
+          found = identifier.includes.every(part => spanText.includes(part));
+        } else if (identifier.text) {
+          found = spanText === identifier.text;
+        }
+        if (found) break;
+      }
+      
+      if (found) {
+        const flexContainer = span.closest('.flex');
+        if (flexContainer) {
+          editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
+          if (editBtn) {
+            log(`Botón editar encontrado en intento ${attempt + 1}`, 'success');
+            return editBtn;
+          }
         }
       }
     }
-  }
-  if (!editBtn) {
-    const containers = document.querySelectorAll('.flex.justify-between');
-    for (const container of containers) {
-      if (container.textContent.includes('[121]') && container.textContent.includes('SUPERVISOR')) {
-        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
+    
+    // Búsqueda alternativa: por contenedores flex
+    if (!editBtn) {
+      const containers = document.querySelectorAll('.flex.justify-between');
+      for (const container of containers) {
+        let found = false;
+        for (const identifier of labelIdentifiers) {
+          if (identifier.includes) {
+            found = identifier.includes.every(part => container.textContent.includes(part));
+          }
+          if (found) break;
+        }
+        
+        if (found) {
+          editBtn = container.querySelector('button .anticon-edit')?.closest('button');
+          if (editBtn) {
+            log(`Botón editar encontrado (búsqueda alternativa) en intento ${attempt + 1}`, 'success');
+            return editBtn;
+          }
+        }
       }
     }
+    
+    if (attempt < attempts - 1) {
+      log(`Botón editar no encontrado, reintentando... (${attempt + 1}/${attempts})`, 'warning');
+      await delay(retryDelay);
+    }
   }
+  
+  log('Botón editar no encontrado después de todos los reintentos', 'warning');
+  return null;
+}
+
+async function processFirmaSupervisor(data) {
+  log('Procesando firma del supervisor [121]', 'info');
+  
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[121]', 'FIRMA', 'SUPERVISOR'] }
+  ]);
+  
   if (!editBtn) {
     log('Botón de editar supervisor no encontrado', 'warning');
     return;
   }
+  
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
   let firmaModal = await waitForModal('FIRMA DEL SUPERVISOR');
@@ -683,36 +734,21 @@ async function processFirmaSupervisor(data) {
 
 async function processFirmaTecnico(data) {
   log('Procesando firma del técnico catastral [122]', 'info');
-  let editBtn = null;
-  const allSpans = document.querySelectorAll('span');
-  for (const span of allSpans) {
-    const spanText = span.textContent.trim();
-    if (spanText.includes('[122]') && spanText.includes('FIRMA') && spanText.includes('CNICO')) {
-      const flexContainer = span.closest('.flex');
-      if (flexContainer) {
-        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) {
-          log('Botón de editar técnico encontrado', 'success');
-          break;
-        }
-      }
-    }
-  }
+  
+  // Buscar botón con reintentos (3 segundos total)
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[122]', 'FIRMA', 'CNICO'] },
+    { includes: ['[122]', 'CNICO CATASTRAL'] }
+  ]);
+  
   if (!editBtn) {
-    const containers = document.querySelectorAll('.flex.justify-between');
-    for (const container of containers) {
-      if (container.textContent.includes('[122]') && container.textContent.includes('CNICO')) {
-        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
-      }
-    }
-  }
-  if (!editBtn) {
-    log('Botón de editar técnico no encontrado', 'warning');
+    log('Botón de editar técnico no encontrado después de reintentos', 'warning');
     return;
   }
+
   simulateClick(editBtn);
   await delay(CONFIG.delays.long);
+
   let firmaModal = await waitForModal('CNICO CATASTRAL');
   if (!firmaModal) {
     firmaModal = await waitForModal('NUEVA FIRMA');
@@ -721,6 +757,7 @@ async function processFirmaTecnico(data) {
     log('Modal de firma técnico no apareció', 'error');
     return;
   }
+
   const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
                     firmaModal.querySelector('button .anticon-search')?.closest('button');
   if (searchBtn) {
@@ -728,7 +765,9 @@ async function processFirmaTecnico(data) {
     await delay(CONFIG.delays.long);
     await searchAndSelectPersonal(data['final-tecnico-nombre']);
   }
+
   await delay(CONFIG.delays.long);
+
   let firmaModalUpdated = await waitForModal('CNICO CATASTRAL');
   if (!firmaModalUpdated) {
     firmaModalUpdated = await waitForModal('NUEVA FIRMA');
@@ -742,6 +781,7 @@ async function processFirmaTecnico(data) {
       log('Firma técnico guardada', 'success');
     }
   }
+
   await delay(CONFIG.delays.extraLong);
 }
 
@@ -940,6 +980,31 @@ async function handleSeccionFinal() {
   }
   log('Seccion final completada', 'success');
 }
+
+// Agregar ANTES de la sección de inicialización (antes de initCotitularidad)
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'executeSection') {
+    if (message.section === 'firmas-only') {
+      (async () => {
+        const finalData = message.data || {};
+        log('Ejecutando firmas directamente (sin guardar observaciones)', 'info');
+        
+        if (finalData['final-supervisor-nombre']) {
+          await processFirmaSupervisor(finalData);
+        }
+        await delay(CONFIG.delays.long);
+        if (finalData['final-tecnico-nombre']) {
+          await processFirmaTecnico(finalData);
+        }
+        
+        log('Firmas seteadas correctamente', 'success');
+        sendResponse({ success: true });
+      })();
+      return true;
+    }
+  }
+});
 
 // ==================== INICIALIZACIÓN ====================
 

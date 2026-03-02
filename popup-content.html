@@ -26,6 +26,7 @@
       </div>
 
       <div class="header-actions">
+        <!-- <button class="btn-header" id="btn-float-window" title="Abrir en ventana flotante">🪟</button>-->
         <button class="btn-header btn-save-all" id="btn-guardar-todo-header" title="Guardar todo">💾</button>
         <button class="btn-theme" id="btn-theme" title="Cambiar tema">🌙</button>
       </div>
@@ -42,7 +43,7 @@
             <button class="btn btn-clear" data-action="clear" data-section="principales">🗑️</button>
           </div>
         </div>
-        <div class="seccion-content">
+        <div class="seccion-content grid-2">
           <div class="field-group">
             <label for="principales-sector">SECTOR</label>
             <input type="text" id="principales-sector" name="sector">
@@ -51,9 +52,40 @@
             <label for="principales-manzana">MANZANA</label>
             <input type="text" id="principales-manzana" name="manzana">
           </div>
-          <div class="field-group">
+          <div class="field-group field-with-toggle">
             <label for="principales-lote">LOTE</label>
-            <input type="text" id="principales-lote" name="lote">
+            <div class="input-toggle-wrapper">
+              <input type="text" id="principales-lote" name="lote">
+              <button class="btn-auto-increment" data-target="principales-lote" title="Auto incrementar al guardar">🔄</button>
+            </div>
+          </div>
+          <div class="field-group field-with-toggle">
+            <label for="principales-edifica">EDIFICA</label>
+            <div class="input-toggle-wrapper">
+              <input type="text" id="principales-edifica" name="edifica" value="01">
+              <button class="btn-auto-increment" data-target="principales-edifica" title="Auto incrementar al guardar">🔄</button>
+            </div>
+          </div>
+          <div class="field-group field-with-toggle">
+            <label for="principales-entrada">ENTRADA</label>
+            <div class="input-toggle-wrapper">
+              <input type="text" id="principales-entrada" name="entrada" value="01">
+              <button class="btn-auto-increment" data-target="principales-entrada" title="Auto incrementar al guardar">🔄</button>
+            </div>
+          </div>
+          <div class="field-group field-with-toggle">
+            <label for="principales-piso">PISO</label>
+            <div class="input-toggle-wrapper">
+              <input type="text" id="principales-piso" name="piso" value="01">
+              <button class="btn-auto-increment" data-target="principales-piso" title="Auto incrementar al guardar">🔄</button>
+            </div>
+          </div>
+          <div class="field-group field-with-toggle">
+            <label for="principales-unidad">UNIDAD</label>
+            <div class="input-toggle-wrapper">
+              <input type="text" id="principales-unidad" name="unidad" value="001">
+              <button class="btn-auto-increment" data-target="principales-unidad" title="Auto incrementar al guardar">🔄</button>
+            </div>
           </div>
         </div>
       </section>
@@ -76,13 +108,19 @@
             <label for="ubicacion-manzana">MANZANA</label>
             <input type="text" id="ubicacion-manzana" name="manzana">
           </div>
-          <div class="field-group">
+          <div class="field-group field-with-toggle">
             <label for="ubicacion-lote">LOTE</label>
-            <input type="text" id="ubicacion-lote" name="lote">
+            <div class="input-toggle-wrapper">
+              <input type="text" id="ubicacion-lote" name="lote">
+              <button class="btn-auto-increment" data-target="ubicacion-lote" title="Auto incrementar al guardar">🔄</button>
+            </div>
           </div>
-          <div class="field-group">
+          <div class="field-group field-with-toggle">
             <label for="ubicacion-sub-lote">SUB-LOTE</label>
-            <input type="text" id="ubicacion-sub-lote" name="sub_lote">
+            <div class="input-toggle-wrapper">
+              <input type="text" id="ubicacion-sub-lote" name="sub_lote">
+              <button class="btn-auto-increment" data-target="ubicacion-sub-lote" title="Auto incrementar al guardar">🔄</button>
+            </div>
           </div>
         </div>
       </section>
@@ -124,24 +162,24 @@
               </thead>
               <tbody>
                 <tr>
-                  <td class="lindero-label">FRENTE</td>
-                  <td><input type="text" id="lindero-frente-medida" name="frente_medida"></td>
-                  <td><input type="text" id="lindero-frente-colindancia" name="frente_colindancia"></td>
+                  <td>FRENTE</td>
+                  <td><input type="text" id="lindero-frente-medida"></td>
+                  <td><input type="text" id="lindero-frente-colindancia"></td>
                 </tr>
                 <tr>
-                  <td class="lindero-label">DERECHA</td>
-                  <td><input type="text" id="lindero-derecha-medida" name="derecha_medida"></td>
-                  <td><input type="text" id="lindero-derecha-colindancia" name="derecha_colindancia"></td>
+                  <td>DERECHA</td>
+                  <td><input type="text" id="lindero-derecha-medida"></td>
+                  <td><input type="text" id="lindero-derecha-colindancia"></td>
                 </tr>
                 <tr>
-                  <td class="lindero-label">IZQUIERDA</td>
-                  <td><input type="text" id="lindero-izquierda-medida" name="izquierda_medida"></td>
-                  <td><input type="text" id="lindero-izquierda-colindancia" name="izquierda_colindancia"></td>
+                  <td>IZQUIERDA</td>
+                  <td><input type="text" id="lindero-izquierda-medida"></td>
+                  <td><input type="text" id="lindero-izquierda-colindancia"></td>
                 </tr>
                 <tr>
-                  <td class="lindero-label">FONDO</td>
-                  <td><input type="text" id="lindero-fondo-medida" name="fondo_medida"></td>
-                  <td><input type="text" id="lindero-fondo-colindancia" name="fondo_colindancia"></td>
+                  <td>FONDO</td>
+                  <td><input type="text" id="lindero-fondo-medida"></td>
+                  <td><input type="text" id="lindero-fondo-colindancia"></td>
                 </tr>
               </tbody>
             </table>
@@ -162,11 +200,6 @@
         </div>
       </div>
       <div class="tabla-excel-container">
-        <div class="tabla-instrucciones">
-          <span class="instruccion-item">⌨️ Flechas</span>
-          <span class="instruccion-item">↵ Enter</span>
-          <span class="instruccion-item">⇥ Tab</span>
-        </div>
         <table class="tabla-excel tabla-navegable" id="tabla-vias" data-table-type="vias">
           <thead>
             <tr>
@@ -186,6 +219,7 @@
               <td class="acciones-cell">
                 <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
                 <button class="btn-row btn-delete" data-action="delete">❌</button>
+                <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
               </td>
             </tr>
           </tbody>
@@ -251,6 +285,7 @@
               <td class="acciones-cell">
                 <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
                 <button class="btn-row btn-delete" data-action="delete">❌</button>
+                <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
               </td>
             </tr>
           </tbody>
@@ -302,6 +337,59 @@
               <td class="acciones-cell">
                 <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
                 <button class="btn-row btn-delete" data-action="delete">❌</button>
+                <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BIENES COMUNES -->
+    <section class="seccion" id="seccion-biencomun">
+      <div class="seccion-header">
+        <h2>🏢 Bienes Comunes</h2>
+        <div class="seccion-buttons">
+          <button class="btn btn-add" data-action="add-row" data-section="biencomun">➕</button>
+          <button class="btn btn-save" data-action="save" data-section="biencomun">💾</button>
+          <button class="btn btn-clear" data-action="clear" data-section="biencomun">🗑️</button>
+          <button class="btn btn-execute" data-action="execute" data-section="biencomun" title="Ejecutar automatización bienes comunes">▶️</button>
+        </div>
+      </div>
+      <div class="tabla-excel-container">
+        <div class="tabla-instrucciones">
+          <span class="instruccion-item">⌨️ Flechas</span>
+          <span class="instruccion-item">↵ Enter</span>
+          <span class="instruccion-item">⇥ Tab</span>
+        </div>
+        <table class="tabla-excel tabla-navegable" id="tabla-biencomun" data-table-type="biencomun">
+          <thead>
+            <tr>
+              <th title="Correlativo - auto incrementa">N EDIFI</th>
+              <th>ENTRADA</th>
+              <th>PISO</th>
+              <th>UNIDAD</th>
+              <th title="Porcentaje">%</th>
+              <th title="Área Terreno Común">ATC</th>
+              <th title="Área Construida Común">ACC</th>
+              <th title="Área Otras Instalaciones Comunes">AOIC</th>
+              <th>ACC</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-biencomun">
+            <tr data-row-id="1">
+              <td><input type="text" name="n_edifi" data-col="0" data-validation="any" value="1"></td>
+              <td><input type="text" name="entrada" data-col="1" data-validation="any"></td>
+              <td><input type="text" name="piso" data-col="2" data-validation="any"></td>
+              <td><input type="text" name="unidad" data-col="3" data-validation="any"></td>
+              <td><input type="text" name="porcentaje" data-col="4" data-validation="any"></td>
+              <td><input type="text" name="atc" data-col="5" data-validation="any"></td>
+              <td><input type="text" name="acc" data-col="6" data-validation="any"></td>
+              <td><input type="text" name="aoic" data-col="7" data-validation="any"></td>
+              <td class="acciones-cell">
+                <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
+                <button class="btn-row btn-delete" data-action="delete">❌</button>
+                <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
               </td>
             </tr>
           </tbody>
@@ -423,12 +511,14 @@
 
     <!-- Botones globales -->
     <div class="global-actions">
-      <button class="btn btn-global-save" id="btn-guardar-todo">💾 Guardar Todo</button>
-      <button class="btn btn-global-clear" id="btn-limpiar-todo">🗑️ Limpiar Todo</button>
+      <button class="btn btn-global-save" id="btn-guardar-todo">💾 Guardar</button>
+      <button class="btn btn-global-firmas" id="btn-setear-firmas" title="Setear firmas sin guardar observaciones">🖊️ Firmas</button>
+      <button class="btn btn-global-clear" id="btn-limpiar-todo">🗑️ Limpiar</button>
       <button class="btn btn-global-export" id="btn-exportar">📤 Exportar</button>
       <button class="btn btn-global-import" id="btn-importar">📥 Importar</button>
       <input type="file" id="input-importar" accept=".json" style="display: none;">
     </div>
+
   </div>
 
   <script src="popup.js"></script>

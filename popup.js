@@ -3,7 +3,8 @@ const THEME_KEY = 'fichaCatastralTheme';
 
 const SECCIONES_CONFIG = {
   principales: {
-    fields: ['principales-sector', 'principales-manzana', 'principales-lote']
+    fields: ['principales-sector', 'principales-manzana', 'principales-lote',
+            'principales-edifica', 'principales-entrada', 'principales-piso', 'principales-unidad']
   },
   ubicacion: {
     fields: [
@@ -52,6 +53,11 @@ const TABLAS_CONFIG = {
     tableId: 'tabla-obras',
     tbodyId: 'tbody-obras',
     columns: ['codigo', 'mes', 'anio', 'mep', 'ecs', 'ecc', 'total', 'uca']
+  },
+  biencomun: {
+    tableId: 'tabla-biencomun',
+    tbodyId: 'tbody-biencomun',
+    columns: ['n_edifi', 'entrada', 'piso', 'unidad', 'porcentaje', 'atc', 'acc', 'aoic']
   }
 };
 
@@ -278,7 +284,6 @@ async function updateFichasUI() {
   const percent = data.meta > 0 ? Math.min(100, ((data.avance || 0) / data.meta) * 100) : 0;
   if (progressEl) progressEl.style.width = percent.toFixed(1) + '%';
 
-  // Cambiar color de la barra según progreso
   if (progressEl) {
     if (percent >= 100) {
       progressEl.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)';
@@ -289,7 +294,6 @@ async function updateFichasUI() {
     }
   }
 
-  // Mostrar notificación si se completa la meta
   if (data.meta > 0 && data.avance >= data.meta && !sessionStorage.getItem('metaCompletada')) {
     sessionStorage.setItem('metaCompletada', 'true');
     showToast('🎉 ¡Meta completada!', 'success');
@@ -327,6 +331,275 @@ function setupFichasCounter() {
   }
 
   updateFichasUI();
+}
+
+// ==================== AUTO-INCREMENT SYSTEM ====================
+
+const autoIncrementState = {};
+
+function initAutoIncrementButtons() {
+  document.querySelectorAll('.btn-auto-increment').forEach(btn => {
+    const target = btn.dataset.target;
+
+    chrome.storage.local.get(['autoIncrementState'], (result) => {
+      const saved = result.autoIncrementState || {};
+      autoIncrementState[target] = saved[target] || false;
+      updateAutoIncrementUI(btn, autoIncrementState[target]);
+    });
+
+    btn.addEventListener('click', () => {
+      autoIncrementState[target] = !autoIncrementState[target];
+      updateAutoIncrementUI(btn, autoIncrementState[target]);
+
+      chrome.storage.local.set({ autoIncrementState });
+      showToast(
+        autoIncrementState[target]
+          ? `Auto-incremento activado para ${target.split('-').pop().toUpperCase()}`
+          : `Auto-incremento desactivado para ${target.split('-').pop().toUpperCase()}`,
+        autoIncrementState[target] ? 'success' : 'info'
+      );
+    });
+  });
+}
+
+function updateAutoIncrementUI(btn, active) {
+  if (active) {
+    btn.classList.add('active');
+    btn.textContent = '🔄';
+    btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+    btn.style.color = 'white';
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '🔄';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+}
+
+function incrementFormattedValue(value) {
+  if (!value || value === '0' || value === '00' || value === '000') return value;
+
+  const strVal = String(value);
+  const numVal = parseInt(strVal, 10);
+
+  if (isNaN(numVal)) return value;
+
+  const newNum = numVal + 1;
+  const newStr = String(newNum);
+
+  if (strVal.length > newStr.length) {
+    return newStr.padStart(strVal.length, '0');
+  }
+
+  return newStr;
+}
+
+function processAutoIncrements() {
+  let anyIncremented = false;
+
+  for (const [targetId, active] of Object.entries(autoIncrementState)) {
+    if (!active) continue;
+
+    const input = document.getElementById(targetId);
+    if (!input) continue;
+
+    const currentVal = input.value.trim();
+    if (!currentVal || currentVal === '0' || currentVal === '00' || currentVal === '000') continue;
+
+    const newVal = incrementFormattedValue(currentVal);
+    if (newVal !== currentVal) {
+      input.value = newVal;
+      anyIncremented = true;
+    }
+  }
+
+  if (anyIncremented) {
+    saveAllSections();
+    showToast('Valores auto-incrementados ✓', 'success');
+  }
+}
+
+// ==================== PER-ROW EXECUTE AUTOMATION ====================
+
+function setupRowExecuteButtons() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="execute-row"]');
+    if (!btn) return;
+
+    const row = btn.closest('tr');
+    const table = btn.closest('table');
+    if (!row || !table) return;
+
+    const tableType = table.dataset.tableType;
+    const config = TABLAS_CONFIG[tableType];
+    if (!config) return;
+
+    const rowData = {};
+    config.columns.forEach(colName => {
+      const input = row.querySelector(`input[name="${colName}"]`);
+      if (input) rowData[colName] = input.value;
+    });
+
+    const hasData = Object.values(rowData).some(v => v && v.trim() !== '');
+    if (!hasData) {
+      showToast('La fila está vacía', 'error');
+      return;
+    }
+
+    showToast(`Ejecutando fila de ${tableType}...`, 'info');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        const messageData = {
+          action: 'executeSection',
+          section: tableType,
+          data: [rowData]
+        };
+
+        // Para vías, agregar datos de ubicación
+        if (tableType === 'vias') {
+          messageData.ubicacion = getSectionValuesFromDOM('ubicacion');
+        }
+
+        chrome.tabs.sendMessage(tabs[0].id, messageData, (response) => {
+          if (chrome.runtime.lastError) {
+            showToast('Error: No se pudo conectar con la página', 'error');
+          } else if (response && response.success) {
+            showToast('Fila ejecutada ✓', 'success');
+          }
+        });
+      }
+    });
+  });
+}
+
+// ==================== BIENES COMUNES TABLE LOGIC ====================
+
+function addBienComunRow(values = {}) {
+  const config = TABLAS_CONFIG['biencomun'];
+  if (!config) return;
+
+  const tbody = document.getElementById(config.tbodyId);
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+  let maxEdifi = 0;
+  rows.forEach(row => {
+    const input = row.querySelector('input[name="n_edifi"]');
+    if (input && input.value) {
+      const num = parseInt(input.value, 10);
+      if (!isNaN(num) && num > maxEdifi) maxEdifi = num;
+    }
+  });
+
+  if (!values.n_edifi) {
+    values.n_edifi = String(maxEdifi + 1);
+  }
+
+  const row = createTableRow('biencomun', values);
+  tbody.appendChild(row);
+
+  return row;
+}
+
+function duplicateTableRowBienComun(row) {
+  const config = TABLAS_CONFIG['biencomun'];
+  const values = {};
+  config.columns.forEach(colName => {
+    const input = row.querySelector(`input[name="${colName}"]`);
+    if (input) values[colName] = input.value;
+  });
+
+  const tbody = document.getElementById(config.tbodyId);
+  let maxEdifi = 0;
+  tbody.querySelectorAll('tr').forEach(r => {
+    const input = r.querySelector('input[name="n_edifi"]');
+    if (input && input.value) {
+      const num = parseInt(input.value, 10);
+      if (!isNaN(num) && num > maxEdifi) maxEdifi = num;
+    }
+  });
+  values.n_edifi = String(maxEdifi + 1);
+
+  const newRow = createTableRow('biencomun', values);
+  row.parentNode.insertBefore(newRow, row.nextSibling);
+  showToast('Fila duplicada (N EDIFI: ' + values.n_edifi + ')', 'success');
+}
+
+// ==================== EXECUTE BIENCOMUN AUTOMATION ====================
+
+function executeBienComunAutomation() {
+  const tableData = getTableDataFromDOM('biencomun');
+  const filasConDatos = tableData.filter(row =>
+    Object.values(row).some(v => v && v.trim() !== '')
+  );
+
+  if (filasConDatos.length === 0) {
+    showToast('No hay datos de bienes comunes para ejecutar', 'error');
+    return;
+  }
+
+  showToast(`Ejecutando bienes comunes (${filasConDatos.length} filas)...`, 'info');
+
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'executeSection',
+        section: 'biencomun',
+        data: filasConDatos
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          showToast('Error: No se pudo conectar con la página', 'error');
+        } else if (response && response.success) {
+          showToast('Bienes comunes ejecutados ✓', 'success');
+        }
+      });
+    }
+  });
+}
+
+// ==================== FLOATING WINDOW ====================
+
+function openFloatingWindow() {
+  const popupUrl = chrome.runtime.getURL('popup-content.html');
+
+  chrome.windows.create({
+    url: popupUrl,
+    type: 'popup',
+    width: 900,
+    height: 700,
+    left: 100,
+    top: 100
+  });
+}
+
+// ==================== SET FIRMAS BUTTON (sin guardar observaciones) ====================
+
+function executeFirmasOnly() {
+  const finalData = getSectionValuesFromDOM('final');
+
+  if (!finalData['final-supervisor-nombre'] && !finalData['final-tecnico-nombre']) {
+    showToast('No hay datos de firmas para setear', 'error');
+    return;
+  }
+
+  showToast('Seteando firmas...', 'info');
+
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'executeSection',
+        section: 'firmas-only',
+        data: finalData
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          showToast('Error: No se pudo conectar con la página', 'error');
+        } else if (response && response.success) {
+          showToast('Firmas seteadas ✓', 'success');
+        }
+      });
+    }
+  });
 }
 
 // ==================== HELPER: Obtener fila con puerta P de vías ====================
@@ -650,6 +923,7 @@ function createTableRow(tableType, values = {}) {
   actionsTd.innerHTML = `
     <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
     <button class="btn-row btn-delete" data-action="delete">❌</button>
+    <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
   `;
   row.appendChild(actionsTd);
   return row;
@@ -699,17 +973,34 @@ function clearTableInDOM(tableType) {
   limpiarErroresValidacion(tableType);
 }
 
+// [INTEGRACIÓN] addTableRow delega a addBienComunRow para biencomun (auto-calcula N EDIFI)
 function addTableRow(tableType) {
   const config = TABLAS_CONFIG[tableType];
   if (!config) return;
   const tbody = document.getElementById(config.tbodyId);
   if (!tbody) return;
+
+  if (tableType === 'biencomun') {
+    const newRow = addBienComunRow();
+    if (newRow) {
+      const firstInput = newRow.querySelector('input');
+      if (firstInput) firstInput.focus();
+    }
+    return;
+  }
+
   const row = createTableRow(tableType);
   tbody.appendChild(row);
   row.querySelector('input').focus();
 }
 
+// [INTEGRACIÓN] duplicateTableRow delega a duplicateTableRowBienComun para biencomun
 function duplicateTableRow(row, tableType) {
+  if (tableType === 'biencomun') {
+    duplicateTableRowBienComun(row);
+    return;
+  }
+
   const config = TABLAS_CONFIG[tableType];
   if (!config) return;
   const values = {};
@@ -758,7 +1049,13 @@ async function clearTable(tableType) {
   showToast(`"${tableType}" limpiado`, 'info');
 }
 
+// [INTEGRACIÓN] executeAutomation delega a executeBienComunAutomation para biencomun
 async function executeAutomation(tableType) {
+  if (tableType === 'biencomun') {
+    executeBienComunAutomation();
+    return;
+  }
+
   const data = getTableDataFromDOM(tableType);
   const filasConDatos = data.filter(row => {
     const columns = TABLAS_CONFIG[tableType].columns;
@@ -837,6 +1134,8 @@ async function executeAutomation(tableType) {
   });
 }
 
+// ==================== SAVE ALL (con validación) ====================
+
 async function saveAll() {
   const allData = {};
   let hasErrors = false;
@@ -863,6 +1162,20 @@ async function saveAll() {
   await saveAllData(allData);
   showToast('Todo guardado correctamente ✓', 'success');
 }
+
+// [INTEGRACIÓN] saveAllSections: guarda sin validación, usado por processAutoIncrements
+async function saveAllSections() {
+  const allData = {};
+  for (const section of Object.keys(SECCIONES_CONFIG)) {
+    allData[section] = getSectionValuesFromDOM(section);
+  }
+  for (const tableType of Object.keys(TABLAS_CONFIG)) {
+    allData[tableType] = getTableDataFromDOM(tableType);
+  }
+  await saveAllData(allData);
+}
+
+// ==================== CLEAR / EXPORT / IMPORT ====================
 
 async function clearAll() {
   if (!confirm('¿Limpiar todos los datos?')) return;
@@ -926,7 +1239,10 @@ async function loadStoredData() {
   }
 }
 
+// ==================== EVENT LISTENERS ====================
+
 function setupEventListeners() {
+
   const themeBtn = document.getElementById('btn-theme');
   if (themeBtn) {
     themeBtn.addEventListener('click', toggleTheme);
@@ -938,6 +1254,19 @@ function setupEventListeners() {
     btnGuardarHeader.addEventListener('click', saveAll);
   }
 
+  // [INTEGRACIÓN] Botón ventana flotante
+  const btnFloatWindow = document.getElementById('btn-float-window');
+  if (btnFloatWindow) {
+    btnFloatWindow.addEventListener('click', openFloatingWindow);
+  }
+
+  // [INTEGRACIÓN] Botón setear firmas (sin guardar observaciones)
+  const btnSetearFirmas = document.getElementById('btn-setear-firmas');
+  if (btnSetearFirmas) {
+    btnSetearFirmas.addEventListener('click', executeFirmasOnly);
+  }
+
+  // Delegación de clicks en botones
   document.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -965,6 +1294,8 @@ function setupEventListeners() {
       await executeAutomation(section);
     }
   });
+
+  // Botones globales
   const btnGuardar = document.getElementById('btn-guardar-todo');
   if (btnGuardar) btnGuardar.addEventListener('click', saveAll);
   const btnLimpiar = document.getElementById('btn-limpiar-todo');
@@ -986,9 +1317,22 @@ function setupEventListeners() {
       }
     });
   }
+
+  // Setup funcionalidades
   setupFichasCounter();
   setupCrearLotes();
+
+  // [INTEGRACIÓN] Inicializar auto-incremento y ejecutar por fila
+  initAutoIncrementButtons();
+  setupRowExecuteButtons();
 }
+
+// [INTEGRACIÓN] Listener: observaciones-guardadas → dispara auto-incremento
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === 'observaciones-guardadas') {
+    processAutoIncrements();
+  }
+});
 
 // ==================== INICIALIZACIÓN ====================
 

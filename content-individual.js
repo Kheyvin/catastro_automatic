@@ -2775,35 +2775,83 @@ async function setFechaFirmaModal(modal, fecha) {
   log('Fecha establecida: ' + fechaFormateada, 'success');
 }
 
-async function processFirmaSupervisor(data) {
-  log('Procesando firma del supervisor', 'info');
-
-  let editBtn = null;
-
-  const allSpans = document.querySelectorAll('span');
-  for (const span of allSpans) {
-    if (span.textContent.trim() === '[95] FIRMA DEL SUPERVISOR') {
-      const flexContainer = span.closest('.flex');
-      if (flexContainer) {
-        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) {
-          log('Boton de editar supervisor encontrado', 'success');
-          break;
+async function findEditBtnWithRetry(labelIdentifiers, maxRetries) {
+  // labelIdentifiers: array de objetos {text: 'texto a buscar', includes: ['parte1', 'parte2']}
+  // maxRetries: cantidad de reintentos (total ~3 segundos con delay.short entre cada uno)
+  const retryDelay = CONFIG.delays.short; // ~300ms
+  const totalRetries = Math.ceil(3000 / retryDelay); // ~10 reintentos en 3 segundos
+  const attempts = maxRetries || totalRetries;
+  
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    let editBtn = null;
+    
+    // Búsqueda principal: por spans con texto específico
+    const allSpans = document.querySelectorAll('span');
+    for (const span of allSpans) {
+      const spanText = span.textContent.trim();
+      let found = false;
+      
+      for (const identifier of labelIdentifiers) {
+        if (identifier.includes) {
+          found = identifier.includes.every(part => spanText.includes(part));
+        } else if (identifier.text) {
+          found = spanText === identifier.text;
+        }
+        if (found) break;
+      }
+      
+      if (found) {
+        const flexContainer = span.closest('.flex');
+        if (flexContainer) {
+          editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
+          if (editBtn) {
+            log(`Botón editar encontrado en intento ${attempt + 1}`, 'success');
+            return editBtn;
+          }
         }
       }
     }
-  }
-
-  if (!editBtn) {
-    const containers = document.querySelectorAll('.flex.justify-between');
-    for (const container of containers) {
-      if (container.textContent.includes('[95]') && container.textContent.includes('SUPERVISOR')) {
-        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
+    
+    // Búsqueda alternativa: por contenedores flex
+    if (!editBtn) {
+      const containers = document.querySelectorAll('.flex.justify-between');
+      for (const container of containers) {
+        let found = false;
+        for (const identifier of labelIdentifiers) {
+          if (identifier.includes) {
+            found = identifier.includes.every(part => container.textContent.includes(part));
+          }
+          if (found) break;
+        }
+        
+        if (found) {
+          editBtn = container.querySelector('button .anticon-edit')?.closest('button');
+          if (editBtn) {
+            log(`Botón editar encontrado (búsqueda alternativa) en intento ${attempt + 1}`, 'success');
+            return editBtn;
+          }
+        }
       }
     }
+    
+    if (attempt < attempts - 1) {
+      log(`Botón editar no encontrado, reintentando... (${attempt + 1}/${attempts})`, 'warning');
+      await delay(retryDelay);
+    }
   }
+  
+  log('Botón editar no encontrado después de todos los reintentos', 'warning');
+  return null;
+}
 
+async function processFirmaSupervisor(data) {
+  log('Procesando firma del supervisor', 'info');
+  
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[95]', 'FIRMA', 'SUPERVISOR'] },
+    { text: '[95] FIRMA DEL SUPERVISOR' }
+  ]);
+  
   if (!editBtn) {
     log('Boton de editar supervisor no encontrado', 'warning');
     return;
@@ -2853,36 +2901,15 @@ async function processFirmaSupervisor(data) {
 
 async function processFirmaTecnico(data) {
   log('Procesando firma del tecnico catastral', 'info');
-
-  let editBtn = null;
-
-  const allSpans = document.querySelectorAll('span');
-  for (const span of allSpans) {
-    const spanText = span.textContent.trim();
-    if (spanText.includes('[96]') && spanText.includes('FIRMA') && spanText.includes('CNICO')) {
-      const flexContainer = span.closest('.flex');
-      if (flexContainer) {
-        editBtn = flexContainer.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) {
-          log('Boton de editar tecnico encontrado', 'success');
-          break;
-        }
-      }
-    }
-  }
-
+  
+  // Buscar botón con reintentos (3 segundos total)
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[96]', 'FIRMA', 'CNICO'] },
+    { includes: ['[96]', 'CNICO CATASTRAL'] }
+  ]);
+  
   if (!editBtn) {
-    const containers = document.querySelectorAll('.flex.justify-between');
-    for (const container of containers) {
-      if (container.textContent.includes('[96]') && container.textContent.includes('CNICO')) {
-        editBtn = container.querySelector('button .anticon-edit')?.closest('button');
-        if (editBtn) break;
-      }
-    }
-  }
-
-  if (!editBtn) {
-    log('Boton de editar tecnico no encontrado', 'warning');
+    log('Boton de editar tecnico no encontrado después de reintentos', 'warning');
     return;
   }
 
@@ -2903,7 +2930,6 @@ async function processFirmaTecnico(data) {
   if (searchBtn) {
     simulateClick(searchBtn);
     await delay(CONFIG.delays.long);
-
     await searchAndSelectPersonal(data['final-tecnico-nombre']);
   }
 
@@ -2915,9 +2941,7 @@ async function processFirmaTecnico(data) {
   }
   if (firmaModalUpdated) {
     await setFechaFirmaModal(firmaModalUpdated, data['final-tecnico-fecha']);
-
     await delay(CONFIG.delays.medium);
-
     const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
     if (guardarBtn) {
       simulateClick(guardarBtn);
@@ -2927,7 +2951,6 @@ async function processFirmaTecnico(data) {
 
   await delay(CONFIG.delays.extraLong);
 }
-
 // ==================== SECCIÓN FINAL ====================
 
 async function handleSeccionFinal() {
@@ -2941,6 +2964,8 @@ async function handleSeccionFinal() {
   await waitForObservacionesButtonClick();
   log('Usuario guardo observaciones', 'success');
   await incrementFichasCounter();
+  // Notificar al popup para auto-incrementar
+  chrome.runtime.sendMessage({ action: 'observaciones-guardadas' });
 
   await delay(CONFIG.delays.long);
 
@@ -3050,8 +3075,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         log('Error en obras: ' + err.message, 'error');
         sendResponse({ success: false, error: err.message });
       });
-    }
-
+    } else if (message.section === 'firmas-only') {
+        (async () => {
+          const finalData = message.data || {};
+          if (finalData['final-supervisor-nombre']) await processFirmaSupervisor(finalData);
+          await delay(CONFIG.delays.long);
+          if (finalData['final-tecnico-nombre']) await processFirmaTecnico(finalData);
+          sendResponse({ success: true });
+        })();
+        return true;
+      }
     return true;
   }
 
