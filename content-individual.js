@@ -1695,6 +1695,151 @@ async function captureUbicacionData(section) {
   }
 }
 
+// ==================== MANEJO DE LISTADO DE ADMINISTRADOS ====================
+
+async function handleListadoAdministrados(modal) {
+  log('Modal LISTADO DE ADMINISTRADOS abierto. Esperando búsqueda del usuario...', 'info');
+
+  await new Promise((resolve) => {
+    const searchInput = modal.querySelector('input#form_item_search') ||
+                        modal.querySelector('input[placeholder="Buscar"]');
+    const searchBtn = modal.querySelector('button[type="submit"]') ||
+                      modal.querySelector('button .anticon-search')?.closest('button');
+
+    if (!searchInput) {
+      log('Input de búsqueda no encontrado en modal', 'error');
+      resolve();
+      return;
+    }
+
+    let resolved = false;
+    const doResolve = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    };
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doResolve();
+    });
+
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => doResolve());
+    }
+
+    const allButtons = modal.querySelectorAll('button');
+    for (const btn of allButtons) {
+      if ((btn.textContent || '').includes('BUSCAR')) {
+        btn.addEventListener('click', () => doResolve());
+      }
+    }
+
+    setTimeout(doResolve, 120000);
+  });
+
+  log('Usuario realizó búsqueda. Esperando 1.5s para resultados...', 'info');
+  await delay(1500);
+
+  const totalSpan = modal.querySelector('p.float-right span.text-black');
+  const totalRegistros = totalSpan ? parseInt(totalSpan.textContent) : -1;
+  log('Total de registros: ' + totalRegistros, 'info');
+
+  if (totalRegistros === 0) {
+    const searchInput = modal.querySelector('input#form_item_search') ||
+                        modal.querySelector('input[placeholder="Buscar"]');
+    const valorBusqueda = searchInput ? searchInput.value.trim() : '';
+    log('0 registros. Valor guardado: ' + valorBusqueda, 'info');
+
+    const nuevoBtn = modal.querySelector('button .anticon-file-add')?.closest('button');
+    if (nuevoBtn) {
+      simulateClick(nuevoBtn);
+      log('Click en NUEVO', 'success');
+    } else {
+      const allBtns = modal.querySelectorAll('button');
+      for (const btn of allBtns) {
+        if ((btn.textContent || '').includes('NUEVO')) {
+          simulateClick(btn);
+          log('Click en NUEVO (por texto)', 'success');
+          break;
+        }
+      }
+    }
+
+    await delay(CONFIG.delays.long);
+    const nuevoModal = await waitForModal('NUEVO LISTADO DE ADMINISTRADOS') ||
+                       await waitForModal('NUEVO');
+    if (nuevoModal) {
+      await fillNuevoAdministradoModal(nuevoModal, valorBusqueda);
+    } else {
+      log('Modal NUEVO no apareció', 'error');
+    }
+  } else if (totalRegistros === 1) {
+    const selectBtn = modal.querySelector('button .anticon-select')?.closest('button');
+    if (selectBtn) {
+      simulateClick(selectBtn);
+      log('Registro seleccionado automáticamente', 'success');
+    }
+  } else if (totalRegistros > 1) {
+    log(totalRegistros + ' registros encontrados. Esperando selección manual...', 'warning');
+    await waitForModalToClose('LISTADO DE ADMINISTRADOS');
+  }
+}
+
+async function fillNuevoAdministradoModal(modal, valorDocumento) {
+  log('Llenando NUEVO ADMINISTRADO: ' + valorDocumento, 'info');
+  await delay(CONFIG.delays.medium);
+
+  const docInput = modal.querySelector('input#form_item_documentoregistro') ||
+                   modal.querySelector('input[placeholder="Buscar por documento de identidad"]');
+  if (docInput) {
+    simulateInput(docInput, valorDocumento);
+    log('Documento seteado: ' + valorDocumento, 'success');
+    await delay(CONFIG.delays.short);
+
+    const searchBtn = docInput.closest('.ant-input-group-wrapper')?.querySelector('.ant-input-search-button') ||
+                      docInput.closest('.ant-input-wrapper')?.querySelector('.ant-input-search-button') ||
+                      modal.querySelector('.ant-input-search-button');
+    if (searchBtn) {
+      simulateClick(searchBtn);
+      log('Click en búsqueda de documento', 'success');
+      await delay(CONFIG.delays.long);
+      await delay(CONFIG.delays.long);
+    }
+  } else {
+    log('Input de documento no encontrado', 'error');
+  }
+
+  await delay(CONFIG.delays.medium);
+  const formItems = modal.querySelectorAll('.ant-form-item');
+  let estadoCivilSet = false;
+  for (const formItem of formItems) {
+    const label = formItem.querySelector('label');
+    if (label && label.textContent && label.textContent.includes('Estado Civil')) {
+      const select = formItem.querySelector('.ant-select');
+      if (select) {
+        await selectOptionByText(select, 'SOLTERO');
+        log('Estado Civil → SOLTERO(A)', 'success');
+        estadoCivilSet = true;
+        break;
+      }
+    }
+  }
+
+  if (!estadoCivilSet) {
+    const selectInput = modal.querySelector('#form_item_idestadocivil');
+    if (selectInput) {
+      const selectContainer = selectInput.closest('.ant-select');
+      if (selectContainer) {
+        await selectOptionByText(selectContainer, 'SOLTERO');
+        log('Estado Civil → SOLTERO(A) (por id)', 'success');
+      }
+    }
+  }
+
+  log('Formulario NUEVO ADMINISTRADO completado', 'info');
+}
+
 // ==================== SECCION 03: TITULAR (MODIFICADA) ====================
 
 async function handleSeccion03Titular() {
@@ -1762,6 +1907,14 @@ async function handleSeccion03Titular() {
     if (searchButton) {
       simulateClick(searchButton);
       log('Modal NRO DOC desplegado para PERSONA NATURAL', 'success');
+
+      await delay(CONFIG.delays.long);
+      const adminModal = await waitForModal('LISTADO DE ADMINISTRADOS');
+      if (adminModal) {
+        await handleListadoAdministrados(adminModal);
+      } else {
+        log('Modal LISTADO DE ADMINISTRADOS no apareció', 'warning');
+      }
     }
   } else if (tipoTitularSeleccion === 'PERSONA_JURIDICA') {
     const searchButton = findSearchButtonByLegend(section, 'NRO RUC');
@@ -2072,11 +2225,124 @@ async function handleSeccion06Descripcion() {
   await expandAndProcessSection(6);
 }
 
+// ==================== EJECUTAR SERVICIOS POR FILA ====================
+
+async function handleSeccion07ServiciosRow(rowData) {
+  log('Procesando servicios por fila', 'info');
+
+  // Buscar la sección 07 SERVICIOS BÁSICOS
+  const sections = document.querySelectorAll('.ant-collapse-item');
+  let section = null;
+  for (const sec of sections) {
+    const header = sec.querySelector('.ant-collapse-header-text');
+    if (header && header.textContent.toUpperCase().includes('SERVICIOS')) {
+      section = sec;
+      break;
+    }
+  }
+
+  if (!section) {
+    // Fallback: buscar por índice (sección 6 = index 6)
+    section = sections[6];
+  }
+
+  if (!section) {
+    log('Sección de SERVICIOS BÁSICOS no encontrada', 'error');
+    return;
+  }
+
+  // Expandir si no está activa
+  if (!section.classList.contains('ant-collapse-item-active')) {
+    const header = section.querySelector('.ant-collapse-header');
+    if (header) {
+      simulateClick(header);
+      await delay(CONFIG.delays.long);
+    }
+  }
+
+  // Remover readonly de todos los selectores
+  const allSelects = section.querySelectorAll('.ant-select');
+  allSelects.forEach(select => {
+    removeReadonly(select);
+  });
+  const allInputs = section.querySelectorAll('.ant-select input');
+  allInputs.forEach(input => {
+    input.removeAttribute('readonly');
+  });
+
+  const fieldsets = section.querySelectorAll('fieldset');
+
+  // Mapeo de columnas de tabla a SERVICIOS_FIELDS
+  const SERVICIOS_TABLE_FIELDS = [
+    { key: 'luz', legend: 'LUZ' },
+    { key: 'agua', legend: 'AGUA' },
+    { key: 'telf', legend: 'TELF' },
+    { key: 'desague', legend: 'DESAG' },
+    { key: 'gas', legend: 'GAS' },
+    { key: 'internet', legend: 'INTERNET' },
+    { key: 'tv', legend: 'TV' }
+  ];
+
+  for (const serviceConfig of SERVICIOS_TABLE_FIELDS) {
+    const value = (rowData[serviceConfig.key] || '').toString().trim();
+
+    if (!value) {
+      log('Servicio ' + serviceConfig.legend + ': vacío, omitiendo', 'info');
+      continue;
+    }
+
+    const mappedValue = SERVICIOS_MAPPINGS[value];
+    if (!mappedValue) {
+      log('Servicio ' + serviceConfig.legend + ': valor "' + value + '" no reconocido', 'warning');
+      continue;
+    }
+
+    let targetFieldset = null;
+    for (const fs of fieldsets) {
+      const legend = fs.querySelector('legend');
+      if (legend && legend.textContent.toUpperCase().includes(serviceConfig.legend)) {
+        targetFieldset = fs;
+        break;
+      }
+    }
+
+    if (targetFieldset) {
+      const select = targetFieldset.querySelector('.ant-select');
+      if (select) {
+        await selectOptionByText(select, mappedValue);
+        log('Servicio ' + serviceConfig.legend + ' → ' + mappedValue, 'success');
+        await delay(CONFIG.delays.short);
+      }
+    } else {
+      log('Fieldset no encontrado: ' + serviceConfig.legend, 'warning');
+    }
+  }
+
+  // Click en "Guardar servicios básicos"
+  log('Guardando servicios básicos...', 'info');
+  await delay(CONFIG.delays.medium);
+
+  const saveButtons = section.querySelectorAll('button');
+  for (const btn of saveButtons) {
+    if (btn.textContent.includes('Guardar servicios b')) {
+      simulateClick(btn);
+      log('Servicios básicos guardados', 'success');
+      break;
+    }
+  }
+
+  await delay(CONFIG.delays.long);
+  log('Ejecución de servicios por fila completada', 'success');
+}
+
 async function handleSeccion07Servicios() {
   log('Procesando Seccion 07: SERVICIOS BASICOS', 'info');
 
   const data = AppState.storedData;
-  const servicios = data.servicios || {};
+  const rawServicios = data.servicios || {};
+  const servicios = Array.isArray(rawServicios) && rawServicios.length > 0
+    ? rawServicios[0]
+    : rawServicios;
 
   await delay(CONFIG.delays.medium);
   const section = document.querySelectorAll('.ant-collapse-item')[6];
@@ -2098,7 +2364,7 @@ async function handleSeccion07Servicios() {
 
   for (let i = 0; i < SERVICIOS_FIELDS.length; i++) {
     const serviceConfig = SERVICIOS_FIELDS[i];
-    const value = servicios[serviceConfig.key];
+    const value = servicios[serviceConfig.key] || servicios[serviceConfig.key.replace('servicios-', '')] || '';
 
     if (value === undefined || value === null || value.toString().trim() === '') {
       log('Servicio ' + serviceConfig.legend + ': valor vacio, omitiendo', 'info');
@@ -3066,6 +3332,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: true });
       }).catch(err => {
         log('Error en construcciones: ' + err.message, 'error');
+        sendResponse({ success: false, error: err.message });
+      });
+    } else if (message.section === 'servicios') {
+      handleSeccion07ServiciosRow(message.data[0]).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        log('Error en servicios: ' + err.message, 'error');
         sendResponse({ success: false, error: err.message });
       });
     } else if (message.section === 'obras') {

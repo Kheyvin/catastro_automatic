@@ -21,12 +21,6 @@ const SECCIONES_CONFIG = {
       'lindero-fondo-medida', 'lindero-fondo-colindancia'
     ]
   },
-  servicios: {
-    fields: [
-      'servicios-luz', 'servicios-agua', 'servicios-telf',
-      'servicios-desague', 'servicios-gas', 'servicios-internet', 'servicios-tv'
-    ]
-  },
   inscripcion: {
     fields: ['inscripcion-numero', 'inscripcion-asiento', 'inscripcion-fecha']
   },
@@ -58,7 +52,12 @@ const TABLAS_CONFIG = {
     tableId: 'tabla-biencomun',
     tbodyId: 'tbody-biencomun',
     columns: ['n_edifi', 'entrada', 'piso', 'unidad', 'porcentaje', 'atc', 'acc', 'aoic']
-  }
+  },
+  servicios: {
+    tableId: 'tabla-servicios',
+    tbodyId: 'tbody-servicios',
+    columns: ['luz', 'agua', 'telf', 'desague', 'gas', 'internet', 'tv']
+  },
 };
 
 // ==================== CONFIGURACIÓN DE VALIDACIONES ====================
@@ -96,7 +95,16 @@ const VALIDACIONES = {
     ecc: { type: 'ecc', label: 'ECC', errorMsg: 'Debe ser 0-4 (ej: 0, 01, 02, 03, 04)' },
     total: { type: 'any', label: 'TOTAL' },
     uca: { type: 'uca', label: 'UCA', errorMsg: 'Debe ser 0-7 (ej: 0, 01, 02...07)' }
-  }
+  },
+  servicios: {
+    luz: { type: 'servicio', label: 'LUZ', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    agua: { type: 'servicio', label: 'AGUA', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    telf: { type: 'servicio', label: 'TELF', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    desague: { type: 'servicio', label: 'DESAGÜE', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    gas: { type: 'servicio', label: 'GAS', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    internet: { type: 'servicio', label: 'INTERNET', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' },
+    tv: { type: 'servicio', label: 'TV', errorMsg: 'Debe ser 1 (SI) o 2 (NO)' }
+  },
 };
 
 // ==================== FUNCIONES DE VALIDACIÓN ====================
@@ -115,10 +123,7 @@ function validarCampo(valor, tipo) {
       return { valid: false };
     case 'anio':
       if (v === '') return { valid: true, normalized: '' };
-      if (/^\d{4}$/.test(v)) {
-        return { valid: true, normalized: v };
-      }
-      return { valid: false };
+      return { valid: true, normalized: v };
     case 'mep':
       if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
       if (/^(0?[0-3])$/.test(v)) {
@@ -126,6 +131,11 @@ function validarCampo(valor, tipo) {
       }
       return { valid: false };
     case 'ecs':
+      if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
+      if (/^(0?[0-4])$/.test(v)) {
+        return { valid: true, normalized: v };
+      }
+      return { valid: false };
     case 'ecc':
       if (v === '' || v === '0' || v === '00') return { valid: true, normalized: '0' };
       if (/^(0?[0-4])$/.test(v)) {
@@ -164,6 +174,12 @@ function validarCampo(valor, tipo) {
         return { valid: true, normalized: numCond.toString().padStart(2, '0') };
       }
       return { valid: false };
+    case 'servicio': {
+      if (valor === '' || valor === '1' || valor === '2') {
+        return { valid: true, normalized: valor };
+      }
+      return { valid: false, normalized: valor };
+    }
     default:
       return { valid: true, normalized: v };
   }

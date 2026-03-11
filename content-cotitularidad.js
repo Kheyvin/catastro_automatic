@@ -785,6 +785,151 @@ async function processFirmaTecnico(data) {
   await delay(CONFIG.delays.extraLong);
 }
 
+// ==================== MANEJO DE LISTADO DE ADMINISTRADOS ====================
+
+async function handleListadoAdministrados(modal) {
+  log('Modal LISTADO DE ADMINISTRADOS abierto. Esperando búsqueda del usuario...', 'info');
+
+  await new Promise((resolve) => {
+    const searchInput = modal.querySelector('input#form_item_search') ||
+                        modal.querySelector('input[placeholder="Buscar"]');
+    const searchBtn = modal.querySelector('button[type="submit"]') ||
+                      modal.querySelector('button .anticon-search')?.closest('button');
+
+    if (!searchInput) {
+      log('Input de búsqueda no encontrado en modal', 'error');
+      resolve();
+      return;
+    }
+
+    let resolved = false;
+    const doResolve = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    };
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doResolve();
+    });
+
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => doResolve());
+    }
+
+    const allButtons = modal.querySelectorAll('button');
+    for (const btn of allButtons) {
+      if ((btn.textContent || '').includes('BUSCAR')) {
+        btn.addEventListener('click', () => doResolve());
+      }
+    }
+
+    setTimeout(doResolve, 120000);
+  });
+
+  log('Usuario realizó búsqueda. Esperando 1.5s para resultados...', 'info');
+  await delay(1500);
+
+  const totalSpan = modal.querySelector('p.float-right span.text-black');
+  const totalRegistros = totalSpan ? parseInt(totalSpan.textContent) : -1;
+  log('Total de registros: ' + totalRegistros, 'info');
+
+  if (totalRegistros === 0) {
+    const searchInput = modal.querySelector('input#form_item_search') ||
+                        modal.querySelector('input[placeholder="Buscar"]');
+    const valorBusqueda = searchInput ? searchInput.value.trim() : '';
+    log('0 registros. Valor guardado: ' + valorBusqueda, 'info');
+
+    const nuevoBtn = modal.querySelector('button .anticon-file-add')?.closest('button');
+    if (nuevoBtn) {
+      simulateClick(nuevoBtn);
+      log('Click en NUEVO', 'success');
+    } else {
+      const allBtns = modal.querySelectorAll('button');
+      for (const btn of allBtns) {
+        if ((btn.textContent || '').includes('NUEVO')) {
+          simulateClick(btn);
+          log('Click en NUEVO (por texto)', 'success');
+          break;
+        }
+      }
+    }
+
+    await delay(CONFIG.delays.long);
+    const nuevoModal = await waitForModal('NUEVO LISTADO DE ADMINISTRADOS') ||
+                       await waitForModal('NUEVO');
+    if (nuevoModal) {
+      await fillNuevoAdministradoModal(nuevoModal, valorBusqueda);
+    } else {
+      log('Modal NUEVO no apareció', 'error');
+    }
+  } else if (totalRegistros === 1) {
+    const selectBtn = modal.querySelector('button .anticon-select')?.closest('button');
+    if (selectBtn) {
+      simulateClick(selectBtn);
+      log('Registro seleccionado automáticamente', 'success');
+    }
+  } else if (totalRegistros > 1) {
+    log(totalRegistros + ' registros encontrados. Esperando selección manual...', 'warning');
+    await waitForModalToClose('LISTADO DE ADMINISTRADOS');
+  }
+}
+
+async function fillNuevoAdministradoModal(modal, valorDocumento) {
+  log('Llenando NUEVO ADMINISTRADO: ' + valorDocumento, 'info');
+  await delay(CONFIG.delays.medium);
+
+  const docInput = modal.querySelector('input#form_item_documentoregistro') ||
+                   modal.querySelector('input[placeholder="Buscar por documento de identidad"]');
+  if (docInput) {
+    simulateInput(docInput, valorDocumento);
+    log('Documento seteado: ' + valorDocumento, 'success');
+    await delay(CONFIG.delays.short);
+
+    const searchBtn = docInput.closest('.ant-input-group-wrapper')?.querySelector('.ant-input-search-button') ||
+                      docInput.closest('.ant-input-wrapper')?.querySelector('.ant-input-search-button') ||
+                      modal.querySelector('.ant-input-search-button');
+    if (searchBtn) {
+      simulateClick(searchBtn);
+      log('Click en búsqueda de documento', 'success');
+      await delay(CONFIG.delays.long);
+      await delay(CONFIG.delays.long);
+    }
+  } else {
+    log('Input de documento no encontrado', 'error');
+  }
+
+  await delay(CONFIG.delays.medium);
+  const formItems = modal.querySelectorAll('.ant-form-item');
+  let estadoCivilSet = false;
+  for (const formItem of formItems) {
+    const label = formItem.querySelector('label');
+    if (label && label.textContent && label.textContent.includes('Estado Civil')) {
+      const select = formItem.querySelector('.ant-select');
+      if (select) {
+        await selectOptionByText(select, 'SOLTERO');
+        log('Estado Civil → SOLTERO(A)', 'success');
+        estadoCivilSet = true;
+        break;
+      }
+    }
+  }
+
+  if (!estadoCivilSet) {
+    const selectInput = modal.querySelector('#form_item_idestadocivil');
+    if (selectInput) {
+      const selectContainer = selectInput.closest('.ant-select');
+      if (selectContainer) {
+        await selectOptionByText(selectContainer, 'SOLTERO');
+        log('Estado Civil → SOLTERO(A) (por id)', 'success');
+      }
+    }
+  }
+
+  log('Formulario NUEVO ADMINISTRADO completado', 'info');
+}
+
 // ==================== FUNCIÓN PRINCIPAL DE COTITULARIDAD ====================
 
 async function handleNuevoCotitularModal(ubicacion) {
@@ -883,6 +1028,46 @@ async function handleNuevoCotitularModal(ubicacion) {
           await handleModalSearch('LISTADO DE HABITACIONES URBANAS', ubicacion['ubicacion-codigo-hu']);
         }
       }
+    }
+    // Esperar que el usuario haga click en el botón de búsqueda de NRO DOC [23]
+    log('Esperando que usuario haga click en búsqueda de NRO DOC...', 'info');
+
+    await new Promise((resolve) => {
+      const handler = (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        // Detectar si es el botón search dentro del fieldset NRO DOC [23]
+        const fieldset = button.closest('fieldset');
+        if (fieldset) {
+          const legend = fieldset.querySelector('legend');
+          if (legend && legend.textContent.toUpperCase().includes('NRO DOC')) {
+            const isSearchBtn = button.querySelector('.anticon-search') ||
+                                button.classList.contains('ant-input-search-button');
+            if (isSearchBtn) {
+              log('Click detectado en búsqueda NRO DOC del cotitular', 'success');
+              document.removeEventListener('click', handler, true);
+              resolve();
+              return;
+            }
+          }
+        }
+      };
+      document.addEventListener('click', handler, true);
+      // Timeout: 2 minutos
+      setTimeout(() => {
+        document.removeEventListener('click', handler, true);
+        resolve();
+      }, 120000);
+    });
+
+    // Esperar que aparezca el modal LISTADO DE ADMINISTRADOS
+    await delay(CONFIG.delays.long);
+    const adminModal = await waitForModal('LISTADO DE ADMINISTRADOS');
+    if (adminModal) {
+      await handleListadoAdministrados(adminModal);
+    } else {
+      log('Modal LISTADO DE ADMINISTRADOS no apareció después de NRO DOC', 'warning');
     }
     log('Modal de nuevo cotitular procesado', 'success');
   } catch (e) {

@@ -43,48 +43,52 @@
             <button class="btn btn-clear" data-action="clear" data-section="principales">🗑️</button>
           </div>
         </div>
-        <div class="seccion-content grid-2">
-          <div class="field-group">
-            <label for="principales-sector">SECTOR</label>
-            <input type="text" id="principales-sector" name="sector">
-          </div>
-          <div class="field-group">
-            <label for="principales-manzana">MANZANA</label>
-            <input type="text" id="principales-manzana" name="manzana">
-          </div>
-          <div class="field-group field-with-toggle">
-            <label for="principales-lote">LOTE</label>
-            <div class="input-toggle-wrapper">
-              <input type="text" id="principales-lote" name="lote">
-              <button class="btn-auto-increment" data-target="principales-lote" title="Auto incrementar al guardar">🔄</button>
+        <div class="seccion-content principales-2col">
+          <div class="principales-col">
+            <div class="field-group">
+              <label for="principales-sector">SECTOR</label>
+              <input type="text" id="principales-sector" name="sector">
+            </div>
+            <div class="field-group">
+              <label for="principales-manzana">MANZANA</label>
+              <input type="text" id="principales-manzana" name="manzana">
+            </div>
+            <div class="field-group field-with-toggle">
+              <label for="principales-lote">LOTE</label>
+              <div class="input-toggle-wrapper">
+                <input type="text" id="principales-lote" name="lote">
+                <button class="btn-auto-increment" data-target="principales-lote" title="Auto incrementar al guardar">🔄</button>
+              </div>
             </div>
           </div>
-          <div class="field-group field-with-toggle">
-            <label for="principales-edifica">EDIFICA</label>
-            <div class="input-toggle-wrapper">
-              <input type="text" id="principales-edifica" name="edifica" value="01">
-              <button class="btn-auto-increment" data-target="principales-edifica" title="Auto incrementar al guardar">🔄</button>
+          <div class="principales-col">
+            <div class="field-group field-with-toggle">
+              <label for="principales-edifica">EDIFICA</label>
+              <div class="input-toggle-wrapper">
+                <input type="text" id="principales-edifica" name="edifica" value="01">
+                <button class="btn-auto-increment" data-target="principales-edifica" title="Auto incrementar al guardar">🔄</button>
+              </div>
             </div>
-          </div>
-          <div class="field-group field-with-toggle">
-            <label for="principales-entrada">ENTRADA</label>
-            <div class="input-toggle-wrapper">
-              <input type="text" id="principales-entrada" name="entrada" value="01">
-              <button class="btn-auto-increment" data-target="principales-entrada" title="Auto incrementar al guardar">🔄</button>
+            <div class="field-group field-with-toggle">
+              <label for="principales-entrada">ENTRADA</label>
+              <div class="input-toggle-wrapper">
+                <input type="text" id="principales-entrada" name="entrada" value="01">
+                <button class="btn-auto-increment" data-target="principales-entrada" title="Auto incrementar al guardar">🔄</button>
+              </div>
             </div>
-          </div>
-          <div class="field-group field-with-toggle">
-            <label for="principales-piso">PISO</label>
-            <div class="input-toggle-wrapper">
-              <input type="text" id="principales-piso" name="piso" value="01">
-              <button class="btn-auto-increment" data-target="principales-piso" title="Auto incrementar al guardar">🔄</button>
+            <div class="field-group field-with-toggle">
+              <label for="principales-piso">PISO</label>
+              <div class="input-toggle-wrapper">
+                <input type="text" id="principales-piso" name="piso" value="01">
+                <button class="btn-auto-increment" data-target="principales-piso" title="Auto incrementar al guardar">🔄</button>
+              </div>
             </div>
-          </div>
-          <div class="field-group field-with-toggle">
-            <label for="principales-unidad">UNIDAD</label>
-            <div class="input-toggle-wrapper">
-              <input type="text" id="principales-unidad" name="unidad" value="001">
-              <button class="btn-auto-increment" data-target="principales-unidad" title="Auto incrementar al guardar">🔄</button>
+            <div class="field-group field-with-toggle">
+              <label for="principales-unidad">UNIDAD</label>
+              <div class="input-toggle-wrapper">
+                <input type="text" id="principales-unidad" name="unidad" value="001">
+                <button class="btn-auto-increment" data-target="principales-unidad" title="Auto incrementar al guardar">🔄</button>
+              </div>
             </div>
           </div>
         </div>
@@ -404,39 +408,43 @@
         <div class="seccion-header">
           <h2>⚡ Servicios</h2>
           <div class="seccion-buttons">
+            <button class="btn btn-add" data-action="add-row" data-section="servicios">➕</button>
             <button class="btn btn-save" data-action="save" data-section="servicios">💾</button>
             <button class="btn btn-clear" data-action="clear" data-section="servicios">🗑️</button>
+            <!-- SIN botón ▶️ general, solo execute-row por fila -->
           </div>
         </div>
-        <div class="seccion-content grid-servicios">
-          <div class="field-group">
-            <label for="servicios-luz">LUZ</label>
-            <input type="text" id="servicios-luz" name="luz" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-agua">AGUA</label>
-            <input type="text" id="servicios-agua" name="agua" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-telf">TELF</label>
-            <input type="text" id="servicios-telf" name="telf" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-desague">DESAGÜE</label>
-            <input type="text" id="servicios-desague" name="desague" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-gas">GAS</label>
-            <input type="text" id="servicios-gas" name="gas" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-internet">INTERNET</label>
-            <input type="text" id="servicios-internet" name="internet" placeholder="1/2" maxlength="1">
-          </div>
-          <div class="field-group">
-            <label for="servicios-tv">TV</label>
-            <input type="text" id="servicios-tv" name="tv" placeholder="1/2" maxlength="1">
-          </div>
+        <div class="tabla-excel-container">
+          <table class="tabla-excel tabla-navegable" id="tabla-servicios" data-table-type="servicios">
+            <thead>
+              <tr>
+                <th title="1=SI, 2=NO">LUZ</th>
+                <th title="1=SI, 2=NO">AGUA</th>
+                <th title="1=SI, 2=NO">TELF</th>
+                <th title="1=SI, 2=NO">DESAGÜE</th>
+                <th title="1=SI, 2=NO">GAS</th>
+                <th title="1=SI, 2=NO">INTERNET</th>
+                <th title="1=SI, 2=NO">TV</th>
+                <th>ACC</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-servicios">
+              <tr data-row-id="1">
+                <td><input type="text" name="luz" data-col="0" data-validation="servicio"></td>
+                <td><input type="text" name="agua" data-col="1" data-validation="servicio"></td>
+                <td><input type="text" name="telf" data-col="2" data-validation="servicio"></td>
+                <td><input type="text" name="desague" data-col="3" data-validation="servicio"></td>
+                <td><input type="text" name="gas" data-col="4" data-validation="servicio"></td>
+                <td><input type="text" name="internet" data-col="5" data-validation="servicio"></td>
+                <td><input type="text" name="tv" data-col="6" data-validation="servicio"></td>
+                <td class="acciones-cell">
+                  <button class="btn-row btn-duplicate" data-action="duplicate">📋</button>
+                  <button class="btn-row btn-delete" data-action="delete">❌</button>
+                  <button class="btn-row btn-execute-row" data-action="execute-row" title="Ejecutar esta fila">▶️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 

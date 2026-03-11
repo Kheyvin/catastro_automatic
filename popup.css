@@ -221,6 +221,19 @@ body {
   transform: rotate(20deg);
 }
 
+.principales-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.principales-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* ==================== SECCIONES DUO Y TRIO ==================== */
 
 .seccion-trio {
@@ -996,3 +1009,4 @@ body {
     flex-wrap: wrap;
   }
 }
+
