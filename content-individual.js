@@ -1087,16 +1087,16 @@ async function handleSeccion01Principales() {
   }
 
   const edificaInput = section.querySelector('#form_item_codigoedifica');
-  if (edificaInput) simulateInput(edificaInput, CONFIG.defaultValues.edifica);
+  if (edificaInput) simulateInput(edificaInput, principales['principales-edifica'] || '01');
 
   const entradaInput = section.querySelector('#form_item_codigoentrada');
-  if (entradaInput) simulateInput(entradaInput, CONFIG.defaultValues.entrada);
+  if (entradaInput) simulateInput(entradaInput, principales['principales-entrada'] || '01');
 
   const pisoInput = section.querySelector('#form_item_codigopiso');
-  if (pisoInput) simulateInput(pisoInput, CONFIG.defaultValues.piso);
+  if (pisoInput) simulateInput(pisoInput, principales['principales-piso'] || '01');
 
   const unidadInput = section.querySelector('#form_item_codigounidad');
-  if (unidadInput) simulateInput(unidadInput, CONFIG.defaultValues.unidad);
+  if (unidadInput) simulateInput(unidadInput, principales['principales-unidad'] || '001');
 
   if (final['final-observaciones']) {
     const observacionesInput = document.querySelector('textarea[id*="observacion"]') ||
@@ -1257,7 +1257,7 @@ async function handleSeccion02Ubicacion() {
         document.removeEventListener('click', handleSection5Click, true);
         resolve(null);
       }
-    }, 120000);
+    }, 220000);
   });
 
   if (userChoice === 'SECCION_03') {
@@ -3217,6 +3217,69 @@ async function processFirmaTecnico(data) {
 
   await delay(CONFIG.delays.extraLong);
 }
+
+async function processFirmaVerificador(data) {
+  log('Procesando V°B° del verificador catastral', 'info');
+
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[97]', 'VERIFICADOR'] },
+    { includes: ['VERIFICADOR', 'CATASTRAL'] }
+  ]);
+
+  if (!editBtn) {
+    log('Boton de editar verificador no encontrado', 'warning');
+    return;
+  }
+
+  simulateClick(editBtn);
+  await delay(CONFIG.delays.long);
+
+  let firmaModal = await waitForModal('VERIFICADOR CATASTRAL');
+  if (!firmaModal) {
+    firmaModal = await waitForModal('NUEVA V');
+  }
+  if (!firmaModal) {
+    log('Modal de firma verificador no aparecio', 'error');
+    return;
+  }
+
+  const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
+                    firmaModal.querySelector('button .anticon-search')?.closest('button');
+  if (searchBtn) {
+    simulateClick(searchBtn);
+    await delay(CONFIG.delays.long);
+    await searchAndSelectPersonal(data['final-verificador-nombre']);
+  }
+
+  await delay(CONFIG.delays.long);
+
+  let firmaModalUpdated = await waitForModal('VERIFICADOR CATASTRAL');
+  if (!firmaModalUpdated) {
+    firmaModalUpdated = await waitForModal('NUEVA V');
+  }
+  if (firmaModalUpdated) {
+    await setFechaFirmaModal(firmaModalUpdated, data['final-verificador-fecha']);
+
+    if (data['final-verificador-registro']) {
+      const registroInput = firmaModalUpdated.querySelector('#form_item_nroregistroverificador');
+      if (registroInput) {
+        simulateInput(registroInput, data['final-verificador-registro']);
+        log('N°Registro verificador: ' + data['final-verificador-registro'], 'success');
+      }
+    }
+
+    await delay(CONFIG.delays.medium);
+
+    const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
+    if (guardarBtn) {
+      simulateClick(guardarBtn);
+      log('Firma verificador guardada', 'success');
+    }
+  }
+
+  await delay(CONFIG.delays.extraLong);
+}
+
 // ==================== SECCIÓN FINAL ====================
 
 async function handleSeccionFinal() {
@@ -3243,6 +3306,12 @@ async function handleSeccionFinal() {
 
   if (finalData['final-tecnico-nombre']) {
     await processFirmaTecnico(finalData);
+  }
+
+  await delay(CONFIG.delays.long);
+
+  if (finalData['final-verificador-nombre']) {
+    await processFirmaVerificador(finalData);
   }
 
   log('Seccion final completada', 'success');
@@ -3354,6 +3423,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (finalData['final-supervisor-nombre']) await processFirmaSupervisor(finalData);
           await delay(CONFIG.delays.long);
           if (finalData['final-tecnico-nombre']) await processFirmaTecnico(finalData);
+          await delay(CONFIG.delays.long);
+          if (finalData['final-verificador-nombre']) await processFirmaVerificador(finalData);
           sendResponse({ success: true });
         })();
         return true;

@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Webinar Catastro - By KDA",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "description": "Automatización de ficha catastral individual, cotitular y economica",
   "permissions": [
     "storage",
     "tabs"
   ],
   "host_permissions": [
-    "http://161.132.42.244/*",
+    "https://prueba-catastro.munialbarracin.gob.pe/*",
     "https://*/*"
   ],
   "icons": {
@@ -29,7 +29,7 @@
   "content_scripts": [
     {
       "matches": [
-        "http://161.132.42.244:9006/ficha-individual/*"
+        "https://prueba-catastro.munialbarracin.gob.pe/ficha-individual/*"
       ],
       "js": [
         "content-individual.js"
@@ -38,7 +38,7 @@
     },
     {
       "matches": [
-        "http://161.132.42.244:9006/ficha-cotitularidad/*"
+        "https://prueba-catastro.munialbarracin.gob.pe/ficha-cotitularidad/*"
       ],
       "js": [
         "content-cotitularidad.js"
@@ -47,7 +47,7 @@
     },
     {
       "matches": [
-        "http://161.132.42.244:9006/ficha-economica/*"
+        "https://prueba-catastro.munialbarracin.gob.pe/ficha-economica/*"
       ],
       "js": [
         "content-economica.js"
@@ -56,7 +56,7 @@
     },
     {
       "matches": [
-        "http://161.132.42.244:9006/ficha-biencomun/*"
+        "https://prueba-catastro.munialbarracin.gob.pe/ficha-biencomun/*"
       ],
       "js": [
         "content-biencomun.js"

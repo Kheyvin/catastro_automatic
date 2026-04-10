@@ -463,6 +463,63 @@ async function processFirmaTecnico(data) {
   await delay(CONFIG.delays.extraLong);
 }
 
+async function processFirmaVerificador(data) {
+  log('Procesando V°B° del verificador catastral [123]', 'info');
+
+  const editBtn = await findEditBtnWithRetry([
+    { includes: ['[123]', 'VERIFICADOR'] },
+    { includes: ['VERIFICADOR', 'CATASTRAL'] }
+  ]);
+
+  if (!editBtn) {
+    log('Botón de editar verificador no encontrado', 'warning');
+    return;
+  }
+
+  simulateClick(editBtn);
+  await delay(CONFIG.delays.long);
+
+  let firmaModal = await waitForModal('VERIFICADOR CATASTRAL');
+  if (!firmaModal) firmaModal = await waitForModal('NUEVA V');
+  if (!firmaModal) {
+    log('Modal de firma verificador no apareció', 'error');
+    return;
+  }
+
+  const searchBtn = firmaModal.querySelector('legend button .anticon-search')?.closest('button') ||
+                    firmaModal.querySelector('button .anticon-search')?.closest('button');
+  if (searchBtn) {
+    simulateClick(searchBtn);
+    await delay(CONFIG.delays.long);
+    await searchAndSelectPersonal(data['final-verificador-nombre']);
+  }
+
+  await delay(CONFIG.delays.long);
+
+  let firmaModalUpdated = await waitForModal('VERIFICADOR CATASTRAL');
+  if (!firmaModalUpdated) firmaModalUpdated = await waitForModal('NUEVA V');
+  if (firmaModalUpdated) {
+    await setFechaFirmaModal(firmaModalUpdated, data['final-verificador-fecha']);
+
+    if (data['final-verificador-registro']) {
+      const registroInput = firmaModalUpdated.querySelector('#form_item_nroregistroverificador');
+      if (registroInput) {
+        simulateInput(registroInput, data['final-verificador-registro']);
+        log('N°Registro verificador: ' + data['final-verificador-registro'], 'success');
+      }
+    }
+
+    await delay(CONFIG.delays.medium);
+    const guardarBtn = firmaModalUpdated.querySelector('.ant-modal-footer button.ant-btn-primary');
+    if (guardarBtn) {
+      simulateClick(guardarBtn);
+      log('Firma verificador guardada', 'success');
+    }
+  }
+
+  await delay(CONFIG.delays.extraLong);
+}
+
 // ==================== SETEO DE OBSERVACIONES ====================
 
 async function setObservacionesFromStorage() {
@@ -726,10 +783,14 @@ function setupGuardarInformacionListener() {
       if (finalData['final-tecnico-nombre']) {
         await processFirmaTecnico(finalData);
       }
+      await delay(CONFIG.delays.long);
+      if (finalData['final-verificador-nombre']) {
+        await processFirmaVerificador(finalData);
+      }
       log('Firmas completadas', 'success');
     }
   };
-  
+
   document.addEventListener('click', handleClick, true);
 }
 
@@ -750,7 +811,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (async () => {
         const finalData = message.data || {};
         log('Ejecutando firmas directamente', 'info');
-        
+
         if (finalData['final-supervisor-nombre']) {
           await processFirmaSupervisor(finalData);
         }
@@ -758,7 +819,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (finalData['final-tecnico-nombre']) {
           await processFirmaTecnico(finalData);
         }
-        
+        await delay(CONFIG.delays.long);
+        if (finalData['final-verificador-nombre']) {
+          await processFirmaVerificador(finalData);
+        }
+
         log('Firmas seteadas correctamente', 'success');
         sendResponse({ success: true });
       })();

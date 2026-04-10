@@ -27,7 +27,8 @@ const SECCIONES_CONFIG = {
   final: {
     fields: [
       'final-observaciones', 'final-supervisor-nombre', 'final-supervisor-fecha',
-      'final-tecnico-nombre', 'final-tecnico-fecha'
+      'final-tecnico-nombre', 'final-tecnico-fecha',
+      'final-verificador-nombre', 'final-verificador-fecha', 'final-verificador-registro'
     ]
   }
 };
@@ -594,7 +595,7 @@ function openFloatingWindow() {
 function executeFirmasOnly() {
   const finalData = getSectionValuesFromDOM('final');
 
-  if (!finalData['final-supervisor-nombre'] && !finalData['final-tecnico-nombre']) {
+  if (!finalData['final-supervisor-nombre'] && !finalData['final-tecnico-nombre'] && !finalData['final-verificador-nombre']) {
     showToast('No hay datos de firmas para setear', 'error');
     return;
   }
